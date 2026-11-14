@@ -64,3 +64,8 @@ The repository's code licence is MIT (see `LICENSE`). **Third-party data, tiles 
 See [Data Sources](sources.html), [Privacy](privacy.html) and [Terms](terms.html).
 
 **SkyPulse AU is not affiliated with, approved by or endorsed by any emergency authority.**
+
+## Diagnosing unavailable feeds
+GitHub Pages must publish from **GitHub Actions**, not **Deploy from a branch**. A branch-based Pages deployment can run after the custom feed-fetch workflow and overwrite its generated `data/rfs.json` and `data/bom.json`. In **Settings → Pages → Build and deployment**, choose **GitHub Actions** and rerun **Actions → Deploy SkyPulse AU → Run workflow**. If a second **pages build and deployment** run appears after each push, the branch setting is still active.
+
+The BOM RSS endpoint currently returns HTTP 403 to the automated runner. SkyPulse therefore links to the official BOM warnings rather than falsely displaying “no warnings”. The map has a new Reload Map control for tile-loading failures.
