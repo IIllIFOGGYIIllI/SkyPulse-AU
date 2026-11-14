@@ -1,6 +1,6 @@
 /* Network-first navigation, offline shell only. Hazard and warning data are NEVER cached. */
-const CACHE="skypulse-shell-v2";
-const SHELL=["./","./index.html","./offline.html","./assets/styles.css","./assets/app.js","./assets/icon.svg","./manifest.webmanifest","./privacy.html","./terms.html","./sources.html"];
+const CACHE="skypulse-shell-v3";
+const SHELL=["./","./index.html","./offline.html","./assets/styles.css","./assets/leaflet.css","./assets/app.js","./assets/icon.svg","./manifest.webmanifest","./privacy.html","./terms.html","./sources.html"];
 self.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting()));});
 self.addEventListener("activate",event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
 self.addEventListener("fetch",event=>{
