@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://api.open-meteo.com">
   <link rel="preconnect" href="https://tile.openstreetmap.org">
   <link rel="stylesheet" href="./assets/leaflet.css?v=1">
-  <link rel="stylesheet" href="./assets/styles.css?v=4">
+  <link rel="stylesheet" href="./assets/styles.css?v=5">
   <title>SkyPulse AU | Australian Weather &amp; Warnings</title>
 </head>
 <body>
@@ -42,18 +42,18 @@
       <div class="content">
         <div class="independent-note"><span class="notice-dot">!</span> <span><b>Independent information service.</b> For emergencies call <b>000</b>. Always follow <a href="https://www.nsw.gov.au/emergency/hazards-near-me-app" target="_blank" rel="noopener">official NSW alerts</a> and <a href="https://www.bom.gov.au/" target="_blank" rel="noopener">BOM warnings</a>. App notifications are not a replacement for emergency services.</span></div>
         <section id="overview" class="section overview">
-          <div class="section-header"><div><div class="eyebrow">YOUR LOCAL OUTLOOK</div><h1>Weather Overview <span id="heading-location">Cessnock</span></h1><p class="muted" id="current-clock">Loading local conditions…</p></div><div class="status-pill" id="weather-status"><span class="pulse-dot"></span> Loading weather</div></div>
+          <div class="section-header"><div><div class="eyebrow">YOUR LOCAL OUTLOOK</div><h1 class="overview-title"><span class="overview-title-label">Weather Overview</span><span id="heading-location" class="overview-title-location">Cessnock</span></h1><p class="muted" id="current-clock">Loading local conditions…</p></div><div class="status-pill" id="weather-status"><span class="pulse-dot"></span> Loading weather</div></div>
           <div class="hero-grid">
             <article class="card hero-card">
               <div class="hero-aura"></div><div class="hero-top"><span class="mini-tag">CURRENT CONDITIONS</span><span class="mini-tag subtle" id="current-date">—</span></div>
               <div class="hero-main"><div><div class="temp-line"><span id="current-temp">--</span><sup>°C</sup></div><div class="condition" id="current-description">Fetching forecast…</div><p id="feels-like">Feels like —</p></div><div class="hero-weather" id="weather-symbol" aria-hidden="true">☀</div></div>
-              <div class="hero-bottom"><div><span>Today's high</span><strong id="today-high">—</strong></div><div><span>Today's low</span><strong id="today-low">—</strong></div><div><span>Chance of rain</span><strong id="today-rain">—</strong></div><div><span>Updated</span><strong id="forecast-update">—</strong></div></div>
+              <div class="hero-bottom"><div><span>Today's High</span><strong id="today-high">—</strong></div><div><span>Today's Low</span><strong id="today-low">—</strong></div><div><span>Chance of Rain</span><strong id="today-rain">—</strong></div><div><span>Updated</span><strong id="forecast-update">—</strong></div></div>
             </article>
             <div class="metric-grid">
               <article class="card metric"><div class="metric-top"><span>WIND SPEED</span><span class="metric-icon">≋</span></div><div class="metric-value" id="wind-speed">—</div><div class="metric-sub" id="wind-gust">Gusts —</div></article>
-              <article class="card metric"><div class="metric-top"><span>HUMIDITY</span><span class="metric-icon">◉</span></div><div class="metric-value" id="humidity">—</div><div class="metric-sub">Relative humidity</div></article>
+              <article class="card metric"><div class="metric-top"><span>HUMIDITY</span><span class="metric-icon">◉</span></div><div class="metric-value" id="humidity">—</div><div class="metric-sub">Relative Humidity</div></article>
               <article class="card metric"><div class="metric-top"><span>UV INDEX</span><span class="metric-icon">☼</span></div><div class="metric-value" id="uv-index">—</div><div class="metric-sub" id="uv-description">Daily maximum</div></article>
-              <article class="card metric"><div class="metric-top"><span>RAINFALL</span><span class="metric-icon">☂</span></div><div class="metric-value" id="rain-total">—</div><div class="metric-sub">Forecast today</div></article>
+              <article class="card metric"><div class="metric-top"><span>RAINFALL</span><span class="metric-icon">☂</span></div><div class="metric-value" id="rain-total">—</div><div class="metric-sub">Forecast Today</div></article>
             </div>
           </div>
         </section>
@@ -101,6 +101,6 @@
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
   <nav class="mobile-tabs" aria-label="Mobile navigation"><a href="#overview">⌂<small>Home</small></a><a href="#forecast">☀<small>Forecast</small></a><a href="#map-section">◎<small>Map</small></a><a href="#hazards">⚠<small>Hazards</small></a><a href="#alerts">⚙<small>Settings</small></a></nav>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
-  <script src="./assets/app.js?v=4" defer></script>
+  <script src="./assets/app.js?v=5" defer></script>
 </body>
 </html>

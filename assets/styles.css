@@ -54,3 +54,61 @@ body.map-lock-scroll{overflow:hidden}
 .map-legend small{display:block;font-size:10px;color:#aac1d4}
 .map-legend-dot{display:block;flex:none;width:9px;height:9px;background:#ff9c52;border:1px solid white;border-radius:50%}
 @media(max-width:750px){.map-coordinates{bottom:53px}.map-legend{bottom:84px;left:9px}}
+
+/* v5: mobile typography rhythm and balanced section spacing. */
+.section .section-header{gap:16px 24px;margin-bottom:24px}
+.section .section-header.compact{margin-bottom:21px}
+.section .section-header>div:first-child{min-width:0}
+.section h1,.section h2,.section h3{line-height:1.32;overflow-wrap:break-word}
+.section .eyebrow{margin-bottom:11px;line-height:1.5}
+.overview-title{display:flex;align-items:baseline;flex-wrap:wrap;gap:7px .46em;letter-spacing:-.65px}
+.overview-title .overview-title-label{color:var(--text)}
+.overview-title .overview-title-location{color:var(--accent);font-weight:800;overflow-wrap:anywhere}
+.section .section-header p.muted{margin-top:11px;line-height:1.6}
+.section .card-title-row{gap:14px;margin-bottom:20px;align-items:flex-start}
+.section .card-title-row h3{line-height:1.4}
+.section .card-title-row p.muted{margin-top:7px;line-height:1.5}
+.section .metric-top{gap:12px;line-height:1.45}
+.section .metric-sub{line-height:1.55}
+.section .hero-bottom{row-gap:18px}
+.section .hero-bottom div{gap:7px}
+.section .hero-bottom span{line-height:1.4}
+.section .hero-main p{margin-top:8px;line-height:1.5}
+.topbar .top-heading{gap:7px}
+.topbar .top-heading strong{line-height:1.5}
+.topbar .location-picker{gap:13px}
+.topbar .location-picker input{line-height:1.5}
+@media(max-width:890px){
+  .topbar{gap:14px;padding:16px 18px}
+  .topbar .top-heading{gap:8px}
+  .topbar .top-actions{gap:9px}
+  .content{padding:22px 18px 105px}
+  .section{margin-top:36px}
+  .section .section-header{gap:15px;margin-bottom:24px}
+  .overview-title{gap:8px .42em}
+  .section .section-header p.muted{margin-top:12px}
+  .status-pill{line-height:1.5}
+}
+@media(max-width:620px){
+  .topbar .breadcrumb{line-height:1.6}
+  .topbar .top-actions{gap:8px}
+  .topbar .location-picker{min-width:0;gap:12px;padding:0 14px}
+  .overview-title{display:grid;justify-items:start;row-gap:6px;font-size:clamp(23px,6.5vw,29px);line-height:1.25}
+  .overview-title .overview-title-location{display:block;font-size:.92em;line-height:1.25}
+  .overview .section-header{align-items:flex-start;gap:20px}
+  .overview .section-header .status-pill{align-self:flex-start}
+  .hero-card{padding:21px;gap:20px}
+  .hero-main{gap:8px}
+  .hero-bottom{column-gap:10px}
+  .metric{padding:18px;gap:8px}
+  .section .card-title-row{margin-bottom:18px}
+  .section .eyebrow{margin-bottom:10px}
+  .news-card{gap:12px}
+  .settings-card,.hazards-card{padding:20px}
+}
+@media(max-width:380px){
+  .topbar{padding:14px 13px}
+  .content{padding-left:13px;padding-right:13px}
+  .topbar .icon-button{padding:0 8px}
+  .hero-bottom{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 10px}
+}
