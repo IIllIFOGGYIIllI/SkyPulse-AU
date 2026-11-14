@@ -1,0 +1,43 @@
+{
+  "id": "./",
+  "name": "SkyPulse AU — Australian Weather & Warnings",
+  "short_name": "SkyPulse AU",
+  "description": "Australian Weather, Warnings & Emergency Information",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
+  ],
+  "background_color": "#081321",
+  "theme_color": "#0b1729",
+  "lang": "en-AU",
+  "categories": [
+    "weather",
+    "news",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "./assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Weather",
+      "url": "./#overview"
+    },
+    {
+      "name": "NSW Hazards",
+      "url": "./#hazards"
+    },
+    {
+      "name": "Radar",
+      "url": "./#map-section"
+    }
+  ]
+}
