@@ -69,3 +69,8 @@ See [Data Sources](sources.html), [Privacy](privacy.html) and [Terms](terms.html
 GitHub Pages must publish from **GitHub Actions**, not **Deploy from a branch**. A branch-based Pages deployment can run after the custom feed-fetch workflow and overwrite its generated `data/rfs.json` and `data/bom.json`. In **Settings → Pages → Build and deployment**, choose **GitHub Actions** and rerun **Actions → Deploy SkyPulse AU → Run workflow**. If a second **pages build and deployment** run appears after each push, the branch setting is still active.
 
 The BOM RSS endpoint currently returns HTTP 403 to the automated runner. SkyPulse therefore links to the official BOM warnings rather than falsely displaying “no warnings”. The map has a new Reload Map control for tile-loading failures.
+
+## Map Viewer v4
+The Leaflet 1.9.4 stylesheet is **self-hosted** at `assets/leaflet.css`, resolving the failure mode where map tiles appear as scattered, unpositioned image squares when remote Leaflet CSS is unavailable. Map controls now include zoom, precise device location (with user consent), return to the selected town, fit to nearby mapped incidents, fullscreen, layer visibility, a nearby-only filter, radar opacity, radar frame navigation, optional mouse-wheel zoom, coordinates, metric scale and a clear incident legend. Using **Current Location** on the map does **not** silently replace the saved weather location. Map tiles remain online-only and subject to OSM tile availability and its usage policy.
+
+The GitHub Actions deployment runs a static validation script, in addition to JavaScript syntax checks, before publishing changes. This validation does not replace a real-device rendering check.

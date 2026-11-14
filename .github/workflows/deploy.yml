@@ -30,6 +30,11 @@ jobs:
           python-version: "3.12"
       - name: Fetch official public data
         run: python scripts/sync_feeds.py
+      - name: Validate Dashboard and PWA
+        run: |
+          node --check assets/app.js
+          node --check sw.js
+          python scripts/validate_site.py
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload site

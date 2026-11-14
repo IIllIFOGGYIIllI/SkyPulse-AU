@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://api.open-meteo.com">
   <link rel="preconnect" href="https://tile.openstreetmap.org">
   <link rel="stylesheet" href="./assets/leaflet.css?v=1">
-  <link rel="stylesheet" href="./assets/styles.css?v=3">
+  <link rel="stylesheet" href="./assets/styles.css?v=4">
   <title>SkyPulse AU | Australian Weather &amp; Warnings</title>
 </head>
 <body>
@@ -74,10 +74,10 @@
   <label class="map-layer-check"><input type="checkbox" id="map-layer-radar" checked><span>Rain Radar<small>Historical rainfall imagery</small></span></label>
   <label class="map-layer-check"><input type="checkbox" id="map-layer-rfs" checked><span>NSW RFS Incidents<small>Mapped incident locations</small></span></label>
   <label class="map-layer-check"><input type="checkbox" id="map-nearby-only" checked><span>Nearby Incidents Only<small>Uses your selected alert radius</small></span></label>
-  <div class="map-layer-slider"><label for="map-radar-opacity">Radar Opacity <strong id="map-opacity-label">60%</strong></label><input id="map-radar-opacity" type="range" min="20" max="100" value="60" step="5"></div>
+  <label class="map-layer-check"><input type="checkbox" id="map-wheel-zoom"><span>Mouse Wheel Zoom<small>Scroll to zoom when enabled</small></span></label><div class="map-layer-slider"><label for="map-radar-opacity">Radar Opacity <strong id="map-opacity-label">60%</strong></label><input id="map-radar-opacity" type="range" min="20" max="100" value="60" step="5"></div>
   <div class="map-panel-title minor">Map Data</div><p>Street map: OpenStreetMap<br>Rain radar: RainViewer<br>Incidents: NSW Rural Fire Service</p>
 </div>
-<div id="map-coordinates" class="map-coordinates" aria-live="off">Move the map to inspect coordinates</div>
+<div class="map-legend" aria-label="Map marker legend"><span class="map-legend-dot"></span><span>Mapped RFS Incidents <small>Not Official Warning Boundaries</small></span></div><div id="map-coordinates" class="map-coordinates" aria-live="off">Move the Map to Inspect Coordinates</div>
 <div id="map-location-status" class="map-location-status" role="status" hidden></div></div><div id="map-tile-status" class="map-tile-status" role="status" hidden></div><div class="map-footer"><div class="radar-controls"><button id="radar-step-back" aria-label="Previous Radar Frame" title="Previous Radar Frame"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></button><button id="radar-play" aria-label="Play Radar Animation" title="Play Radar Animation">▶</button><button id="radar-step-forward" aria-label="Next Radar Frame" title="Next Radar Frame"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10 6 6 6-6 6"/></svg></button><input id="radar-slider" type="range" min="0" max="0" value="0" aria-label="Radar time frame" disabled><span id="radar-frame-label">Historical Radar</span></div><span class="muted">Map © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> · Radar © RainViewer</span></div></div>
         </section>
         <section id="hazards" class="section">
@@ -101,6 +101,6 @@
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
   <nav class="mobile-tabs" aria-label="Mobile navigation"><a href="#overview">⌂<small>Home</small></a><a href="#forecast">☀<small>Forecast</small></a><a href="#map-section">◎<small>Map</small></a><a href="#hazards">⚠<small>Hazards</small></a><a href="#alerts">⚙<small>Settings</small></a></nav>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
-  <script src="./assets/app.js?v=3" defer></script>
+  <script src="./assets/app.js?v=4" defer></script>
 </body>
 </html>

@@ -45,3 +45,12 @@
 .map-card .map-side-actions{gap:8px}
 @media(max-width:750px){.map-viewport{height:435px}.map-control-column{top:12px;right:11px;gap:7px}.map-control-button{height:38px;width:38px}.map-layers-panel{top:10px;right:57px;max-height:calc(100% - 20px);overflow-y:auto}.map-coordinates{left:9px;bottom:29px;font-size:10px}.map-location-status{left:10px;right:60px}.map-footer .radar-controls{width:100%;max-width:100%}.map-footer{gap:8px;padding:12px}.map-card .map-side-actions{width:100%}}
 @media(max-width:450px){.map-control-column{gap:6px}.map-control-button{height:35px;width:36px}.map-viewport{height:405px}.map-layers-panel{width:min(265px,calc(100% - 59px));right:53px;padding:12px}.map-toolbar .segmented{display:grid;grid-template-columns:1fr 1fr}.map-toolbar .segmented button{font-size:11px;padding:7px 6px}}
+
+/* v4: Non-overlapping scale/coordinate legend and fullscreen scroll lock */
+body.map-lock-scroll{overflow:hidden}
+.map-viewport .leaflet-control-scale{margin-bottom:8px!important}
+.map-coordinates{bottom:56px}
+.map-legend{position:absolute;bottom:88px;left:14px;z-index:790;display:flex;gap:8px;align-items:center;color:#eef7ff;border:1px solid #ffffff23;background:#0a1c2edf;border-radius:8px;padding:7px 9px;font-size:11px;line-height:1.3;pointer-events:none}
+.map-legend small{display:block;font-size:10px;color:#aac1d4}
+.map-legend-dot{display:block;flex:none;width:9px;height:9px;background:#ff9c52;border:1px solid white;border-radius:50%}
+@media(max-width:750px){.map-coordinates{bottom:53px}.map-legend{bottom:84px;left:9px}}
