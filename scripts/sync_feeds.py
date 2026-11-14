@@ -37,7 +37,7 @@ def load_rfs():
             p = item.get("properties") or {}
             if not isinstance(p, dict):
                 p = {}
-            names = ("title", "name", "incidentName", "eventName", "alertLevel", "alert", "status", "link", "url", "guid", "id")
+            names = ("title", "name", "incidentName", "eventName", "alertLevel", "alert-level", "alert", "status", "link", "url", "guid", "id", "type", "fire", "location", "updated")
             features.append({"type": "Feature", "id": str(item.get("id", ""))[:200], "geometry": item["geometry"], "properties": {k: str(p.get(k, ""))[:800] for k in names if p.get(k) is not None}})
         write("rfs.json", {"source": source, "retrieved_at": now(), "features": features, "warning": "Indicative incident location data. Not emergency instructions."})
         print("RFS features:", len(features))
