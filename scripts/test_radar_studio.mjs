@@ -88,49 +88,22 @@ try{
   if(!m.radarTile||!m.radarTile.url.endsWith("/2/1_1.png")||m.radarTile.opts.maxNativeZoom!==7)
     throw Error("Unsupported free API raster format: "+JSON.stringify(m.radarTile));
   if(requests!==1)throw Error("Unexpected first metadata request count: "+requests);
-  // Ensure only the OSM basemap is toned; rainfall imagery is never recoloured.
+  // Basemap colours stay original. Map information popups follow the website theme.
   const appearance=await page.evaluate(()=>{
     const map=document.querySelector("#weather-map");
-    const wrap=document.createElement("div");wrap.className="skypulse-osm-basemap";
-    const base=document.createElement("img");base.className="leaflet-tile";wrap.append(base);map.append(wrap);
-    const radar=document.createElement("img");radar.className="leaflet-tile";map.append(radar);
-    return {tone:map.dataset.mapTone,base:getComputedStyle(base).filter,
-      radar:getComputedStyle(radar).filter,
-      className:window.__radarTiles.find(v=>v.url.includes("openstreetmap.org"))?.opts?.className};
+    const tile=document.createElement("img");tile.className="leaflet-tile";map.append(tile);
+    const popup=document.createElement("div");popup.className="leaflet-popup-content-wrapper";
+    popup.innerHTML='<div class="leaflet-popup-content"><div class="incident-popup"><div class="incident-detail-row"><dt>Status</dt><dd>Under control</dd></div></div></div>';
+    map.append(popup);
+    return {tile:getComputedStyle(tile).filter,background:getComputedStyle(popup).backgroundColor};
   });
-  if(appearance.tone!=="dark"||!appearance.base.includes("invert(1)")||appearance.radar!=="none"||
-    appearance.className!=="skypulse-osm-basemap")
-    throw Error("Dark map should tone only original OSM tiles: "+JSON.stringify(appearance));
-  await page.locator("#radar-map-style").selectOption("light");
-  let styleNow=await page.evaluate(()=>({
-    tone:document.querySelector("#weather-map").dataset.mapTone,
-    css:getComputedStyle(document.querySelector("#weather-map .skypulse-osm-basemap img")).filter,
-    saved:JSON.parse(localStorage.getItem("skypulse.preferences")).mapStyle
-  }));
-  if(styleNow.tone!=="light"||styleNow.css!=="none"||styleNow.saved!=="light")
-    throw Error("Manual light map mode incorrect: "+JSON.stringify(styleNow));
-  await page.locator("#radar-map-style").selectOption("auto");
+  if(appearance.tile!=="none"||appearance.background!=="rgb(17, 40, 62)")
+    throw Error("Radar should preserve original map colours with dark information panel: "+JSON.stringify(appearance));
   await page.locator("#theme-button").click();
-  if((await page.locator("#weather-map").getAttribute("data-map-tone"))!=="light")
-    throw Error("Auto map theme did not follow site Light switch");
-  await page.locator("#radar-map-style").selectOption("dark");
-  if((await page.locator("#weather-map").getAttribute("data-map-tone"))!=="dark")
-    throw Error("Dark map override should work while the site is in Light");
-  await page.reload({waitUntil:"domcontentloaded"});
-  await page.waitForFunction(()=>document.querySelector("#radar-map-style")?.value==="dark");
-  const retained=await page.evaluate(()=>({
-    site:document.documentElement.dataset.theme,
-    mode:document.querySelector("#radar-map-style").value,
-    tone:document.querySelector("#weather-map").dataset.mapTone,
-    saved:JSON.parse(localStorage.getItem("skypulse.preferences")).mapStyle
-  }));
-  if(retained.site!=="light"||retained.mode!=="dark"||retained.tone!=="dark"||retained.saved!=="dark")
-    throw Error("Dark map override not saved across reload: "+JSON.stringify(retained));
-  // Restore normal dark site and follow-site map choice for the remaining tests.
-  await page.locator("#radar-map-style").selectOption("auto");
+  const light=await page.evaluate(()=>getComputedStyle(document.querySelector("#weather-map .leaflet-popup-content-wrapper")).backgroundColor);
+  if(light!=="rgb(255, 255, 255)")throw Error("Light mode information panel should be light: "+light);
   await page.locator("#theme-button").click();
-  console.log("Radar basemap theme PASSED: OSM-only tone, rain overlay unchanged, Auto follows site and manual preference persists.");
-
+  console.log("Radar map panels PASSED: original map tiles and website-theme-aware information surfaces.");
   const sourceLinks=await page.evaluate(()=>[...document.querySelectorAll("#radar-source-bom,#radar-source-weatherzone")].map(a=>({url:a.href,blank:a.target,rel:a.rel})));
   if(sourceLinks.length!==2||sourceLinks.some(a=>a.blank!=="_blank"||!a.rel.includes("noopener")))
     throw Error("Official radar sources must open on their own sites: "+JSON.stringify(sourceLinks));
