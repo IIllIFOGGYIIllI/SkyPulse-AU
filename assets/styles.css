@@ -306,3 +306,45 @@ html,body{width:100%;max-width:100%;min-width:0}
 /* Preserve full-screen map sizing and attach the selected-tab marker to its own tab. */
 .map-viewport:fullscreen,.map-viewport.map-pseudo-fullscreen{max-width:none!important;width:100vw}
 @media(max-width:890px){.mobile-tabs .mobile-tab{position:relative}}
+
+/* v10 — Dedicated pages, consistent six-tab navigation */
+.page-shortcuts{display:flex;align-items:center;gap:8px;max-width:100%;flex-wrap:wrap;margin:18px 0 8px}
+.page-shortcuts>a{display:inline-flex;justify-content:center;align-items:center;min-height:37px;min-width:0;padding:7px 12px;border:1px solid var(--border);border-radius:9px;background:var(--panel);color:var(--muted);font-weight:750;font-size:11px;line-height:1.25}
+.page-shortcuts>a:hover,.page-shortcuts>a[aria-current=page]{color:var(--accent);border-color:var(--accent);background:var(--panel-2)}
+body[data-page] .section{margin-top:28px}
+.overview-explore{margin:22px 0 6px;padding:22px;background:var(--panel);border:1px solid var(--border);border-radius:16px}
+.overview-explore h2{font-size:21px;margin:0}.overview-explore p{font-size:12px;margin:5px 0 0}
+.overview-explore-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:16px}
+.overview-explore-grid>a{display:grid;grid-template-columns:1fr auto;align-content:start;gap:5px;border:1px solid var(--border);border-radius:11px;padding:14px;background:var(--panel-2);min-width:0;transition:border-color .15s}
+.overview-explore-grid>a:hover{border-color:var(--accent)}
+.overview-explore-grid>a>span:first-child{grid-column:1/-1;font-size:24px;color:var(--accent)}
+.overview-explore-grid strong{font-size:13px;line-height:1.35}.overview-explore-grid small{font-size:10px;color:var(--muted);grid-column:1/-1}
+.overview-explore-grid .explore-arrow{grid-column:2;grid-row:2;color:var(--accent);font-size:13px}
+body[data-page=map-section] .map-viewport{min-height:500px}
+body[data-page=map-section] .map-viewport #weather-map{min-height:470px}
+body[data-page=alerts] .settings-grid{margin-bottom:15px}
+body[data-page=alerts] .background-alert-card{margin-top:16px}
+body[data-page=forecast] .forecast-grid{align-items:stretch}
+body[data-page=news] .news-grid{margin-top:6px}
+@media(max-width:1250px){.overview-explore-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:890px){
+ .mobile-tabs{grid-template-columns:repeat(6,minmax(0,1fr));gap:2px}
+ .mobile-tabs .mobile-tab span{font-size:9.5px}
+ .mobile-tabs .mobile-tab svg{width:20px;height:20px}
+ .page-shortcuts{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;overscroll-behavior-x:contain}
+ .page-shortcuts::-webkit-scrollbar{display:none}
+ .page-shortcuts>a{flex:none;white-space:nowrap;scroll-snap-align:start}
+ body[data-page] .section{scroll-margin-top:100px}
+}
+@media(max-width:620px){
+ .overview-explore{padding:18px}.overview-explore-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .overview-explore-grid>a{padding:12px}
+ body[data-page=map-section] .map-viewport{min-height:430px}
+ body[data-page=map-section] #weather-map{min-height:400px}
+}
+@media(max-width:400px){
+ .mobile-tabs{grid-template-columns:repeat(6,minmax(0,1fr));gap:0}
+ .mobile-tabs .mobile-tab{padding:5px 0;min-width:0}
+ .mobile-tabs .mobile-tab span{font-size:9px}
+ .overview-explore-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+}

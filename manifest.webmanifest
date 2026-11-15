@@ -28,16 +28,24 @@
   ],
   "shortcuts": [
     {
-      "name": "Weather",
-      "url": "./#overview"
+      "name": "Weather Overview",
+      "url": "./"
+    },
+    {
+      "name": "Forecast",
+      "url": "./forecast.html"
+    },
+    {
+      "name": "Live Radar",
+      "url": "./radar.html"
     },
     {
       "name": "NSW Hazards",
-      "url": "./#hazards"
+      "url": "./hazards.html"
     },
     {
-      "name": "Radar",
-      "url": "./#map-section"
+      "name": "Settings",
+      "url": "./settings.html"
     }
   ]
 }

@@ -13,19 +13,24 @@ if not re.fullmatch(r"[0-9a-fA-F]{40}",sha):
 if not re.fullmatch(r"[0-9a-fA-F]{40}",sha):
     raise SystemExit("Unable to identify a valid commit SHA for this build")
 version=sha[:12].lower()
-html_path=ROOT/"index.html"
-html=html_path.read_text(encoding="utf-8")
-if '__SKYPULSE_BUILD__' not in html:
-    raise SystemExit("Missing source-build marker in index.html")
-html=html.replace("__SKYPULSE_BUILD__",version)
-# Cache-bust all local application code/style URLs on each source commit.
-assets=["assets/styles.css","assets/leaflet.css","assets/app.js",
-        "assets/push.js","assets/push-config.js","assets/update.js"]
-for asset in assets:
-    html,count=re.subn(r'(?P<path>\./'+re.escape(asset)+r')\?v=[^"\s]+',
-        lambda m:m.group("path")+"?v="+version,html)
-    if count!=1:raise SystemExit("Expected one versioned asset reference: "+asset)
-html_path.write_text(html,encoding="utf-8")
+# Stamp each real route with the same source revision and versioned assets.
+page_paths=("index.html","forecast.html","radar.html","hazards.html","news.html","settings.html")
+assets=("assets/styles.css","assets/leaflet.css","assets/app.js",
+        "assets/push.js","assets/push-config.js","assets/update.js")
+for page in page_paths:
+    html_path=ROOT/page
+    html=html_path.read_text(encoding="utf-8")
+    if '__SKYPULSE_BUILD__' not in html:
+        raise SystemExit("Missing source-build marker in "+page)
+    html=html.replace("__SKYPULSE_BUILD__",version)
+    for asset in assets:
+        pattern=r'(?P<path>\\./'+re.escape(asset)+r')\\?v=[^"\\s]+'
+        html,count=re.subn(pattern,
+            lambda m:m.group("path")+"?v="+version,html)
+        expected=1 if "./"+asset in html else 0
+        if count!=expected:
+            raise SystemExit("Unexpected local asset version count: "+page+" / "+asset+" : "+str(count))
+    html_path.write_text(html,encoding="utf-8")
 sw_path=ROOT/"sw.js"
 sw=sw_path.read_text(encoding="utf-8")
 if "__SKYPULSE_BUILD__" not in sw:
@@ -35,5 +40,5 @@ sw_path.write_text(sw,encoding="utf-8")
 metadata={"version":version,"commit":sha.lower(),
           "deployed_at":dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds").replace("+00:00","Z")}
 (ROOT/"app-version.json").write_text(json.dumps(metadata,indent=2)+"\n",encoding="utf-8")
-assert version in html and version in sw
+assert version in sw and all(version in (ROOT / page).read_text(encoding="utf-8") for page in page_paths)
 print("Stamped SkyPulse AU source version:",version)

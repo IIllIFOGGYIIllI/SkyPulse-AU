@@ -5,7 +5,8 @@ const CACHE="skypulse-shell-__SKYPULSE_BUILD__";
 const PREFIX="skypulse-shell-";
 const SHELL=["./","./index.html","./offline.html","./assets/styles.css",
 "./assets/leaflet.css","./assets/app.js","./assets/push.js","./assets/push-config.js",
-"./assets/update.js","./assets/icon.svg","./manifest.webmanifest","./privacy.html",
+"./assets/update.js","./assets/icon.svg","./manifest.webmanifest",
+"./forecast.html","./radar.html","./hazards.html","./news.html","./settings.html","./privacy.html",
 "./terms.html","./sources.html"];
 self.addEventListener("install",event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)));
@@ -32,12 +33,12 @@ self.addEventListener("fetch",event=>{
      url.pathname.endsWith("/sw.js"))return;
   if(request.mode==="navigate"){
     event.respondWith(fetch(request,{cache:"no-store"}).then(async res=>{
-      if(res.ok){
+      if(res.ok&&res.type==="basic"){
         const cache=await caches.open(CACHE);
-        await cache.put("./index.html",res.clone());
+        await cache.put(request,res.clone());
       }
       return res;
-    }).catch(async()=>await caches.match("./index.html")||await caches.match("./offline.html")));
+    }).catch(async()=>await caches.match(request)||await caches.match("./offline.html")));
     return;
   }
   event.respondWith(fetch(request).then(async res=>{
@@ -55,7 +56,7 @@ self.addEventListener("fetch",event=>{
 });
 /* Push payloads intentionally contain no private data; cloud gateway sends empty pushes. */
 self.addEventListener("push",event=>{
-  const url=new URL("./#hazards",self.registration.scope).href;
+  const url=new URL("./hazards.html",self.registration.scope).href;
   event.waitUntil(self.registration.showNotification("SkyPulse AU — NSW RFS Update",{
     body:"An RFS warning area or incident update may be relevant to your saved watch zone. Verify current details with NSW RFS.",
     icon:"./assets/icon.svg",badge:"./assets/icon.svg",tag:"skypulse-rfs-update",
