@@ -824,3 +824,45 @@ body[data-page=hazards] .fire-attribution{border-top:1px solid var(--border);mar
  .fire-directory-dropdowns{grid-template-columns:minmax(0,1fr)}
  .fire-directory{height:510px}
 }
+
+/* Basemap appearance — only standard OpenStreetMap image tiles are toned.
+   RainViewer pixels, NSW RFS hazard polygons, marker colours and popups stay unchanged. */
+#weather-map, #radar-peek-map, #fire-area-map {background:#13293b}
+#weather-map[data-map-tone=light], #radar-peek-map[data-map-tone=light], #fire-area-map[data-map-tone=light]{background:#dbe9ef}
+#weather-map[data-map-tone=dark], #radar-peek-map[data-map-tone=dark], #fire-area-map[data-map-tone=dark]{background:#142538}
+#weather-map[data-map-tone=dark] .skypulse-osm-basemap img.leaflet-tile,
+#radar-peek-map[data-map-tone=dark] .skypulse-osm-basemap img.leaflet-tile,
+#fire-area-map[data-map-tone=dark] .skypulse-osm-basemap img.leaflet-tile{
+ filter:brightness(.82) invert(1) hue-rotate(180deg) saturate(.68) contrast(.94);
+}
+#weather-map[data-map-tone=light] .skypulse-osm-basemap img.leaflet-tile,
+#radar-peek-map[data-map-tone=light] .skypulse-osm-basemap img.leaflet-tile,
+#fire-area-map[data-map-tone=light] .skypulse-osm-basemap img.leaflet-tile{filter:none}
+.skypulse-map-style{display:inline-flex;align-items:center;gap:8px;min-width:0;min-height:38px;padding:4px 8px 4px 10px;
+ background:var(--panel-2);border:1px solid var(--border);border-radius:9px;color:var(--muted);
+ font:850 10px/1.2 Manrope,sans-serif;letter-spacing:.6px;white-space:nowrap}
+.skypulse-map-style-symbol{font-size:16px;line-height:1;color:var(--accent)}
+.skypulse-map-style select{color:var(--text);background:var(--panel);border:1px solid var(--border);
+ border-radius:7px;max-width:155px;min-width:118px;min-height:28px;padding:4px 6px;font:750 10.5px Manrope,sans-serif;letter-spacing:0}
+.skypulse-map-style:focus-within{border-color:var(--accent)}
+.skypulse-map-style select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+body[data-page=hazards] .fire-map-actions .skypulse-map-style{margin-right:1px}
+body[data-page=map-section] .radar-quick-actions .skypulse-map-style{margin-right:2px}
+#weather-map .leaflet-control-attribution,
+#fire-area-map .leaflet-control-attribution{background:#102439e6;color:#dce9f4;border:1px solid #3b5c73;border-radius:5px 0 0 0;font-size:10px}
+#weather-map .leaflet-control-attribution a,
+#fire-area-map .leaflet-control-attribution a{color:#84d2ff}
+#weather-map .leaflet-popup-content-wrapper,
+#weather-map .leaflet-popup-tip,
+#fire-area-map .leaflet-popup-content-wrapper,
+#fire-area-map .leaflet-popup-tip{box-shadow:0 12px 45px #07131d8c}
+@media(max-width:820px){
+ body[data-page=hazards] .fire-map-actions{display:flex;flex-wrap:wrap}
+ body[data-page=hazards] .fire-map-actions .skypulse-map-style{width:100%;justify-content:space-between}
+ body[data-page=map-section] .radar-quick-actions{display:flex;flex-wrap:wrap}
+ body[data-page=map-section] .radar-quick-actions .skypulse-map-style{flex:1 1 100%;justify-content:space-between}
+}
+@media(max-width:500px){
+ body[data-page=hazards] .fire-map-actions button{flex:1;min-width:0}
+ .skypulse-map-style select{max-width:145px;min-width:114px}
+}
