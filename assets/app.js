@@ -8,13 +8,13 @@ var radarStored=stored.radar&&typeof stored.radar==="object"&&!Array.isArray(sto
 function radarSettingBool(key,fallback){return typeof radarStored[key]==="boolean"?radarStored[key]:fallback;}
 function radarSettingSpeed(value){return [5000,3500,2200].includes(Number(value))?Number(value):3500;}
 function radarSettingOpacity(value){var x=Number(value);return Number.isFinite(x)&&x>=.2&&x<=1?Math.round(x*20)/20:.6;}
-var state={location:stored.location||DEFAULT,radius:Number(stored.radius)||50,mapStyle:["auto","dark","light"].includes(stored.mapStyle)?stored.mapStyle:"auto",theme:stored.theme||"dark",notify:!!stored.notify,weather:null,weatherLocationKey:"",weatherFetchedAt:0,weatherCached:false,weatherFetchFailed:false,weatherSeq:0,forecastChartMode:"temperature",forecastDayIndex:0,map:null,markers:null,radarLayer:null,peekMap:null,peekLayer:null,radarFrames:[],radarHost:"",radarEnabled:radarSettingBool("rain",true),incidentsEnabled:radarSettingBool("incidents",true),radarTimer:null,radarIndex:-1,radarFollowLatest:radarSettingBool("follow",true),
+var state={location:stored.location||DEFAULT,radius:Number(stored.radius)||50,theme:stored.theme||"dark",notify:!!stored.notify,weather:null,weatherLocationKey:"",weatherFetchedAt:0,weatherCached:false,weatherFetchFailed:false,weatherSeq:0,forecastChartMode:"temperature",forecastDayIndex:0,map:null,markers:null,radarLayer:null,peekMap:null,peekLayer:null,radarFrames:[],radarHost:"",radarEnabled:radarSettingBool("rain",true),incidentsEnabled:radarSettingBool("incidents",true),radarTimer:null,radarIndex:-1,radarFollowLatest:radarSettingBool("follow",true),
 radarAutocheck:radarSettingBool("auto",true),radarLoop:radarSettingBool("loop",true),
 radarShowTimestamp:radarSettingBool("timestamp",true),radarSpeed:radarSettingSpeed(radarStored.speed),
 radarShareView:null,radarSharedAt:null,radarCurrentRegion:"local",radarFetchedAt:0,radarAttemptAt:0,radarLoadingPromise:null,radarRenderedKey:"",radarOutgoing:null,radarSwapTimer:null,radarLastError:"",radarTileErrors:0,baseLayer:null,locationMarker:null,mapTileFailures:0,mapNearbyOnly:radarSettingBool("nearby",true),mapWheelZoom:radarSettingBool("wheel",false),radarOpacity:radarSettingOpacity(radarStored.opacity),gpsMarker:null,gpsAccuracy:null,mapStatusTimer:null,fireDanger:null,hazardMap:null,hazardLayers:null,hazardRadiusLayer:null,fireDirectoryMode:"incidents",fireDirectoryScope:"nearby",fireDirectorySort:"distance",fireDirectoryQuery:"",fireSelected:null,
  incidentsFresh:false,warningsFresh:false,fireAreasEnabled:radarSettingBool("fireareas",true),fireAreaLayer:null,fireDistrict:stored.fireDistrict||"",rfsAlerts:[],warningLayer:null,warningsEnabled:radarSettingBool("warnings",true),incidents:[],lastIncidentFetch:null,seen:stored.seen||null,weatherError:false};
 var DATA_MAX_AGE=90*60*1000;
-function save(){try{localStorage.setItem("skypulse.preferences",JSON.stringify({location:state.location,radius:state.radius,mapStyle:state.mapStyle,theme:state.theme,notify:state.notify,seen:state.seen,fireDistrict:state.fireDistrict,
+function save(){try{localStorage.setItem("skypulse.preferences",JSON.stringify({location:state.location,radius:state.radius,theme:state.theme,notify:state.notify,seen:state.seen,fireDistrict:state.fireDistrict,
  radar:{auto:state.radarAutocheck,follow:state.radarFollowLatest,
  loop:state.radarLoop,timestamp:state.radarShowTimestamp,speed:state.radarSpeed,
  opacity:state.radarOpacity,rain:state.radarEnabled,incidents:state.incidentsEnabled,
@@ -27,19 +27,7 @@ function relTime(value){var delta=Math.max(0,Date.now()-new Date(value).getTime(
 function validUrl(s){try{var u=new URL(s);return u.protocol==="https:"?u.href:null;}catch(e){return null;}}
 function weatherMeta(code,isDay){if(code===null||code===undefined||!Number.isFinite(Number(code)))return ["Conditions unavailable","☁️"];var c=Number(code);if(c===0)return ["Clear sky",isDay?"☀️":"🌙"];if(c<=2)return ["Partly cloudy",isDay?"🌤️":"☁️"];if(c===3)return ["Overcast","☁️"];if(c<=48)return ["Foggy","🌫️"];if(c<=57)return ["Drizzle","🌦️"];if(c<=67)return ["Rain","🌧️"];if(c<=77)return ["Snow","🌨️"];if(c<=82)return ["Rain showers","🌦️"];if(c<=86)return ["Snow showers","🌨️"];if(c===95||c===96||c===99)return ["Thunderstorms","⛈️"];return ["Conditions unavailable","☁️"];}
 function setText(id,s){var el=$(id);if(el)el.textContent=s;}
-function resolvedMapStyle(){return state.mapStyle==="auto"?(state.theme==="light"?"light":"dark"):state.mapStyle;}
-function applyMapStyle(){
- var tone=resolvedMapStyle();
- ["weather-map","fire-area-map","radar-peek-map"].forEach(function(id){
-  var el=$(id);if(el)el.dataset.mapTone=tone;
- });
- ["radar-map-style","fire-map-style"].forEach(function(id){var el=$(id);if(el&&el.value!==state.mapStyle)el.value=state.mapStyle;});
-}
-function setMapStyle(value){
- if(!["auto","dark","light"].includes(value))return;
- state.mapStyle=value;save();applyMapStyle();
-}
-function theme(){document.documentElement.dataset.theme=state.theme;applyMapStyle();setText("theme-name",state.theme==="dark"?"Dark":"Light");$("theme-button").setAttribute("aria-label",state.theme==="dark"?"Switch to Light Theme":"Switch to Dark Theme");$("theme-button").title=state.theme==="dark"?"Switch to Light Theme":"Switch to Dark Theme";}
+function theme(){document.documentElement.dataset.theme=state.theme;setText("theme-name",state.theme==="dark"?"Dark":"Light");$("theme-button").setAttribute("aria-label",state.theme==="dark"?"Switch to Light Theme":"Switch to Dark Theme");$("theme-button").title=state.theme==="dark"?"Switch to Light Theme":"Switch to Dark Theme";}
 function updateLocationUI(){var l=state.location;setText("heading-location",l.name);setText("settings-location",l.name+(l.region?", "+l.region:""));setText("incident-range","Within "+state.radius+" km of "+l.name);$("location-input").value=l.name;setText("radius-label",state.radius+" km");if($("radius"))$("radius").value=state.radius;updateOfficialStation();if(state.fireDanger)renderFireDanger();}
 async function getJSON(url,timeout){var c=new AbortController(),tm=setTimeout(function(){c.abort();},timeout||13000);try{var r=await fetch(url,{signal:c.signal,cache:"no-store"});if(!r.ok)throw Error("HTTP "+r.status);return await r.json();}finally{clearTimeout(tm);}}
 function updateWeatherStatus(text,error){if(!$("weather-status"))return;$("weather-status").innerHTML='<span class="pulse-dot" style="'+(error?"background:var(--red)":"")+'"></span>'+esc(text);}
@@ -566,7 +554,7 @@ function initFireAreaMap(){
  state.hazardMap=L.map(element,{scrollWheelZoom:false,zoomControl:true,preferCanvas:true})
   .setView([state.location.lat,state.location.lon],8);
  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{
-  className:"skypulse-osm-basemap",maxZoom:18,updateWhenIdle:true,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  maxZoom:18,updateWhenIdle:true,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
  }).addTo(state.hazardMap);
  state.hazardLayers={warnings:L.layerGroup().addTo(state.hazardMap),
   extents:L.layerGroup().addTo(state.hazardMap),incidents:L.layerGroup().addTo(state.hazardMap),
@@ -716,7 +704,7 @@ function fitHazardAreas(){
 
 function initRadarPreview(){if(typeof L==="undefined"||state.peekMap)return;var el=$("radar-peek-map");if(!el)return;el.replaceChildren();
 state.peekMap=L.map(el,{zoomControl:false,dragging:false,keyboard:false,doubleClickZoom:false,scrollWheelZoom:false,touchZoom:false,boxZoom:false,attributionControl:false}).setView([state.location.lat,state.location.lon],8);
-L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{className:"skypulse-osm-basemap",maxZoom:16,updateWhenIdle:true,keepBuffer:1}).addTo(state.peekMap);
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:16,updateWhenIdle:true,keepBuffer:1}).addTo(state.peekMap);
 if("ResizeObserver" in window)new ResizeObserver(function(){if(state.peekMap)state.peekMap.invalidateSize({pan:false});}).observe(el);
 setTimeout(function(){state.peekMap.invalidateSize({pan:false});},250);
 }
@@ -867,12 +855,16 @@ function hazardAssessWarnings(){
 function hazardLink(alert){return esc(rfsWarningUrl(alert));}
 function hazardWarningPopup(alert){
  var lvl=hazardLevelStyle(alert),desc=Array.isArray(alert.area_names)?alert.area_names.join(", "):"";
- return '<b>'+esc(alert.headline||alert.event||"NSW RFS warning")+'</b>'+
-  '<p><b>'+esc(lvl.level)+'</b> · Warning area (not a mapped fire extent)</p>'+
-  (desc?'<p>Affected area: '+esc(desc)+'</p>':"")+
-  '<p>Issued: '+esc(hazardPublished(alert.sent))+'</p>'+
-  (alert.instruction?'<p>Published instructions: '+esc(String(alert.instruction).slice(0,550))+'</p>':"")+
-  '<a href="'+hazardLink(alert)+'" target="_blank" rel="noopener">Read Full NSW RFS Warning ↗</a>';
+ return '<div class="rfs-warning-popup"><div class="rfs-warning-popup-heading"><strong>'+
+  esc(alert.headline||alert.event||"NSW RFS warning")+'</strong></div>'+
+  '<div class="rfs-warning-popup-fields"><div class="rfs-warning-popup-field"><b>Warning level</b><span>'+
+  esc(lvl.level)+'</span></div>'+
+  (desc?'<div class="rfs-warning-popup-field"><b>Affected area</b><span>'+esc(desc)+'</span></div>':"")+
+  '<div class="rfs-warning-popup-field"><b>Issued</b><span>'+esc(hazardPublished(alert.sent))+'</span></div></div>'+
+  (alert.instruction?'<div class="rfs-warning-popup-instructions"><strong>Official instructions</strong><p>'+
+   esc(String(alert.instruction).slice(0,700))+'</p></div>':"")+
+  '<p class="incident-map-note">Official warning area, not a published fire extent.</p>'+
+  '<a href="'+hazardLink(alert)+'" target="_blank" rel="noopener">Read Full NSW RFS Warning ↗</a></div>';
 }
 function hazardIncidentPopup(feature){
  var level=incidentAlertStyle(feature);
@@ -973,7 +965,7 @@ function toggleMapFullscreen(){var el=$("map-viewport");if(document.fullscreenEl
 function initMap(){initRadarPreview();if(!$("weather-map")){if(state.peekMap)loadRadar();return;}if(typeof L==="undefined"){$("weather-map").innerHTML='<p class="map-fallback">Map Unavailable. <a href="https://www.bom.gov.au/australia/radar/" target="_blank" rel="noopener">Open Official BOM Radar ↗</a></p>';return;}
 $("weather-map").replaceChildren();
 state.map=L.map("weather-map",{zoomControl:false,scrollWheelZoom:false,preferCanvas:true}).setView(state.radarShareView?[state.radarShareView.lat,state.radarShareView.lon]:[state.location.lat,state.location.lon],state.radarShareView?state.radarShareView.zoom:9);
-state.baseLayer=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{className:"skypulse-osm-basemap",maxZoom:18,updateWhenIdle:true,keepBuffer:2,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> Contributors'});
+state.baseLayer=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,updateWhenIdle:true,keepBuffer:2,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> Contributors'});
 state.baseLayer.on("tileerror",function(){state.mapTileFailures++;if(state.mapTileFailures>=3){setText("map-tile-status","Base Map Tiles Unavailable — Check Your Connection or Use the Official Radar.");$("map-tile-status").hidden=false;}});
 state.baseLayer.addTo(state.map);state.markers=L.layerGroup().addTo(state.map);state.warningLayer=L.layerGroup().addTo(state.map);
  state.fireAreaLayer=L.layerGroup().addTo(state.map);
@@ -1310,7 +1302,6 @@ function init(){
  theme();updateLocationUI();
  setText("year",new Date().getFullYear());
  on("theme-button","click",function(){state.theme=state.theme==="dark"?"light":"dark";save();theme();});
- ["radar-map-style","fire-map-style"].forEach(function(id){on(id,"change",function(e){setMapStyle(e.target.value);});});
  on("location-input","input",function(e){searchLocation(e.target.value);});
  on("location-input","blur",function(){setTimeout(function(){if($("location-results"))$("location-results").hidden=true;},200);});
  on("geo-button","click",function(){if(!navigator.geolocation){message("Location is not supported on this device.");return;}
