@@ -2,7 +2,11 @@
 """Download public data into static JSON for GitHub Pages. No scraping or third-party proxy."""
 from __future__ import annotations
 import datetime as dt
+import html
+from html.parser import HTMLParser
 import json
+import re
+from zoneinfo import ZoneInfo
 import pathlib
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -87,6 +91,99 @@ def safe_geometry(g):
     return None
 
 
+RFS_DETAIL_LABELS = {
+    "ALERT LEVEL": "alert_level",
+    "LOCATION": "location",
+    "COUNCIL AREA": "council_area",
+    "STATUS": "status",
+    "TYPE": "incident_type",
+    "FIRE": "fire",
+    "SIZE": "size",
+    "RESPONSIBLE AGENCY": "responsible_agency",
+    "UPDATED": "updated",
+}
+
+
+class _RfsIncidentDescriptionParser(HTMLParser):
+    """Convert the RFS description HTML to lines, never render untrusted markup."""
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.lines = []
+        self.current = []
+
+    def _break(self):
+        value = " ".join("".join(self.current).split())
+        if value:
+            self.lines.append(value)
+        self.current.clear()
+
+    def handle_starttag(self, tag, attrs):
+        if tag in ("br", "p", "div", "li", "hr"):
+            self._break()
+
+    def handle_startendtag(self, tag, attrs):
+        self.handle_starttag(tag, attrs)
+
+    def handle_endtag(self, tag):
+        if tag in ("p", "div", "li"):
+            self._break()
+
+    def handle_data(self, value):
+        self.current.append(value)
+
+
+def rfs_updated_at(raw):
+    """RFS incident UPDATED is NSW wall-clock time, not the feed retrieval time."""
+    if not raw:
+        return None
+    # Date/time has appeared as 4 Jan 2019 15:35 and 16 Nov 2026 09:50.
+    for fmt in ("%d %b %Y %H:%M", "%d %B %Y %H:%M",
+                "%d/%m/%Y %H:%M", "%d/%m/%Y %I:%M %p",
+                "%d %b %Y %I:%M %p", "%d %B %Y %I:%M %p"):
+        try:
+            local = dt.datetime.strptime(raw.strip(), fmt).replace(tzinfo=ZoneInfo("Australia/Sydney"))
+            if local > dt.datetime.now(ZoneInfo("Australia/Sydney")) + dt.timedelta(minutes=15):
+                return None
+            return local.isoformat(timespec="minutes")
+        except (ValueError, TypeError):
+            continue
+    return None
+
+
+def parse_rfs_incident_description(raw):
+    """Return only known structured labels from the NSW RFS published description."""
+    if not isinstance(raw, str) or not raw.strip():
+        return {}
+    parser = _RfsIncidentDescriptionParser()
+    try:
+        parser.feed(raw[:10000])
+        parser.close()
+        parser._break()
+    except (ValueError, TypeError):
+        return {}
+    out = {}
+    for line in parser.lines[:60]:
+        key, separator, value = line.partition(":")
+        key = " ".join(key.upper().strip().split())
+        if not separator or key not in RFS_DETAIL_LABELS:
+            continue
+        cleaned = html.unescape(re.sub(r"\s+", " ", value)).strip()[:250]
+        if cleaned and cleaned.lower() not in ("unknown", "n/a", "none", "null"):
+            out[RFS_DETAIL_LABELS[key]] = cleaned
+    updated = rfs_updated_at(out.get("updated"))
+    if updated:
+        out["updated_at"] = updated
+    return out
+
+
+def incident_field(properties, *names):
+    for name in names:
+        value = properties.get(name)
+        if value is not None and str(value).strip():
+            return str(value).strip()[:250]
+    return ""
+
+
 def load_rfs():
     source = "https://www.rfs.nsw.gov.au/feeds/majorIncidents.json"
     try:
@@ -104,11 +201,27 @@ def load_rfs():
             p = item.get("properties") or {}
             if not isinstance(p, dict):
                 p = {}
-            names = ("title", "name", "incidentName", "eventName", "alertLevel", "alert-level", "alert", "status", "link", "url", "guid", "id", "type", "fire", "location", "updated", "pubDate", "date", "category", "size", "responsibleAgency", "statusDescription")
-            features.append({"type": "Feature", "id": str(item.get("id", ""))[:200], "geometry": shape, "properties": {k: str(p.get(k, ""))[:800] for k in names if p.get(k) is not None}})
+            # Most of the details shown in Fires Near Me arrive inside the published
+            # HTML description, rather than as individual GeoJSON properties.
+            # Parse a strict allowlist into plain text; don't publish HTML or guess fields.
+            details = parse_rfs_incident_description(p.get("description"))
+            category = incident_field(p, "category", "alertLevel", "alert-level", "alert")
+            if category and not details.get("alert_level"):
+                details["alert_level"] = category
+            names = ("title", "name", "incidentName", "eventName", "alertLevel",
+                     "alert-level", "alert", "status", "link", "url", "guid", "id",
+                     "type", "fire", "location", "updated", "pubDate", "date",
+                     "category", "size", "responsibleAgency", "statusDescription")
+            safe = {k: str(p.get(k, ""))[:800] for k in names if p.get(k) is not None}
+            if category:
+                safe["category"] = category
+            safe["details"] = details
+            features.append({"type": "Feature", "id": str(item.get("id", ""))[:200],
+                             "geometry": shape, "properties": safe})
         write("rfs.json", {"source": source, "retrieved_at": now(), "features": features, "warning": "Indicative incident locations and published fire-area outlines only. Spatial updates can differ from incident updates; these are NOT warning areas or emergency instructions.",
             "attribution": "© State of New South Wales (NSW Rural Fire Service). For current information go to www.rfs.nsw.gov.au."})
-        print("RFS features:", len(features))
+        print("RFS features:", len(features), "with structured incident details:",
+              sum(bool(f["properties"].get("details")) for f in features))
     except Exception as exc:
         print("RFS feed unavailable:", type(exc).__name__, str(exc)[:200])
         write("rfs.json", {"source": source, "retrieved_at": None, "features": [], "error": "Source retrieval failed; verify with NSW RFS."})
