@@ -224,6 +224,8 @@ L.control.scale({metric:true,imperial:false,position:"bottomleft",maxWidth:110})
 state.map.on("moveend zoomend",updateMapCoords);updateMapCoords();
 if("ResizeObserver" in window)new ResizeObserver(function(){if(state.map)state.map.invalidateSize({pan:false});}).observe($("weather-map"));
  state.map.on("moveend zoomend",radarSyncRegionSelection);
+ state.map.on("zoomend",radarUpdateQuality);
+ radarUpdateQuality();
 document.querySelectorAll('a[href="#map-section"]').forEach(function(a){a.addEventListener("click",function(){setTimeout(function(){state.map.invalidateSize({pan:false});},160);});});
 $("map-retry").addEventListener("click",function(){state.mapTileFailures=0;state.radarTileErrors=0;$("map-tile-status").hidden=true;mapRefresh();loadRadar(true);});
 $("map-zoom-in").addEventListener("click",function(){state.map.zoomIn();});$("map-zoom-out").addEventListener("click",function(){state.map.zoomOut();});$("map-locate").addEventListener("click",locateMap);$("map-home").addEventListener("click",centreSelected);$("map-fit").addEventListener("click",fitNearby);$("map-fullscreen").addEventListener("click",toggleMapFullscreen);
@@ -362,6 +364,17 @@ function radarResetPreferences(){
  syncMapLayerUI();radarSyncPreferences();
  setText("radar-preferences-status","Radar defaults restored and saved.");
 }
+
+function radarUpdateQuality(){
+ var label=$("radar-quality-status");
+ if(!label||!state.map)return;
+ var zoom=Number(state.map.getZoom()),isScaled=Number.isFinite(zoom)&&zoom>7;
+ label.dataset.quality=isScaled?"scaled":"native";
+ label.textContent=isScaled?
+  "Radar zoom "+zoom+": source images enlarged beyond native zoom 7 (no extra radar detail).":
+  "Radar source supports native detail through zoom 7.";
+}
+
 function radarSyncRegionSelection(){
  if(!state.map)return;
  document.querySelectorAll("[data-radar-region]").forEach(function(button){
@@ -377,7 +390,7 @@ function radarSetRegion(mode){
  if(mode==="region")state.map.setView([state.location.lat,state.location.lon],7);
  if(mode==="nsw")state.map.fitBounds([[-37.55,140.9],[-28.1,153.8]],{padding:[15,15]});
  if(mode==="australia")state.map.fitBounds([[-44.0,112.5],[-10.3,154.0]],{padding:[15,15]});
- radarSyncRegionSelection();
+ radarSyncRegionSelection();radarUpdateQuality();
  mapInfo("Map view: "+({local:"Selected Location",region:"Regional Area",nsw:"New South Wales",australia:"Australia"}[mode]||"Selected Location")+".");
 }
 function radarReadSharedLink(){

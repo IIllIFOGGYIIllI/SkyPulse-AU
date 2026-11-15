@@ -1,0 +1,59 @@
+# SkyPulse AU — Five-Minute Radar Data Provider Review
+**Reviewed:** 16 November 2026  
+**Purpose:** identify a lawful, dependable, higher-detail Australian radar source for SkyPulse AU's public PWA.
+
+## Conclusion
+
+**Do not republish BOM or Weatherzone radar tiles without permission.** Their public viewing websites and FTP access do not, by themselves, grant permission to rebroadcast imagery in SkyPulse AU. Keep the current RainViewer historical interactive layer while linking to official/first-party five-minute viewers. Pursue a radar tile/data licence or authorised commercial weather data provider for a genuine in-app upgrade.
+
+| Service | Australian observation interval | In-app SkyPulse status | Usage considerations |
+|---|---|---|---|
+| **RainViewer free Weather Maps API** | 10-minute past frames, approximately 2 hours | **Integrated** in SkyPulse AU | Historical only; 2026 free tier limited to zoom 7 and Universal Blue; non-commercial/personal/educational/small community use, source attribution |
+| **Bureau of Meteorology** | **5-minute observations** | **Official viewer link** | Copyright page forbids onward distribution without applicable permission; radar products can require data licensing; access as a registered user through paid services |
+| **Weatherzone Layers** | **5-minute Australian composite** | **External viewer link** | No verified grant to redistribute its map tiles inside SkyPulse AU |
+| **The Weather Company — Precipitation Type Global Radar** | **5-minute radar**, Australia included; ~5 km spatial resolution | **Candidate for licensed integration** | Obtain API access and confirm billing, Australia availability and display/redistribution terms; attribution for Australian radar imagery may apply |
+| **WeatherAPI.com radar.json** | 5-minute in available countries | **Not a candidate for Australia presently** | Documentation as of November 2026 lists US and selected European countries, not Australia; paid Pro+ |
+| **Zoom Earth** | Australian imagery shown on its website | **Not an integration candidate without a licence** | Terms prohibit mirroring, bulk downloads and transferring materials to another server |
+
+### Verified primary documentation
+
+- [RainViewer API transition](https://www.rainviewer.com/api/transition-faq.html) and [Weather Maps API](https://www.rainviewer.com/api/weather-maps-api.html)
+- [BOM radar data services](https://www.bom.gov.au/catalogue/data-feeds.shtml), [BOM copyright](https://www.bom.gov.au/copyright), [BOM anonymous FTP products](https://www.bom.gov.au/catalogue/anon-ftp.shtml), [Registered Users services](https://www.bom.gov.au/resources/data-services)
+- [Weatherzone Layers help](https://www.weatherzone.com/au/layers/)
+- [The Weather Company Australia-covering radar product](https://developer.weather.com/docs/openapi/precipitation-type-global-radar-2-0) and [image tiles attribution](https://developer.weather.com/docs/openapi/weather-imagery-image-tileserver-3-0)
+- [WeatherAPI.com coverage](https://www.weatherapi.com/docs/radar-api/)
+- [Zoom Earth usage terms](https://zoom.earth/legal/terms/)
+
+## Proposed licensed integration: what to verify before development
+
+1. **Authorisation:** written licence/contract explicitly permitting map overlays on a public website and PWA, caching, user map views and non-commercial community use.
+2. **Australian coverage:** current NSW coastal/inland radar coverage (particularly Hunter and Cessnock); any blind spots; exact issue and acquisition times.
+3. **Resolution:** native spatial resolution and tiles/colour legend; compare against RainViewer's free zoom 7; zoom level alone is not a guarantee of more measured detail.
+4. **Latency:** observed time-to-publication across at least several update cycles; five-minute *update interval* does not guarantee data issued within five minutes.
+5. **API contract:** metadata feed with validated UTC timestamps; Web Mercator tiles or properly georeferenced radar imagery; JavaScript/Leaflet interoperability.
+6. **Credentials:** keep keys server-side in a separate authenticated Cloudflare Worker; never embed a vendor key in public GitHub Pages JavaScript. Cache/limit requests and handle 429/503 responses.
+7. **Graceful fallback:** keep RainViewer as a selectable fallback; label each source and source-specific freshness accurately.
+8. **Attribution and emergency safety:** visible source and legend; no implication of official endorsement; continue official links and warning disclaimer.
+
+## Suggested enquiry to BOM
+
+Contact: **webreg@bom.gov.au** (listed on BOM data services website; confirm current contact details).
+
+Subject: Australian radar imagery redistribution and GIS2Web licence enquiry — SkyPulse AU
+
+Hello,
+
+I maintain SkyPulse AU, an independent, publicly accessible, non-commercial Australian weather and emergency-awareness website and PWA. We currently link to BOM's official radar and use separately licensed historical radar data for our interactive map.
+
+We are interested in displaying BOM's five-minute Australian radar imagery, with clear attribution, in an interactive NSW/Australia map. Could you please advise whether a registered-user radar imagery subscription or GIS2Web service permits public website/PWA display and what permissions, costs and delivery formats would apply? We would also like to know whether historical time steps and georeferenced overlays are available.
+
+We would only proceed after confirming the appropriate licence and attribution requirements.
+
+Thank you,
+SkyPulse AU
+
+**Do not send this request automatically or claim access is authorised.** The enquiry is a starting point for the owner's decision.
+
+## Current implementation
+
+SkyPulse radar source cards provide links to the publisher-operated five-minute viewers. The RainViewer interactive layer is unchanged, with a zoom-quality advisory showing when its imagery is enlarged beyond native zoom 7. There is **no direct five-minute map tile integration yet**.

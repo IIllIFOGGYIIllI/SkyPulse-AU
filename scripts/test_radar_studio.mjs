@@ -88,6 +88,16 @@ try{
   if(!m.radarTile||!m.radarTile.url.endsWith("/2/1_1.png")||m.radarTile.opts.maxNativeZoom!==7)
     throw Error("Unsupported free API raster format: "+JSON.stringify(m.radarTile));
   if(requests!==1)throw Error("Unexpected first metadata request count: "+requests);
+  const sourceLinks=await page.evaluate(()=>[...document.querySelectorAll("#radar-source-bom,#radar-source-weatherzone")].map(a=>({url:a.href,blank:a.target,rel:a.rel})));
+  if(sourceLinks.length!==2||sourceLinks.some(a=>a.blank!=="_blank"||!a.rel.includes("noopener")))
+    throw Error("Official radar sources must open on their own sites: "+JSON.stringify(sourceLinks));
+  const quality=await page.locator("#radar-quality-status").textContent();
+  if(!quality.includes("enlarged beyond native zoom 7"))throw Error("Missing resolution disclosure at zoom 9: "+quality);
+  await page.locator('[data-radar-region="nsw"]').click();
+  const native=await page.locator("#radar-quality-status").textContent();
+  if(!native.includes("through zoom 7"))throw Error("Native zoom indicator didn't update after NSW preset: "+native);
+  await page.locator('[data-radar-region="local"]').click();
+  console.log("Radar providers PASSED: official five-minute external links and truthful native vs enlarged image detail.");
   // Scrub backwards, then fetch a newer manifest: selected historical time must not jump.
   await page.locator("#radar-step-back").click();
   const selected=await page.locator("#radar-frame-label").textContent();

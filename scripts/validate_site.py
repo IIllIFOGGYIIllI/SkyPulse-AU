@@ -14,7 +14,8 @@ pages = {
                                   "map-coordinates", "radar-step-back", "radar-step-forward",
                                   "radar-check-now", "radar-freshness-indicator", "radar-latest-issued",
                                   "radar-last-check", "radar-map-clock", "radar-latest", "radar-speed",
-                                  "radar-slider", "radar-frame-kind", "radar-data-age"]),
+                                  "radar-slider", "radar-frame-kind", "radar-data-age", "radar-source-bom",
+                                  "radar-source-weatherzone", "radar-quality-status"]),
     "hazards.html": ("hazards", ["hazards-refresh", "incidents-list", "rfs-alerts-list", "fdr-district-select", "wmo-warnings-list"]),
     "news.html": ("news", []),
     "settings.html": ("alerts", ["settings-location", "radius", "notify-toggle", "push-enable",
@@ -51,6 +52,11 @@ for path, (page_id, required) in pages.items():
           len(set(re.findall(r'\sid="([^"]+)"', h))))
     for id in required:
         check(path + ": element " + id, 'id="' + id + '"' in h)
+check("Radar official BOM viewer external", 'href="https://www.bom.gov.au/australia/radar/"' in text["radar.html"])
+check("Radar Weatherzone viewer external", 'href="https://www.weatherzone.com/au/layers/"' in text["radar.html"])
+check("Radar source choice not spoofed", "ACTiVE IN SKYPULSE" not in text["radar.html"] and 'ACTIVE IN SKYPULSE' in text["radar.html"])
+check("Radar detail disclosure", "function radarUpdateQuality()" in js and "native zoom 7" in js)
+check("Radar provider research retained", (ROOT / "docs/RADAR_PROVIDER_REVIEW.md").exists())
 check("Radar poll cadence at 5 minutes", "RADAR_CHECK_MS=300000" in js)
 check("Source generation timestamp shown in Sydney time", 'timeZone:"Australia/Sydney"' in js)
 check("Radar recent vs stale explicitly distinguished", '"STALE IMAGE"' in js and '"RECENT FRAME"' in js)

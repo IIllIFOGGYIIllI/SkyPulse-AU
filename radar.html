@@ -65,6 +65,34 @@
   </div>
 </div>
 
+<div class="radar-provider-panel" role="region" aria-labelledby="radar-provider-title">
+  <div class="radar-provider-heading"><div><div class="eyebrow">RADAR DATA SOURCES</div><h3 id="radar-provider-title">Choose Your Radar Experience</h3></div><span class="radar-provider-hint">Image frequency depends on each publisher</span></div>
+  <div class="radar-provider-grid">
+    <div class="radar-provider radar-provider-current">
+      <div class="radar-provider-top"><span class="radar-provider-icon" aria-hidden="true">◎</span><span class="radar-provider-pill">ACTIVE IN SKYPULSE</span></div>
+      <strong>RainViewer Historical Radar</strong>
+      <span class="radar-provider-cadence">10-minute frames · Approx. 2-hour history</span>
+      <p>Interactive SkyPulse map, NSW RFS layers, timestamps, timeline playback and saved preferences. Free imagery is limited to native zoom level 7.</p>
+      <span class="radar-provider-action">You are viewing this source</span>
+    </div>
+    <a id="radar-source-bom" class="radar-provider radar-provider-external" href="https://www.bom.gov.au/australia/radar/" target="_blank" rel="noopener noreferrer" aria-label="Open official Bureau of Meteorology five-minute radar in a new tab">
+      <div class="radar-provider-top"><span class="radar-provider-icon" aria-hidden="true">◉</span><span class="radar-provider-pill">OFFICIAL AUSTRALIAN RADAR</span></div>
+      <strong>Bureau of Meteorology Radar</strong>
+      <span class="radar-provider-cadence">5-minute imagery · Official BOM viewer</span>
+      <p>Open the Bureau's own radar service for Australian five-minute observations. Images are displayed by BOM, not copied or hosted by SkyPulse AU.</p>
+      <span class="radar-provider-action">Open BOM Radar ↗</span>
+    </a>
+    <a id="radar-source-weatherzone" class="radar-provider radar-provider-external" href="https://www.weatherzone.com/au/layers/" target="_blank" rel="noopener noreferrer" aria-label="Open Weatherzone Layers five-minute radar in a new tab">
+      <div class="radar-provider-top"><span class="radar-provider-icon" aria-hidden="true">≋</span><span class="radar-provider-pill">EXTERNAL RADAR VIEWER</span></div>
+      <strong>Weatherzone Layers</strong>
+      <span class="radar-provider-cadence">5-minute radar mosaic · Separate website</span>
+      <p>Explore a national radar composite with five-minute time steps, plus Weatherzone's additional visualisation layers on its own website.</p>
+      <span class="radar-provider-action">Open Weatherzone ↗</span>
+    </a>
+  </div>
+  <p class="radar-provider-disclosure">Why isn't five-minute imagery embedded here? BOM radar redistribution needs the appropriate licence or permission. External viewers open on the original provider's website. <a href="./sources.html">Data sources &amp; licensing ↗</a></p>
+</div>
+
 <div class="radar-quickbar">
   <div class="radar-region-bar" role="group" aria-label="Radar map region">
     <span class="radar-region-caption">MAP VIEW</span>
@@ -128,7 +156,7 @@
   </div>
   <div class="radar-explainer"><span><strong>Tip:</strong> Use ←/→ when the timeline is focused. Frame time is the provider's generation timestamp, not necessarily the exact time of every radar scan. Radar is historical, not a live video feed.</span><a href="https://www.bom.gov.au/australia/radar/" target="_blank" rel="noopener">Check Official BOM Radar ↗</a></div>
 </div>
-<div class="map-footer radar-attribution"><span>Map © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> · Radar imagery © <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer</a> · 10-minute source frames · best-effort updates</span></div></div>
+<div class="map-footer radar-attribution"><span id="radar-quality-status" class="radar-quality-status" role="status">Radar image detail is limited by the source.</span><span>Map © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> · Radar imagery © <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer</a> · 10-minute source frames · best-effort updates</span></div></div>
         </section>
 <footer class="footer"><span>© <span id="year"></span> SkyPulse AU · Independent weather information platform</span><span><a href="./privacy.html">Privacy Policy</a> · <a href="./terms.html">Terms</a> · <a href="./sources.html">Data Sources</a> · <a href="https://github.com/IIllIFOGGYIIllI/SkyPulse-AU" target="_blank" rel="noopener">GitHub ↗</a></span></footer>
       </div>
