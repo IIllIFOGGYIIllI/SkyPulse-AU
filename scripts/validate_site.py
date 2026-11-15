@@ -48,6 +48,19 @@ push_config = (ROOT / "assets/push-config.js").read_text(encoding="utf-8")
 check("Client API config is present", "window.SKYPULSE_PUSH_API" in push_config)
 check("Push API config contains no private VAPID key", "VAPID_PRIVATE_PKCS8" not in push_config)
 check("Push API config does not contain credentials", "Authorization:" not in push_config and "Bearer " not in push_config)
+# The release stamp runs before these checks in GitHub Actions.
+release_file = ROOT / "app-version.json"
+check("Release metadata generated", release_file.exists())
+if release_file.exists():
+    import json
+    release_data = json.loads(release_file.read_text(encoding="utf-8"))
+    release_version = release_data.get("version", "")
+    check("Release identifier matches deployed HTML", 'data-build="' + release_version + '"' in html)
+    check("Service worker cache uses current release", 'skypulse-shell-' + release_version in sw)
+    check("App update helper included", "assets/update.js?v=" + release_version in html)
+    check("Release metadata is excluded from caches", 'app-version.json' in sw)
+    check("Service worker preserves non-SkyPulse caches", 'name.startsWith(PREFIX)' in sw)
+    check("Existing push handler preserved", 'addEventListener("push"' in sw)
 check("Emergency safety disclaimer displayed", "For emergencies call" in html)
 check("BOM fallback for unavailable warnings", "Warning feed unavailable" in js)
 if errors:
