@@ -21,7 +21,7 @@ pages = {
                                   "radar-last-check", "radar-map-clock", "radar-latest", "radar-speed",
                                   "radar-slider", "radar-frame-kind", "radar-data-age", "radar-source-bom",
                                   "radar-source-weatherzone", "radar-quality-status"]),
-    "hazards.html": ("hazards", ["fire-area-map", "fire-geofence-state", "fire-map-warnings", "fire-map-boundaries", "fire-overlaps", "fire-map-fit", "fire-warning-feed-health", "fire-incident-feed-health", "hazards-refresh", "incidents-list", "rfs-alerts-list", "fdr-district-select", "wmo-warnings-list"]),
+    "hazards.html": ("hazards", ["fire-area-map", "fire-command-summary", "fire-summary-incidents", "fire-summary-warnings", "fire-summary-extents", "fire-summary-location", "fire-directory-list", "fire-directory-incidents", "fire-directory-warnings", "fire-directory-search", "fire-directory-scope", "fire-directory-sort", "fire-map-selection", "fire-map-selection-close", "fire-geofence-state", "fire-map-warnings", "fire-map-boundaries", "fire-overlaps", "fire-map-fit", "fire-warning-feed-health", "fire-incident-feed-health", "hazards-refresh", "incidents-list", "rfs-alerts-list", "fdr-district-select", "wmo-warnings-list"]),
     "news.html": ("news", []),
     "settings.html": ("alerts", ["settings-location", "radius", "notify-toggle", "push-enable",
                                "push-consent", "push-include-incidents", "push-disable", "push-test",
@@ -67,6 +67,7 @@ check("Model-forecast stale and cached states", 'FORECAST_CACHE_MS=2*60*60*1000'
 check("Forecast missing-value safety", 'return ["Conditions unavailable","☁️"]' in js)
 check("Forecast hourly field support", "wind_gusts_10m,is_day" in js)
 check("Fire area test suites exist", (ROOT / "scripts/test_fire_areas.mjs").exists() and (ROOT / "scripts/test_fire_geometry.py").exists())
+check("Incident fire operations view has filterable directory", "function renderFireDirectory()" in js and "function fireSelectMapItem(" in js)
 check("CAP polygons and incident footprints handled separately", "function hazardWarningPolygons(" in js and "function hazardIncidentPolygons(" in js)
 check("NSW RFS published incident description parser", "def parse_rfs_incident_description(" in (ROOT / "scripts/sync_feeds.py").read_text())
 check("Incident details shown in both map and cards", "function incidentDetailList(" in js and "incident-rich-card" in js and "hazardIncidentPopup(" in js)

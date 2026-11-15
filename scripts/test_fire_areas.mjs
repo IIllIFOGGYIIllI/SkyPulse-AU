@@ -38,7 +38,9 @@ try{
       status:"Under control",incident_type:"Bush Fire",fire:"Yes",size:"93 ha",
       responsible_agency:"Rural Fire Service",updated:"16 Nov 2026 09:50",
       updated_at:"2026-11-16T09:50:00+11:00"}},geometry:{type:"GeometryCollection",geometries:[
-     {type:"Point",coordinates:[151.345,-32.83]},{type:"Polygon",coordinates:[footprint]}]}}]};
+     {type:"Point",coordinates:[151.345,-32.83]},{type:"Polygon",coordinates:[footprint]}]}},
+     {id:"fire2",properties:{title:"Remote Northern NSW Fire",category:"Advice",details:{alert_level:"Advice",status:"Being controlled",location:"Northern NSW"}},
+      geometry:{type:"Point",coordinates:[153.15,-28.55]}}]};
    if(file==="fdr.json")payload={retrieved_at:now,districts:[{name:"Greater Hunter",rating_today:"Moderate",rating_tomorrow:"Moderate"}]};
    return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(payload)});
   }
@@ -70,6 +72,48 @@ try{
  }
 
  if(rows.cards!==1||!rows.health.includes("1 published polygon")||!rows.fire.includes("1 published mapped area"))throw Error("Polygon source status/count incorrect: "+JSON.stringify(rows));
+ // The primary incident workspace should be compact, interactive and factually grounded.
+ const kpis=await page.evaluate(()=>({
+  near:document.querySelector("#fire-summary-incidents")?.textContent,
+  warnings:document.querySelector("#fire-summary-warnings")?.textContent,
+  extents:document.querySelector("#fire-summary-extents")?.textContent,
+  location:document.querySelector("#fire-summary-location")?.textContent,
+  list:document.querySelectorAll("#fire-directory-list [data-fire-dir-kind]").length
+ }));
+ if(kpis.near!=="1"||kpis.warnings!=="1"||kpis.extents!=="1"||kpis.location!=="Cessnock"||kpis.list!==1)
+  throw Error("Incident intelligence summary or monitoring-area list wrong: "+JSON.stringify(kpis));
+ await page.locator('#fire-directory-list [data-fire-dir-kind="incident"]').first().click();
+ if(!(await page.locator("#fire-map-selection").isVisible()))throw Error("Map details panel didn't appear after selecting an incident");
+ for(const val of ["Test Fire","Under control","93 ha","MCFARLANE ST","Rural Fire Service"]){
+  if(!(await page.locator("#fire-map-selection-body").textContent()).includes(val))
+   throw Error("Map details panel missing published field: "+val);
+ }
+ await page.locator("#fire-map-selection-close").click();
+ if(await page.locator("#fire-map-selection").isVisible())throw Error("Close-map-details action failed");
+ await page.locator("#fire-directory-scope").selectOption("statewide");
+ if(await page.locator("#fire-directory-list [data-fire-dir-kind]").count()!==2)
+  throw Error("All NSW reports filter didn't reveal remote incident");
+ await page.locator("#fire-directory-search").fill("remote northern");
+ if(await page.locator("#fire-directory-list [data-fire-dir-kind]").count()!==1)
+  throw Error("Report search didn't filter by incident name");
+ await page.locator("#fire-directory-search").fill("");
+ await page.locator("#fire-directory-sort").selectOption("severity");
+ await page.locator("#fire-directory-warnings").click();
+ if((await page.locator("#fire-directory-warnings").getAttribute("aria-selected"))!=="true")
+  throw Error("Warnings tab not selected");
+ if(await page.locator('#fire-directory-list [data-fire-dir-kind="warning"]').count()!==2)
+  throw Error("Official CAP warning directory missing entries");
+ await page.locator('#fire-directory-list [data-fire-dir-kind="warning"][data-fire-dir-index="1"]').click();
+ if(!(await page.locator("#fire-map-selection-body").textContent()).includes("Bushfire information"))
+  throw Error("CAP warning with no polygon did not display its details");
+ await page.locator("#fire-directory-incidents").click();
+ await page.locator("#fire-directory-scope").selectOption("nearby");
+ for(const width of [390,320]){
+  await page.setViewportSize({width,height:844});
+  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
+  if(overflow>2)throw Error("Fire Explorer horizontal mobile overflow at "+width+"px: "+overflow);
+ }
+ await page.setViewportSize({width:390,height:844});
  await page.locator('[data-warning-index="0"]').click();
  if(await page.evaluate(()=>window.__fireZooms)<1)throw Error("Warning focus didn't pan the map");
  await page.locator("#fire-map-warnings").uncheck();
@@ -78,12 +122,14 @@ try{
  await page.waitForFunction(()=>document.querySelector("#fire-geofence-state")?.textContent.includes("unavailable or stale"));
  const status=await page.locator("#fire-warning-feed-health").textContent();
  if(!status.includes("UNAVAILABLE"))throw Error("Stale warnings presented as current");
+ if(!(await page.locator("#fire-directory-list").textContent()).includes("Data unavailable or delayed"))
+  throw Error("Incident report directory should not imply the source is current during outage");
  stale=false;await page.evaluate(()=>{const pref=JSON.parse(localStorage.getItem("skypulse.preferences"));
   pref.location={name:"Sydney",region:"New South Wales",lat:-33.87,lon:151.21};localStorage.setItem("skypulse.preferences",JSON.stringify(pref));});
  await page.reload({waitUntil:"domcontentloaded"});
  await page.waitForFunction(()=>document.querySelector("#fire-geofence-state")?.textContent.includes("No overlap"));
  if(!(await page.locator("#fire-geofence-state").textContent()).includes("NOT an all-clear"))throw Error("No-overlap message could be misconstrued as safe");
  if(errors.length)throw Error("JS exceptions: "+errors.join(" | "));
- console.log("NSW Fire Area Explorer PASSED: CAP polygon and mapped extent visual distinction, zoom, hidden layer, stale-feed and location-overlap safety.");
+ console.log("NSW Fire Area Explorer PASSED: operational dashboard summary, search, statewide scope, warning tabs, detail overlay, CAP/extents distinction, stale safety and 320/390px mobile layout.");
  await page.close();
 }finally{if(browser)await browser.close();server.kill("SIGTERM");}
