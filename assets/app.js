@@ -4,9 +4,20 @@
 var $=function(id){return document.getElementById(id);};
 var DEFAULT={name:"Cessnock",region:"New South Wales",lat:-32.8321,lon:151.3497};
 var stored={};try{stored=JSON.parse(localStorage.getItem("skypulse.preferences")||"{}");}catch(e){}
-var state={location:stored.location||DEFAULT,radius:Number(stored.radius)||50,theme:stored.theme||"dark",notify:!!stored.notify,weather:null,map:null,markers:null,radarLayer:null,peekMap:null,peekLayer:null,radarFrames:[],radarHost:"",radarEnabled:true,incidentsEnabled:true,radarTimer:null,radarIndex:-1,radarFollowLatest:true,radarFetchedAt:0,radarAttemptAt:0,radarLoadingPromise:null,radarRenderedKey:"",radarOutgoing:null,radarSwapTimer:null,radarLastError:"",radarTileErrors:0,baseLayer:null,locationMarker:null,mapTileFailures:0,mapNearbyOnly:true,mapWheelZoom:false,radarOpacity:.6,gpsMarker:null,gpsAccuracy:null,mapStatusTimer:null,fireDanger:null,fireDistrict:stored.fireDistrict||"",rfsAlerts:[],warningLayer:null,warningsEnabled:true,incidents:[],lastIncidentFetch:null,seen:stored.seen||null,weatherError:false};
+var radarStored=stored.radar&&typeof stored.radar==="object"&&!Array.isArray(stored.radar)?stored.radar:{};
+function radarSettingBool(key,fallback){return typeof radarStored[key]==="boolean"?radarStored[key]:fallback;}
+function radarSettingSpeed(value){return [5000,3500,2200].includes(Number(value))?Number(value):3500;}
+function radarSettingOpacity(value){var x=Number(value);return Number.isFinite(x)&&x>=.2&&x<=1?Math.round(x*20)/20:.6;}
+var state={location:stored.location||DEFAULT,radius:Number(stored.radius)||50,theme:stored.theme||"dark",notify:!!stored.notify,weather:null,map:null,markers:null,radarLayer:null,peekMap:null,peekLayer:null,radarFrames:[],radarHost:"",radarEnabled:radarSettingBool("rain",true),incidentsEnabled:radarSettingBool("incidents",true),radarTimer:null,radarIndex:-1,radarFollowLatest:radarSettingBool("follow",true),
+radarAutocheck:radarSettingBool("auto",true),radarLoop:radarSettingBool("loop",true),
+radarShowTimestamp:radarSettingBool("timestamp",true),radarSpeed:radarSettingSpeed(radarStored.speed),
+radarShareView:null,radarSharedAt:null,radarCurrentRegion:"local",radarFetchedAt:0,radarAttemptAt:0,radarLoadingPromise:null,radarRenderedKey:"",radarOutgoing:null,radarSwapTimer:null,radarLastError:"",radarTileErrors:0,baseLayer:null,locationMarker:null,mapTileFailures:0,mapNearbyOnly:radarSettingBool("nearby",true),mapWheelZoom:radarSettingBool("wheel",false),radarOpacity:radarSettingOpacity(radarStored.opacity),gpsMarker:null,gpsAccuracy:null,mapStatusTimer:null,fireDanger:null,fireDistrict:stored.fireDistrict||"",rfsAlerts:[],warningLayer:null,warningsEnabled:radarSettingBool("warnings",true),incidents:[],lastIncidentFetch:null,seen:stored.seen||null,weatherError:false};
 var DATA_MAX_AGE=90*60*1000;
-function save(){try{localStorage.setItem("skypulse.preferences",JSON.stringify({location:state.location,radius:state.radius,theme:state.theme,notify:state.notify,seen:state.seen,fireDistrict:state.fireDistrict}));}catch(e){}}
+function save(){try{localStorage.setItem("skypulse.preferences",JSON.stringify({location:state.location,radius:state.radius,theme:state.theme,notify:state.notify,seen:state.seen,fireDistrict:state.fireDistrict,
+ radar:{auto:state.radarAutocheck,follow:state.radarFollowLatest,
+ loop:state.radarLoop,timestamp:state.radarShowTimestamp,speed:state.radarSpeed,
+ opacity:state.radarOpacity,rain:state.radarEnabled,incidents:state.incidentsEnabled,
+ warnings:state.warningsEnabled,nearby:state.mapNearbyOnly,wheel:state.mapWheelZoom}}));}catch(e){}}
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];});}
 function num(n,d){return typeof n==="number"&&Number.isFinite(n)?n.toFixed(d||0):"—";}
 function message(text){var t=$("toast");t.textContent=text;t.hidden=false;clearTimeout(message.timer);message.timer=setTimeout(function(){t.hidden=true;},4500);}
@@ -198,12 +209,13 @@ function mapRefresh(){if(state.map){mapResize();state.baseLayer.redraw();}}
 function centreSelected(){if(!state.map)return;state.map.flyTo([state.location.lat,state.location.lon],11,{duration:.5});mapInfo("Map Centred on "+state.location.name+".");}
 function locateMap(){if(!state.map)return;if(!navigator.geolocation){mapInfo("Browser Location Services Are Unavailable.");return;}var btn=$("map-locate");btn.disabled=true;mapInfo("Requesting Current Location…");navigator.geolocation.getCurrentPosition(function(pos){btn.disabled=false;var ll=[pos.coords.latitude,pos.coords.longitude],accuracy=Math.max(0,Number(pos.coords.accuracy)||0);if(state.gpsMarker)state.map.removeLayer(state.gpsMarker);if(state.gpsAccuracy)state.map.removeLayer(state.gpsAccuracy);state.gpsAccuracy=L.circle(ll,{radius:accuracy,color:"#2b93e5",weight:1,fillColor:"#58b7fd",fillOpacity:.13,interactive:false}).addTo(state.map);state.gpsMarker=L.circleMarker(ll,{radius:8,color:"white",weight:3,fillColor:"#1688e1",fillOpacity:1}).addTo(state.map).bindPopup("Your Current Location (Approximate)");state.map.flyTo(ll,Math.max(11,state.map.getZoom()),{duration:.6});mapInfo("Current Location Found"+(accuracy?" · Accuracy ±"+Math.round(accuracy)+" m":"")+". Your Forecast Location Is Unchanged.");},function(error){btn.disabled=false;mapInfo(error.code===1?"Location Permission Denied — Check Your Browser Settings.":"Unable to Determine Current Location.");},{timeout:15000,maximumAge:60000,enableHighAccuracy:true});}
 function fitNearby(){if(!state.map)return;var near=state.incidents.map(function(f){var p=coordinatesOf(f);return p&&Number.isFinite(p[0])&&Number.isFinite(p[1])&&km(state.location.lat,state.location.lon,p[0],p[1])<=state.radius?p:null;}).filter(Boolean);if(!near.length){mapInfo("No Mapped Incidents Found Within the Selected Radius — This Does Not Confirm Safety.");return;}near.push([state.location.lat,state.location.lon]);state.map.fitBounds(L.latLngBounds(near).pad(.22),{maxZoom:12});mapInfo("Showing "+(near.length-1)+" Nearby Mapped RFS Incidents.");}
-function syncMapLayerUI(){$("map-layer-warnings").checked=state.warningsEnabled;[["radar",state.radarEnabled],["incidents",state.incidentsEnabled]].forEach(function(v){var b=$(v[0]==="radar"?"radar-toggle":"incidents-toggle");b.classList.toggle("selected",v[1]);b.setAttribute("aria-pressed",String(v[1]));});$("map-layer-radar").checked=state.radarEnabled;$("map-layer-rfs").checked=state.incidentsEnabled;$("map-nearby-only").checked=state.mapNearbyOnly;$("map-wheel-zoom").checked=state.mapWheelZoom;$("map-radar-opacity").value=Math.round(state.radarOpacity*100);setText("map-opacity-label",Math.round(state.radarOpacity*100)+"%");}
-function setMapLayer(kind,value){if(kind==="radar"){state.radarEnabled=value;if(!value)stopRadarPlayback();if(state.radarFrames.length)showRadarFrame(state.radarIndex);}else{state.incidentsEnabled=value;updateMarkers();}syncMapLayerUI();}
+function syncMapLayerUI(){$("map-layer-warnings").checked=state.warningsEnabled;[["radar",state.radarEnabled],["incidents",state.incidentsEnabled]].forEach(function(v){var b=$(v[0]==="radar"?"radar-toggle":"incidents-toggle");b.classList.toggle("selected",v[1]);b.setAttribute("aria-pressed",String(v[1]));});$("map-layer-radar").checked=state.radarEnabled;$("map-layer-rfs").checked=state.incidentsEnabled;$("map-nearby-only").checked=state.mapNearbyOnly;$("map-wheel-zoom").checked=state.mapWheelZoom;$("map-radar-opacity").value=Math.round(state.radarOpacity*100);setText("map-opacity-label",Math.round(state.radarOpacity*100)+"%");
+ radarSyncPreferences();}
+function setMapLayer(kind,value){if(kind==="radar"){state.radarEnabled=value;if(!value)stopRadarPlayback();if(state.radarFrames.length)showRadarFrame(state.radarIndex);}else{state.incidentsEnabled=value;updateMarkers();}save();syncMapLayerUI();}
 function toggleMapFullscreen(){var el=$("map-viewport");if(document.fullscreenElement===el){document.exitFullscreen().catch(function(){});return;}if(el.classList.contains("map-pseudo-fullscreen")){el.classList.remove("map-pseudo-fullscreen");document.body.classList.remove("map-lock-scroll");setTimeout(mapResize,80);return;}if(el.requestFullscreen){el.requestFullscreen().then(function(){setTimeout(mapResize,80);}).catch(function(){el.classList.add("map-pseudo-fullscreen");document.body.classList.add("map-lock-scroll");setTimeout(mapResize,80);});}else{el.classList.add("map-pseudo-fullscreen");document.body.classList.add("map-lock-scroll");setTimeout(mapResize,80);}}
 function initMap(){initRadarPreview();if(!$("weather-map")){if(state.peekMap)loadRadar();return;}if(typeof L==="undefined"){$("weather-map").innerHTML='<p class="map-fallback">Map Unavailable. <a href="https://www.bom.gov.au/australia/radar/" target="_blank" rel="noopener">Open Official BOM Radar ↗</a></p>';return;}
 $("weather-map").replaceChildren();
-state.map=L.map("weather-map",{zoomControl:false,scrollWheelZoom:false,preferCanvas:true}).setView([state.location.lat,state.location.lon],9);
+state.map=L.map("weather-map",{zoomControl:false,scrollWheelZoom:false,preferCanvas:true}).setView(state.radarShareView?[state.radarShareView.lat,state.radarShareView.lon]:[state.location.lat,state.location.lon],state.radarShareView?state.radarShareView.zoom:9);
 state.baseLayer=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,updateWhenIdle:true,keepBuffer:2,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> Contributors'});
 state.baseLayer.on("tileerror",function(){state.mapTileFailures++;if(state.mapTileFailures>=3){setText("map-tile-status","Base Map Tiles Unavailable — Check Your Connection or Use the Official Radar.");$("map-tile-status").hidden=false;}});
 state.baseLayer.addTo(state.map);state.markers=L.layerGroup().addTo(state.map);state.warningLayer=L.layerGroup().addTo(state.map);
@@ -211,13 +223,14 @@ state.locationMarker=L.circleMarker([state.location.lat,state.location.lon],{rad
 L.control.scale({metric:true,imperial:false,position:"bottomleft",maxWidth:110}).addTo(state.map);
 state.map.on("moveend zoomend",updateMapCoords);updateMapCoords();
 if("ResizeObserver" in window)new ResizeObserver(function(){if(state.map)state.map.invalidateSize({pan:false});}).observe($("weather-map"));
+ state.map.on("moveend zoomend",radarSyncRegionSelection);
 document.querySelectorAll('a[href="#map-section"]').forEach(function(a){a.addEventListener("click",function(){setTimeout(function(){state.map.invalidateSize({pan:false});},160);});});
 $("map-retry").addEventListener("click",function(){state.mapTileFailures=0;state.radarTileErrors=0;$("map-tile-status").hidden=true;mapRefresh();loadRadar(true);});
 $("map-zoom-in").addEventListener("click",function(){state.map.zoomIn();});$("map-zoom-out").addEventListener("click",function(){state.map.zoomOut();});$("map-locate").addEventListener("click",locateMap);$("map-home").addEventListener("click",centreSelected);$("map-fit").addEventListener("click",fitNearby);$("map-fullscreen").addEventListener("click",toggleMapFullscreen);
 $("map-layers-button").addEventListener("click",function(){var panel=$("map-layers-panel");panel.hidden=!panel.hidden;this.setAttribute("aria-expanded",String(!panel.hidden));});
-$("map-layer-radar").addEventListener("change",function(e){setMapLayer("radar",e.target.checked);});$("map-layer-rfs").addEventListener("change",function(e){setMapLayer("incidents",e.target.checked);});$("map-layer-warnings").addEventListener("change",function(e){state.warningsEnabled=e.target.checked;showRfsWarningMap();syncMapLayerUI();});
-$("map-nearby-only").addEventListener("change",function(e){state.mapNearbyOnly=e.target.checked;updateMarkers();syncMapLayerUI();});$("map-wheel-zoom").addEventListener("change",function(e){state.mapWheelZoom=e.target.checked;if(state.mapWheelZoom)state.map.scrollWheelZoom.enable();else state.map.scrollWheelZoom.disable();syncMapLayerUI();});
-$("map-radar-opacity").addEventListener("input",function(e){state.radarOpacity=Number(e.target.value)/100;setText("map-opacity-label",Math.round(state.radarOpacity*100)+"%");if(state.radarLayer)state.radarLayer.setOpacity(state.radarOpacity);});
+$("map-layer-radar").addEventListener("change",function(e){setMapLayer("radar",e.target.checked);});$("map-layer-rfs").addEventListener("change",function(e){setMapLayer("incidents",e.target.checked);});$("map-layer-warnings").addEventListener("change",function(e){state.warningsEnabled=e.target.checked;save();showRfsWarningMap();syncMapLayerUI();});
+$("map-nearby-only").addEventListener("change",function(e){state.mapNearbyOnly=e.target.checked;save();updateMarkers();syncMapLayerUI();});$("map-wheel-zoom").addEventListener("change",function(e){state.mapWheelZoom=e.target.checked;if(state.mapWheelZoom)state.map.scrollWheelZoom.enable();else state.map.scrollWheelZoom.disable();save();syncMapLayerUI();});
+$("map-radar-opacity").addEventListener("input",function(e){radarSetOpacity(Number(e.target.value)/100);});
 state.map.on("click",function(){$("map-layers-panel").hidden=true;$("map-layers-button").setAttribute("aria-expanded","false");});
 document.addEventListener("fullscreenchange",function(){setTimeout(function(){if(state.map)state.map.invalidateSize({pan:false});},100);});
 document.addEventListener("keydown",function(e){if(e.key==="Escape"){$("map-layers-panel").hidden=true;$("map-layers-button").setAttribute("aria-expanded","false");if($("map-viewport").classList.contains("map-pseudo-fullscreen"))toggleMapFullscreen();}});
@@ -272,11 +285,11 @@ function radarFrameUI(){
  setText("radar-history-label","Frame "+(state.radarIndex+1)+" of "+n+" · "+(latest?"Latest available":"Historical image")+" · Frame generation time");
  setText("radar-frame-kind",latest?"LATEST AVAILABLE":"HISTORICAL FRAME");
  if($("radar-frame-kind"))$("radar-frame-kind").classList.toggle("historical",!latest);
- if($("radar-map-stamp"))$("radar-map-stamp").hidden=false;
+ if($("radar-map-stamp"))$("radar-map-stamp").hidden=!state.radarShowTimestamp;
  if($("radar-slider")){var s=$("radar-slider");s.min=0;s.max=n-1;s.value=state.radarIndex;s.setAttribute("aria-valuetext",time);}
  setText("radar-oldest-label",radarClock(state.radarFrames[0].time,false));
  setText("radar-newest-label",radarClock(state.radarFrames[n-1].time,false));
- radarControls();
+ radarSyncPreferences();radarControls();
 }
 function showRadarFrame(i){
  if((!state.map&&!state.peekMap)||!state.radarFrames.length)return;
@@ -304,6 +317,118 @@ function showRadarFrame(i){
  }
  updateRadarPreview(state.radarIndex);
 }
+
+function radarSetSpeed(value){
+ state.radarSpeed=radarSettingSpeed(value);save();radarSyncPreferences();
+ if(state.radarTimer)startRadarPlayback(true);
+}
+function radarSetOpacity(value){
+ state.radarOpacity=radarSettingOpacity(value);save();
+ if(state.radarLayer)state.radarLayer.setOpacity(state.radarOpacity);
+ if(state.radarOutgoing)state.radarOutgoing.setOpacity(state.radarOpacity);
+ if(state.peekLayer)state.peekLayer.setOpacity(state.radarOpacity);
+ radarSyncPreferences();
+}
+function radarSyncPreferences(){
+ const values={"radar-setting-auto":state.radarAutocheck,"radar-setting-follow":state.radarFollowLatest,
+ "radar-setting-loop":state.radarLoop,"radar-setting-timestamp":state.radarShowTimestamp};
+ Object.keys(values).forEach(function(id){if($(id))$(id).checked=values[id];});
+ if($("radar-setting-opacity"))$("radar-setting-opacity").value=Math.round(state.radarOpacity*100);
+ if($("radar-setting-opacity-label"))setText("radar-setting-opacity-label",Math.round(state.radarOpacity*100)+"%");
+ if($("radar-setting-speed"))$("radar-setting-speed").value=String(state.radarSpeed);
+ if($("radar-speed"))$("radar-speed").value=String(state.radarSpeed);
+ const stamp=$("radar-map-stamp");if(stamp)stamp.hidden=!state.radarShowTimestamp||!state.radarFrames.length;
+}
+function radarUpdatePreference(key,value){
+ if(key==="auto"){state.radarAutocheck=value;if(value)loadRadar(false);}
+ if(key==="follow"){state.radarFollowLatest=value;if(value&&state.radarFrames.length)radarGoLatest();}
+ if(key==="loop")state.radarLoop=value;
+ if(key==="timestamp")state.radarShowTimestamp=value;
+ save();radarSyncPreferences();
+ setText("radar-preferences-status","Radar preferences saved on this device.");
+}
+function radarResetPreferences(){
+ state.radarAutocheck=true;state.radarFollowLatest=true;state.radarLoop=true;
+ state.radarShowTimestamp=true;state.radarSpeed=3500;state.radarOpacity=.6;
+ state.radarEnabled=true;state.incidentsEnabled=true;state.warningsEnabled=true;
+ state.mapNearbyOnly=true;state.mapWheelZoom=false;
+ stopRadarPlayback();save();
+ if(state.map){
+  state.map.scrollWheelZoom.disable();
+  updateMarkers();showRfsWarningMap();
+  if(state.radarFrames.length)radarGoLatest();
+ }
+ if($("radar-setting-speed"))$("radar-setting-speed").value="3500";
+ syncMapLayerUI();radarSyncPreferences();
+ setText("radar-preferences-status","Radar defaults restored and saved.");
+}
+function radarSyncRegionSelection(){
+ if(!state.map)return;
+ document.querySelectorAll("[data-radar-region]").forEach(function(button){
+  const active=button.dataset.radarRegion===state.radarCurrentRegion;
+  button.classList.toggle("is-selected",active);
+  button.setAttribute("aria-pressed",String(active));
+ });
+}
+function radarSetRegion(mode){
+ if(!state.map)return;
+ state.radarCurrentRegion=mode;
+ if(mode==="local")state.map.setView([state.location.lat,state.location.lon],10);
+ if(mode==="region")state.map.setView([state.location.lat,state.location.lon],7);
+ if(mode==="nsw")state.map.fitBounds([[-37.55,140.9],[-28.1,153.8]],{padding:[15,15]});
+ if(mode==="australia")state.map.fitBounds([[-44.0,112.5],[-10.3,154.0]],{padding:[15,15]});
+ radarSyncRegionSelection();
+ mapInfo("Map view: "+({local:"Selected Location",region:"Regional Area",nsw:"New South Wales",australia:"Australia"}[mode]||"Selected Location")+".");
+}
+function radarReadSharedLink(){
+ const search=new URLSearchParams(window.location.search);
+ const lat=Number(search.get("lat")),lon=Number(search.get("lon")),zoom=Number(search.get("zoom"));
+ if(search.has("lat")&&search.has("lon")&&search.has("zoom")&&
+   Number.isFinite(lat)&&Math.abs(lat)<=90&&Number.isFinite(lon)&&Math.abs(lon)<=180&&
+   Number.isFinite(zoom)&&zoom>=2&&zoom<=18){
+  state.radarShareView={lat:lat,lon:lon,zoom:zoom};
+  state.radarCurrentRegion="shared";
+ }
+ const epoch=Number(search.get("frame"));
+ if(search.has("frame")&&Number.isFinite(epoch)&&epoch>0&&epoch*1000<Date.now()+600000&&epoch*1000>Date.now()-12*3600000){
+  state.radarSharedAt=epoch;
+ }
+}
+async function radarCopyLink(){
+ if(!state.map)return;
+ const c=state.map.getCenter(),zoom=state.map.getZoom(),current=radarFrame();
+ const link=new URL(window.location.href);
+ link.hash="";
+ link.searchParams.set("lat",c.lat.toFixed(4));
+ link.searchParams.set("lon",c.lng.toFixed(4));
+ link.searchParams.set("zoom",String(zoom));
+ if(current)link.searchParams.set("frame",String(current.time));else link.searchParams.delete("frame");
+ try{
+  if(!navigator.clipboard||!navigator.clipboard.writeText)throw Error("Clipboard not available");
+  await navigator.clipboard.writeText(link.toString());
+  message("Radar map link copied. It opens the same area and nearest available historical frame.");
+ }catch(e){
+  window.prompt("Copy this radar map link:",link.toString());
+ }
+}
+function initRadarPreferences(){
+ radarSyncPreferences();
+ const panel=$("radar-preferences"),toggle=$("radar-preferences-toggle");
+ if(panel&&toggle)toggle.addEventListener("click",function(){
+  panel.hidden=!panel.hidden;toggle.setAttribute("aria-expanded",String(!panel.hidden));
+ });
+ [["auto","radar-setting-auto"],["follow","radar-setting-follow"],["loop","radar-setting-loop"],["timestamp","radar-setting-timestamp"]]
+  .forEach(function(pair){on(pair[1],"change",function(e){radarUpdatePreference(pair[0],e.target.checked);});});
+ on("radar-setting-opacity","input",function(e){radarSetOpacity(Number(e.target.value)/100);});
+ on("radar-setting-speed","change",function(e){radarSetSpeed(e.target.value);});
+ on("radar-reset-preferences","click",radarResetPreferences);
+ on("radar-copy-link","click",radarCopyLink);
+ document.querySelectorAll("[data-radar-region]").forEach(function(btn){
+  btn.addEventListener("click",function(){radarSetRegion(btn.dataset.radarRegion);});
+ });
+ radarSyncRegionSelection();
+}
+
 async function loadRadar(force){
  if(!state.map&&!state.peekMap)return;
  if(state.radarLoadingPromise)return state.radarLoadingPromise;
@@ -325,7 +450,11 @@ async function loadRadar(force){
    var old=radarFrame(),oldTime=old?old.time:null,oldNewest=state.radarFrames[state.radarFrames.length-1]?.time;
    state.radarFrames=frames;state.radarHost=u.origin;state.radarFetchedAt=Date.now();state.radarLastError="";
    var index=frames.length-1;
-   if(!state.radarFollowLatest&&oldTime!=null){
+   if(state.radarSharedAt!==null){
+    index=frames.reduce(function(best,f,i){return Math.abs(f.time-state.radarSharedAt)<Math.abs(frames[best].time-state.radarSharedAt)?i:best;},0);
+    state.radarSharedAt=null;state.radarFollowLatest=false;save();
+    if($("radar-preferences-status"))setText("radar-preferences-status","Shared radar link opened. Showing the nearest available historical frame.");
+   }else if(!state.radarFollowLatest&&oldTime!=null){
     index=frames.findIndex(function(f){return f.time===oldTime;});
     if(index<0)index=frames.reduce(function(best,f,i){return Math.abs(f.time-oldTime)<Math.abs(frames[best].time-oldTime)?i:best;},0);
    }
@@ -346,33 +475,34 @@ function stopRadarPlayback(){
 }
 function startRadarPlayback(resume){
  if(state.radarFrames.length<2)return;
- stopRadarPlayback();state.radarFollowLatest=false;
+ stopRadarPlayback();state.radarFollowLatest=false;save();radarSyncPreferences();
  if(!resume&&state.radarIndex===state.radarFrames.length-1)showRadarFrame(0);
  if($("radar-play")){$("radar-play").textContent="Ⅱ Pause";$("radar-play").setAttribute("aria-label","Pause Radar Animation");}
- var speed=Math.max(2000,Number($("radar-speed")?.value)||3500);
+ var speed=state.radarSpeed;
  state.radarTimer=setInterval(function(){
   if(document.visibilityState!=="visible"){stopRadarPlayback();return;}
+  if(state.radarIndex+1>=state.radarFrames.length&&!state.radarLoop){stopRadarPlayback();return;}
   showRadarFrame((state.radarIndex+1)%state.radarFrames.length);
  },speed);
 }
 function toggleRadarPlay(){if(state.radarTimer)stopRadarPlayback();else startRadarPlayback(false);}
 function radarSeek(i){
- stopRadarPlayback();state.radarFollowLatest=Number(i)>=state.radarFrames.length-1;showRadarFrame(i);
+ stopRadarPlayback();state.radarFollowLatest=Number(i)>=state.radarFrames.length-1;save();showRadarFrame(i);
  if($("radar-latest"))$("radar-latest").textContent="Go to Latest";
 }
 function radarGoLatest(){
- stopRadarPlayback();state.radarFollowLatest=true;showRadarFrame(state.radarFrames.length-1);
+ stopRadarPlayback();state.radarFollowLatest=true;save();showRadarFrame(state.radarFrames.length-1);
  if($("radar-latest"))$("radar-latest").textContent="Go to Latest";
 }
 function initRadarRefresh(){
- setInterval(function(){if(document.visibilityState==="visible")loadRadar(false);},RADAR_CHECK_MS);
+ setInterval(function(){if(state.radarAutocheck&&document.visibilityState==="visible")loadRadar(false);},RADAR_CHECK_MS);
  setInterval(function(){if(document.visibilityState==="visible")radarStatus();},60000);
  document.addEventListener("visibilitychange",function(){
   if(document.visibilityState!=="visible")stopRadarPlayback();
-  else{loadRadar(false);radarStatus();}
+  else{if(state.radarAutocheck)loadRadar(false);radarStatus();}
  });
- window.addEventListener("pageshow",function(){if(document.visibilityState==="visible")loadRadar(false);});
- window.addEventListener("online",function(){if(document.visibilityState==="visible")loadRadar(false);});
+ window.addEventListener("pageshow",function(){if(state.radarAutocheck&&document.visibilityState==="visible")loadRadar(false);});
+ window.addEventListener("online",function(){if(state.radarAutocheck&&document.visibilityState==="visible")loadRadar(false);});
 }
 function changeLocation(l){state.location=l;save();updateLocationUI();if(state.peekMap)state.peekMap.setView([l.lat,l.lon],8);if(state.map){state.map.setView([l.lat,l.lon],9);if(state.locationMarker)state.locationMarker.setLatLng([l.lat,l.lon]).bindPopup("Selected Location: "+esc(l.name));updateMarkers();}state.seen=null;if($("current-temp")||$("temp-chart"))loadWeather();if($("incidents-list")||$("snapshot-incidents"))renderIncidents();window.dispatchEvent(new Event("skypulse:watch-changed"));message("Location changed to "+l.name);}
 var searchTimer=null;function searchLocation(text){clearTimeout(searchTimer);if(text.trim().length<2){$("location-results").hidden=true;return;}searchTimer=setTimeout(async function(){try{var q=new URLSearchParams({name:text.trim(),count:"7",language:"en",countryCode:"AU"});var data=await getJSON("https://geocoding-api.open-meteo.com/v1/search?"+q,9000),results=data.results||[];if($("location-input").value.trim()!==text.trim())return;var box=$("location-results");box.innerHTML="";if(!results.length){box.innerHTML='<div class="muted" style="padding:10px">No Australian matches</div>';}results.forEach(function(r){var b=document.createElement("button");b.type="button";b.setAttribute("role","option");b.innerHTML=esc(r.name)+'<small>'+esc([r.admin1,r.country].filter(Boolean).join(", "))+'</small>';b.addEventListener("click",function(){changeLocation({name:r.name,region:r.admin1||"",lat:r.latitude,lon:r.longitude});box.hidden=true;});box.appendChild(b);});box.hidden=false;}catch(e){$("location-results").hidden=true;}},350);}
@@ -419,14 +549,16 @@ function init(){
  on("incidents-toggle","click",function(){setMapLayer("incidents",!state.incidentsEnabled);});
  on("radar-slider","input",function(e){radarSeek(Number(e.target.value));});
  on("radar-play","click",toggleRadarPlay);
- on("radar-speed","change",function(){if(state.radarTimer)startRadarPlayback(true);});
+ on("radar-speed","change",function(e){radarSetSpeed(e.target.value);});
  on("radar-latest","click",radarGoLatest);
  on("radar-check-now","click",function(){loadRadar(true);});
  on("radar-step-back","click",function(){radarSeek(state.radarIndex-1);});
  on("radar-step-forward","click",function(){radarSeek(state.radarIndex+1);});
  setupInstall();setupNav();
  if($("current-temp")||$("temp-chart"))loadWeather();
+ if($("weather-map"))radarReadSharedLink();
  if($("weather-map")||$("radar-peek-map")){initMap();initRadarRefresh();}
+ if($("weather-map"))initRadarPreferences();
  if($("incidents-list")||$("snapshot-incidents")||$("weather-map"))loadHazards();
  setInterval(function(){if(document.visibilityState==="visible"){if($("current-temp")||$("temp-chart"))loadWeather();
    if($("incidents-list")||$("snapshot-incidents")||$("weather-map"))loadHazards();}},15*60*1000);

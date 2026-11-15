@@ -64,6 +64,37 @@
     <button id="radar-check-now" type="button" class="outline-button radar-refresh-action">↻ Check for New Frames</button>
   </div>
 </div>
+
+<div class="radar-quickbar">
+  <div class="radar-region-bar" role="group" aria-label="Radar map region">
+    <span class="radar-region-caption">MAP VIEW</span>
+    <button type="button" class="radar-region-button is-selected" data-radar-region="local">My Location</button>
+    <button type="button" class="radar-region-button" data-radar-region="region">Regional</button>
+    <button type="button" class="radar-region-button" data-radar-region="nsw">All NSW</button>
+    <button type="button" class="radar-region-button" data-radar-region="australia">Australia</button>
+  </div>
+  <div class="radar-quick-actions">
+    <button id="radar-copy-link" type="button" class="outline-button radar-secondary-button" title="Copy a link to this map location and radar time">Copy Map Link</button>
+    <button id="radar-preferences-toggle" type="button" class="outline-button radar-secondary-button" aria-expanded="false" aria-controls="radar-preferences">⚙ Radar Settings</button>
+  </div>
+</div>
+<div id="radar-preferences" class="radar-preferences" hidden>
+  <div class="radar-preferences-heading">
+    <div><h3>Radar Preferences</h3><p>These choices are saved on this device. Radar imagery remains historical and source-dependent.</p></div>
+    <button id="radar-reset-preferences" type="button" class="outline-button">Restore Defaults</button>
+  </div>
+  <div class="radar-preferences-grid">
+    <label class="radar-preference-option"><span><strong>Auto-check for new frames</strong><small>Check RainViewer every 5 minutes while SkyPulse is open</small></span><input type="checkbox" id="radar-setting-auto" checked></label>
+    <label class="radar-preference-option"><span><strong>Follow newest frame</strong><small>Move to newly issued frames unless you are browsing history</small></span><input type="checkbox" id="radar-setting-follow" checked></label>
+    <label class="radar-preference-option"><span><strong>Loop animation</strong><small>Repeat the history instead of stopping at its end</small></span><input type="checkbox" id="radar-setting-loop" checked></label>
+    <label class="radar-preference-option"><span><strong>Show time on map</strong><small>Keep the selected frame timestamp visible over radar</small></span><input type="checkbox" id="radar-setting-timestamp" checked></label>
+  </div>
+  <div class="radar-preferences-foot">
+    <div class="radar-preference-inline"><label for="radar-setting-opacity">Rain overlay opacity <strong id="radar-setting-opacity-label">60%</strong></label><input id="radar-setting-opacity" type="range" min="20" max="100" step="5" value="60"></div>
+    <div class="radar-preference-inline"><label for="radar-setting-speed">Animation speed</label><select id="radar-setting-speed"><option value="5000">Relaxed · 0.5×</option><option value="3500" selected>Normal · 1×</option><option value="2200">Fast · 2×</option></select></div>
+    <span class="radar-preferences-note" id="radar-preferences-status" role="status">Preferences saved locally.</span>
+  </div>
+</div>
           <div class="card map-card radar-upgraded-card"><div class="map-toolbar"><div class="segmented"><button type="button" id="radar-toggle" class="selected" aria-pressed="true">Rain Radar</button><button type="button" id="incidents-toggle" class="selected" aria-pressed="true">⚠ NSW RFS Incidents</button></div><div class="map-side-actions"><span id="radar-time" class="small-chip">Frame time pending</span><button id="map-retry" class="outline-button" type="button">↻ Reload Map</button></div></div><div class="map-viewport" id="map-viewport"><div id="weather-map" role="region" aria-label="Interactive weather radar and NSW RFS incident map"><p class="map-fallback">Loading Interactive Map… <a href="https://www.bom.gov.au/australia/radar/" target="_blank" rel="noopener">Open Official BOM Radar ↗</a></p></div><div class="map-control-column" role="toolbar" aria-label="Map Navigation">
   <div class="map-control-group"><button type="button" id="map-zoom-in" class="map-control-button" title="Zoom In" aria-label="Zoom In"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button><button type="button" id="map-zoom-out" class="map-control-button" title="Zoom Out" aria-label="Zoom Out"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button></div>
   <div class="map-control-group"><button type="button" id="map-locate" class="map-control-button" title="Go to My Current Location" aria-label="Go to My Current Location"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button><button type="button" id="map-home" class="map-control-button" title="Return to Selected Location" aria-label="Return to Selected Location"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9 21v-7h6v7"/></svg></button><button type="button" id="map-fit" class="map-control-button" title="Show Nearby Incidents" aria-label="Show Nearby Incidents"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><circle cx="12" cy="12" r="2"/></svg></button></div>
@@ -95,7 +126,7 @@
     </div>
     <label class="radar-speed">Speed <select id="radar-speed" aria-label="Radar playback speed"><option value="5000">0.5×</option><option value="3500" selected>1×</option><option value="2200">2×</option></select></label>
   </div>
-  <div class="radar-explainer"><span>Frame time is the provider's generation timestamp, not necessarily the exact time of every radar scan. Radar is historical, not a live video feed.</span><a href="https://www.bom.gov.au/australia/radar/" target="_blank" rel="noopener">Check Official BOM Radar ↗</a></div>
+  <div class="radar-explainer"><span><strong>Tip:</strong> Use ←/→ when the timeline is focused. Frame time is the provider's generation timestamp, not necessarily the exact time of every radar scan. Radar is historical, not a live video feed.</span><a href="https://www.bom.gov.au/australia/radar/" target="_blank" rel="noopener">Check Official BOM Radar ↗</a></div>
 </div>
 <div class="map-footer radar-attribution"><span>Map © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> · Radar imagery © <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer</a> · 10-minute source frames · best-effort updates</span></div></div>
         </section>
