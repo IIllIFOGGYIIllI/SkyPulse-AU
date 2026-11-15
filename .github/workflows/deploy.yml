@@ -57,6 +57,7 @@ jobs:
         run: |
           node scripts/check_mobile_layout.mjs
           node scripts/test_radar_studio.mjs
+          node scripts/test_forecast_reliability.mjs
           rm -rf node_modules package-lock.json
       - name: Configure Pages
         uses: actions/configure-pages@v5
