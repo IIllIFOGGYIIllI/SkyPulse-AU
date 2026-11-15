@@ -142,7 +142,6 @@ try{
  await page.locator("#fire-map-selection-close").click();
  if(await page.locator("#fire-map-selection").isVisible())throw Error("Close-map-details action failed");
  // Click the actual map marker in the Leaflet stub, not just the directory.
- await page.locator("#fire-map-selection-close").click();
  const picked=await page.evaluate(()=>{
   const marker=window.__fireLayers.find(x=>x.kind==="marker"&&x.opts.icon?.options?.html?.includes('data-fire-marker-kind="incident"')&&x.opts.icon?.options?.html?.includes('data-fire-marker-index="0"'));
   if(!marker||typeof marker.handlers.click!=="function")return false;
