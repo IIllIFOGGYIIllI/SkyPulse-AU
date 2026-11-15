@@ -35,6 +35,9 @@ jobs:
           node --check assets/app.js
           node --check sw.js
           python scripts/validate_site.py
+      - name: Check Forecast API Fields
+        continue-on-error: true
+        run: python scripts/check_weather_api.py
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload site
