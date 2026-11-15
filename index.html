@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://api.open-meteo.com">
   <link rel="preconnect" href="https://tile.openstreetmap.org">
   <link rel="stylesheet" href="./assets/leaflet.css?v=1">
-  <link rel="stylesheet" href="./assets/styles.css?v=5">
+  <link rel="stylesheet" href="./assets/styles.css?v=6">
   <title>SkyPulse AU | Australian Weather &amp; Warnings</title>
 </head>
 <body>
@@ -45,16 +45,62 @@
           <div class="section-header"><div><div class="eyebrow">YOUR LOCAL OUTLOOK</div><h1 class="overview-title"><span class="overview-title-label">Weather Overview</span><span id="heading-location" class="overview-title-location">Cessnock</span></h1><p class="muted" id="current-clock">Loading local conditions…</p></div><div class="status-pill" id="weather-status"><span class="pulse-dot"></span> Loading weather</div></div>
           <div class="hero-grid">
             <article class="card hero-card">
-              <div class="hero-aura"></div><div class="hero-top"><span class="mini-tag">CURRENT CONDITIONS</span><span class="mini-tag subtle" id="current-date">—</span></div>
+              <div class="hero-aura"></div><div class="hero-top"><span class="mini-tag">CURRENT MODEL ESTIMATE</span><span class="mini-tag subtle" id="current-date">—</span></div>
               <div class="hero-main"><div><div class="temp-line"><span id="current-temp">--</span><sup>°C</sup></div><div class="condition" id="current-description">Fetching forecast…</div><p id="feels-like">Feels like —</p></div><div class="hero-weather" id="weather-symbol" aria-hidden="true">☀</div></div>
               <div class="hero-bottom"><div><span>Today's High</span><strong id="today-high">—</strong></div><div><span>Today's Low</span><strong id="today-low">—</strong></div><div><span>Chance of Rain</span><strong id="today-rain">—</strong></div><div><span>Updated</span><strong id="forecast-update">—</strong></div></div>
             </article>
             <div class="metric-grid">
               <article class="card metric"><div class="metric-top"><span>WIND SPEED</span><span class="metric-icon">≋</span></div><div class="metric-value" id="wind-speed">—</div><div class="metric-sub" id="wind-gust">Gusts —</div></article>
               <article class="card metric"><div class="metric-top"><span>HUMIDITY</span><span class="metric-icon">◉</span></div><div class="metric-value" id="humidity">—</div><div class="metric-sub">Relative Humidity</div></article>
-              <article class="card metric"><div class="metric-top"><span>UV INDEX</span><span class="metric-icon">☼</span></div><div class="metric-value" id="uv-index">—</div><div class="metric-sub" id="uv-description">Daily maximum</div></article>
-              <article class="card metric"><div class="metric-top"><span>RAINFALL</span><span class="metric-icon">☂</span></div><div class="metric-value" id="rain-total">—</div><div class="metric-sub">Forecast Today</div></article>
+              <article class="card metric"><div class="metric-top"><span>TODAY'S PEAK UV</span><span class="metric-icon">☼</span></div><div class="metric-value" id="uv-index">—</div><div class="metric-sub" id="uv-description">Daily Peak</div></article>
+              <article class="card metric"><div class="metric-top"><span>FORECAST RAINFALL</span><span class="metric-icon">☂</span></div><div class="metric-value" id="rain-total">—</div><div class="metric-sub">Today · Modelled Total</div></article>
             </div>
+          </div>
+          <div class="weather-insight-note"><span class="model-dot"></span><span><strong>Model-Based Local Conditions.</strong> Current estimates and forecasts are generated from weather models, not the nearest observing station. <a href="#official-observations">View Official Station Readings</a>.</span></div>
+          <div class="enhanced-dashboard">
+            <article class="card tomorrow-panel">
+              <div class="card-title-row"><div><div class="eyebrow">NEXT DAY OUTLOOK</div><h2>Tomorrow's Forecast</h2><p class="muted" id="tomorrow-date">Loading Forecast…</p></div><span class="source-badge">MODEL FORECAST</span></div>
+              <div class="tomorrow-snapshot"><div class="tomorrow-condition"><span id="tomorrow-icon" aria-hidden="true">☁️</span><div><b id="tomorrow-condition">Loading Conditions</b><span>Tomorrow's Weather</span></div></div><div class="tomorrow-temps"><span id="tomorrow-min">—°</span><span id="tomorrow-max">—°</span></div></div>
+              <p id="tomorrow-narrative" class="forecast-narrative">Loading the next day's forecast from Open-Meteo.</p>
+              <div class="tomorrow-facts"><div><span>Chance of Rain</span><strong id="tomorrow-rain-chance">—</strong></div><div><span>Forecast Rainfall</span><strong id="tomorrow-rain-amount">—</strong></div><div><span>Maximum Wind Gust</span><strong id="tomorrow-gust">—</strong></div><div><span>Peak UV</span><strong id="tomorrow-uv">—</strong></div></div>
+              <p class="data-footnote">Automatically generated from numerical weather models. Not an official Bureau of Meteorology forecast or warning.</p>
+            </article>
+            <article class="card local-warnings-panel">
+              <div class="card-title-row"><div><div class="eyebrow">EMERGENCY AWARENESS</div><h2>Local Hazard Snapshot</h2><p class="muted">Current status of available official information</p></div><span class="source-badge">NSW</span></div>
+              <div class="hazard-snapshot-list">
+                <div class="hazard-snapshot-item"><span class="hazard-symbol">🔥</span><div><b>NSW RFS Incidents</b><p id="snapshot-incidents">Loading Incident Data…</p></div><a href="#hazards">View ↗</a></div>
+                <div class="hazard-snapshot-item"><span class="hazard-symbol">⚠️</span><div><b>Official Weather Warnings</b><p id="snapshot-warnings">Checking Warning Feed…</p></div><a href="https://www.bom.gov.au/weather-and-climate/warnings-and-alerts" target="_blank" rel="noopener">BOM ↗</a></div>
+                <div class="hazard-snapshot-item"><span class="hazard-symbol">🌡️</span><div><b>Fire Danger Ratings &amp; Total Fire Bans</b><p id="snapshot-fire-danger">Check Official Fire Danger Ratings</p></div><a href="https://www.rfs.nsw.gov.au/fire-information/fdr-and-tobans" target="_blank" rel="noopener">RFS ↗</a></div>
+              </div>
+              <p class="data-footnote">An empty incident list or an unavailable warning feed does not mean the area is safe. Call 000 for emergencies.</p>
+            </article>
+            <article class="card weather-details-panel">
+              <div class="card-title-row"><div><div class="eyebrow">LOCAL WEATHER DETAIL</div><h2>Atmospheric Conditions</h2><p class="muted">Estimated conditions at your selected location</p></div><span class="source-badge">MODEL ESTIMATES</span></div>
+              <div class="detail-grid">
+                <div class="detail-item"><span>Dew Point</span><strong id="detail-dewpoint">—</strong><small>Estimated °C</small></div>
+                <div class="detail-item"><span>Sea-Level Pressure</span><strong id="detail-pressure">—</strong><small>hPa</small></div>
+                <div class="detail-item"><span>Wind Direction</span><strong id="detail-wind-direction">—</strong><small>10 m Wind</small></div>
+                <div class="detail-item"><span>Cloud Cover</span><strong id="detail-cloud-cover">—</strong><small>Estimated Coverage</small></div>
+                <div class="detail-item"><span>Sunrise</span><strong id="detail-sunrise">—</strong><small>Local Time</small></div>
+                <div class="detail-item"><span>Sunset</span><strong id="detail-sunset">—</strong><small>Local Time</small></div>
+              </div>
+            </article>
+            <article class="card official-panel" id="official-observations">
+              <div class="card-title-row"><div><div class="eyebrow">OFFICIAL STATION RECORDS</div><h2>Measured Weather Observations</h2><p class="muted" id="official-station-name">Cessnock Airport AWS · Bureau of Meteorology</p></div><span class="source-badge">BOM OBSERVATIONS</span></div>
+              <div class="official-observation-content"><div class="station-icon" aria-hidden="true">◉</div><div><b>Station Observations, Not Model Estimates</b><p id="official-observation-description">View actual observed temperature, pressure, humidity, wind and rainfall since 9 am directly from the Bureau.</p></div></div>
+              <a id="official-observation-link" href="https://www.bom.gov.au/products/IDN60801/IDN60801.95771.shtml" class="station-link" target="_blank" rel="noopener">Open Official Station Readings <span aria-hidden="true">↗</span></a>
+              <p class="data-footnote">Official station observations are linked rather than republished. The nearest station may not match conditions at your location.</p>
+            </article>
+          </div>
+          <div class="weather-media-grid">
+            <article class="card radar-peek"><div class="card-title-row"><div><div class="eyebrow">WEATHER IMAGERY</div><h3>Recent Rain Radar</h3><p class="muted">Historical Rainfall Imagery · Not a Forecast</p></div><span id="radar-peek-time" class="small-chip">Loading Radar…</span></div>
+              <a href="#map-section" class="radar-peek-link" aria-label="Open Interactive Radar"><div id="radar-peek-map" class="radar-peek-map"><div class="peek-placeholder">Loading Map Preview…</div></div><span class="radar-peek-action">Open Interactive Radar <span aria-hidden="true">↗</span></span></a>
+            </article>
+            <article class="card satellite-peek"><div class="card-title-row"><div><div class="eyebrow">CLOUD IMAGERY</div><h3>Australian Satellite Viewer</h3><p class="muted">View Satellite Images and Cloud Systems</p></div></div>
+              <div class="satellite-graphic" aria-hidden="true"><div class="satellite-orb"></div><span class="satellite-cloud satellite-cloud-one">☁</span><span class="satellite-cloud satellite-cloud-two">☁</span></div>
+              <a href="https://www.bom.gov.au/australia/satellite/" target="_blank" rel="noopener" class="satellite-action">Open Official Satellite Viewer <span aria-hidden="true">↗</span></a>
+              <p class="data-footnote">Illustration only. Click through for the actual Bureau satellite imagery.</p>
+            </article>
           </div>
         </section>
         <section id="forecast" class="section">
@@ -101,6 +147,6 @@
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
   <nav class="mobile-tabs" aria-label="Mobile navigation"><a href="#overview">⌂<small>Home</small></a><a href="#forecast">☀<small>Forecast</small></a><a href="#map-section">◎<small>Map</small></a><a href="#hazards">⚠<small>Hazards</small></a><a href="#alerts">⚙<small>Settings</small></a></nav>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
-  <script src="./assets/app.js?v=5" defer></script>
+  <script src="./assets/app.js?v=6" defer></script>
 </body>
 </html>
