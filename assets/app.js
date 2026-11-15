@@ -483,16 +483,138 @@ function fireIconBadge(kind,level,label){
 }
 function fireLeafletMarkerIcon(kind,level,label,featureKind,index){
  var cls=level==="Emergency Warning"?"emergency":level==="Watch and Act"?"watch":level==="Advice"?"advice":kind==="location"?"location":"other";
- return L.divIcon({className:"fire-leaflet-icon",iconSize:[40,48],iconAnchor:[20,45],popupAnchor:[0,-42],
+ return L.divIcon({className:"fire-leaflet-icon",iconSize:[32,39],iconAnchor:[16,36],popupAnchor:[0,-35],
   html:'<span class="fire-map-pin fire-map-pin-'+esc(cls)+' fire-map-pin-'+esc(kind)+'" '+
    (featureKind?'data-fire-marker-kind="'+esc(featureKind)+'" data-fire-marker-index="'+Number(index)+'" ':'')+
    'role="img" aria-label="'+esc(label)+'"><span class="fire-map-pin-body">'+fireIconSvg(kind)+'</span><span class="fire-map-pin-point"></span></span>'});
 }
+// Lightweight, dependency-free clustering in projected Web Mercator pixels.
+// Grouping only changes how published point markers are presented; it does NOT
+// alter NSW RFS coordinates, incident lists, warnings or fire-area boundaries.
+const FIRE_CLUSTER_PIXEL_RADIUS=43;
+const FIRE_CLUSTER_BREAK_ZOOM=13;
+function fireClusterPoint(latlng,zoom){
+ var lat=Math.max(-85.05112878,Math.min(85.05112878,Number(latlng[0])));
+ var lng=Number(latlng[1]),sin=Math.sin(lat*Math.PI/180),scale=256*Math.pow(2,zoom);
+ return {x:(lng+180)/360*scale,y:(.5-Math.log((1+sin)/(1-sin))/(4*Math.PI))*scale};
+}
+function fireClusterGroups(entries,zoom){
+ if(!Number.isFinite(zoom)||zoom>=FIRE_CLUSTER_BREAK_ZOOM)
+  return entries.map(function(item){return {members:[item],point:item.point.slice()};});
+ var groups=[],bins=new Map(),size=FIRE_CLUSTER_PIXEL_RADIUS;
+ entries.forEach(function(item){
+  var xy=fireClusterPoint(item.point,zoom),cellX=Math.floor(xy.x/size),cellY=Math.floor(xy.y/size),best=null,bestDistance=size*size;
+  for(var a=-1;a<=1;a++)for(var b=-1;b<=1;b++){
+   (bins.get((cellX+a)+":"+(cellY+b))||[]).forEach(function(group){
+    var dx=xy.x-group.x,dy=xy.y-group.y,d=dx*dx+dy*dy;
+    if(d<bestDistance){best=group;bestDistance=d;}
+   });
+  }
+  if(best){
+   best.members.push(item);
+   // Retain the original centroid for a stable visual grouping as further entries arrive.
+   // Zooming to a group always uses the source members, not this approximation.
+   var count=best.members.length;
+   best.point[0]+=(item.point[0]-best.point[0])/count;
+   best.point[1]+=(item.point[1]-best.point[1])/count;
+  }else{
+   var group={members:[item],point:item.point.slice(),x:xy.x,y:xy.y};
+   groups.push(group);
+   var key=cellX+":"+cellY,items=bins.get(key)||[];
+   items.push(group);bins.set(key,items);
+  }
+ });
+ return groups;
+}
+function fireClusterSeverity(members){
+ var best="Unspecified",rank=0,weights={"Advice":1,"Watch and Act":2,"Emergency Warning":3};
+ members.forEach(function(entry){
+  var level=incidentAlertLevel(entry.feature),value=weights[level]||0;
+  if(value>rank){rank=value;best=level;}
+ });
+ return best;
+}
+function fireClusterIcon(group){
+ var level=fireClusterSeverity(group.members),cls=level==="Emergency Warning"?"emergency":
+  level==="Watch and Act"?"watch":level==="Advice"?"advice":"other";
+ var selected=state.fireSelected&&state.fireSelected.kind==="incident"&&
+  group.members.some(function(m){return m.index===state.fireSelected.index;});
+ var ids=group.members.map(function(m){return m.index;}).join(",");
+ var title=group.members.length+" published incident locations grouped. Highest alert level: "+level+
+  ". Select to zoom into individual markers.";
+ return L.divIcon({className:"fire-leaflet-cluster-icon",iconSize:[38,38],iconAnchor:[19,19],
+  html:'<span class="fire-map-cluster fire-map-cluster-'+cls+(selected?' is-selected':'')+
+   '" data-fire-cluster-members="'+ids+'" role="img" aria-label="'+esc(title)+'">'+
+   '<span class="fire-map-cluster-count">'+group.members.length+'</span></span>'});
+}
+function fireZoomCluster(map,group){
+ if(!map||!group||!group.members.length)return;
+ var zoom=Number(map.getZoom()),next=Math.min(FIRE_CLUSTER_BREAK_ZOOM,zoom+2);
+ if(!Number.isFinite(next)||next<=zoom)next=FIRE_CLUSTER_BREAK_ZOOM;
+ map.setView(group.point,next,{animate:true});
+ // Leaflet emits zoomend, which repaints the individual incidents/clusters.
+}
+function fireRenderIncidentPoints(map,layer,entries,selectionMode){
+ if(!map||!layer)return;
+ layer.clearLayers();
+ var zoom=Number(map.getZoom()),groups=fireClusterGroups(entries,zoom);
+ groups.forEach(function(group){
+  if(group.members.length>1){
+   var level=fireClusterSeverity(group.members);
+   L.marker(group.point,{icon:fireClusterIcon(group),keyboard:true,riseOnHover:true,
+    title:group.members.length+" grouped RFS incident locations; highest level "+level+". Select to zoom."})
+    .on("click",function(){fireZoomCluster(map,group);})
+    .addTo(layer);
+   return;
+  }
+  var entry=group.members[0],feature=entry.feature,point=entry.point,level=incidentAlertStyle(feature);
+  var marker=L.marker(point,{
+   icon:fireLeafletMarkerIcon(fireIncidentKind(feature),level.level,incidentTitle(feature)+": "+level.level,
+    selectionMode==="hazards"?"incident":null,entry.index),
+   keyboard:true,riseOnHover:true,title:incidentTitle(feature)+" — "+level.level});
+  if(selectionMode==="hazards"){
+   marker.on("click",function(){fireSelectMapItem("incident",entry.index);});
+  }else{
+   marker.bindPopup(hazardIncidentPopup(feature));
+  }
+  marker.addTo(layer);
+ });
+ if(selectionMode==="hazards")syncFireMapSelection();
+}
+function renderFireIncidentMarkers(){
+ if(!state.hazardMap||!state.hazardLayers)return;
+ var entries=[];
+ if(state.incidentsFresh&&hazardMapEnabled("fire-map-points")){
+  state.incidents.slice(0,500).forEach(function(feature,index){
+   var p=coordinatesOf(feature);
+   if(p&&p.every(Number.isFinite))entries.push({feature,index,point:p});
+  });
+ }
+ fireRenderIncidentPoints(state.hazardMap,state.hazardLayers.incidents,entries,"hazards");
+}
+function renderRadarIncidentMarkers(){
+ if(!state.map||!state.markers)return;
+ var entries=[];
+ if(state.incidentsEnabled&&state.incidentsFresh){
+  state.incidents.slice(0,500).forEach(function(feature,index){
+   var p=coordinatesOf(feature);
+   if(!p||!p.every(Number.isFinite))return;
+   if(state.mapNearbyOnly&&km(state.location.lat,state.location.lon,p[0],p[1])>state.radius)return;
+   entries.push({feature,index,point:p});
+  });
+ }
+ fireRenderIncidentPoints(state.map,state.markers,entries,"radar");
+}
+
 function syncFireMapSelection(){
  var container=$("fire-area-map");if(!container)return;
  container.querySelectorAll("[data-fire-marker-kind]").forEach(function(node){
   node.classList.toggle("is-selected",!!state.fireSelected&&node.dataset.fireMarkerKind===state.fireSelected.kind&&
    Number(node.dataset.fireMarkerIndex)===state.fireSelected.index);
+ });
+ container.querySelectorAll("[data-fire-cluster-members]").forEach(function(node){
+  node.classList.toggle("is-selected",!!state.fireSelected&&state.fireSelected.kind==="incident"&&
+   node.dataset.fireClusterMembers.split(",").includes(String(state.fireSelected.index)));
  });
 }
 
@@ -634,7 +756,8 @@ function renderFireLegend(){
   }).join("")+
   '<span class="fire-legend-item">'+fireIconBadge("zone","Unspecified","Published warning area")+'Warning Polygon</span>'+
   '<span class="fire-legend-item">'+fireIconBadge("perimeter","Unspecified","Published incident extent")+'Incident Extent</span>'+
-  '<span class="fire-legend-item">'+fireIconBadge("radius","Unspecified","Selected monitoring radius")+'Monitoring Radius</span>';
+  '<span class="fire-legend-item">'+fireIconBadge("radius","Unspecified","Selected monitoring radius")+'Monitoring Radius</span>'+
+  '<span class="fire-legend-item"><span class="fire-legend-cluster">3</span>Grouped Incidents · Select to Zoom</span>';
  }
 }
 
@@ -651,7 +774,8 @@ function initFireAreaMap(){
  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{
   maxZoom:18,updateWhenIdle:true,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
  }).addTo(state.hazardMap);
- state.hazardMap.on("zoomend moveend",syncFireMapSelection);
+ state.hazardMap.on("zoomend",renderFireIncidentMarkers);
+ state.hazardMap.on("moveend",syncFireMapSelection);
  state.hazardLayers={warnings:L.layerGroup().addTo(state.hazardMap),
   extents:L.layerGroup().addTo(state.hazardMap),incidents:L.layerGroup().addTo(state.hazardMap),
   locality:L.layerGroup().addTo(state.hazardMap)};
@@ -701,19 +825,11 @@ function renderFireAreaMap(){
        .addTo(layers.extents);
      });
     }
-    if(hazardMapEnabled("fire-map-points")){
-     var p=coordinatesOf(feature);
-     if(p&&Number.isFinite(p[0])&&Number.isFinite(p[1])){
-      L.marker(p,{icon:fireLeafletMarkerIcon(fireIncidentKind(feature),incidentAlertLevel(feature),
-         incidentTitle(feature)+": "+incidentAlertLevel(feature),"incident",state.incidents.indexOf(feature)),
-         keyboard:true,riseOnHover:true})
-       .on("click",function(){fireSelectMapItem("incident",state.incidents.indexOf(feature));})
-       .addTo(layers.incidents);
-     }
-    }
+
    });
   }
  }
+ renderFireIncidentMarkers();
  renderFireAreaStatus();syncFireMapSelection();
 }
 function renderFireAreaStatus(){
@@ -776,7 +892,7 @@ function focusHazardIncident(i){
  try{
   fireSelectMapItem("incident",i);
   if(poly.length)state.hazardMap.fitBounds(L.latLngBounds(poly.flat(2)).pad(.15),{maxZoom:12});
-  else if(point)state.hazardMap.setView(point,11);
+  else if(point)state.hazardMap.setView(point,13);
   $("fire-map-workspace")?.scrollIntoView({behavior:"smooth",block:"start"});
  }catch(e){message("Unable to display this incident area.");}
 }
@@ -1072,6 +1188,7 @@ state.map.on("moveend zoomend",updateMapCoords);updateMapCoords();
 if("ResizeObserver" in window)new ResizeObserver(function(){if(state.map)state.map.invalidateSize({pan:false});}).observe($("weather-map"));
  state.map.on("moveend zoomend",radarSyncRegionSelection);
  state.map.on("zoomend",radarUpdateQuality);
+ state.map.on("zoomend",renderRadarIncidentMarkers);
  radarUpdateQuality();
 document.querySelectorAll('a[href="#map-section"]').forEach(function(a){a.addEventListener("click",function(){setTimeout(function(){state.map.invalidateSize({pan:false});},160);});});
 $("map-retry").addEventListener("click",function(){state.mapTileFailures=0;state.radarTileErrors=0;$("map-tile-status").hidden=true;mapRefresh();loadRadar(true);});
@@ -1085,7 +1202,7 @@ state.map.on("click",function(){$("map-layers-panel").hidden=true;$("map-layers-
 document.addEventListener("fullscreenchange",function(){setTimeout(function(){if(state.map)state.map.invalidateSize({pan:false});},100);});
 document.addEventListener("keydown",function(e){if(e.key==="Escape"){$("map-layers-panel").hidden=true;$("map-layers-button").setAttribute("aria-expanded","false");if($("map-viewport").classList.contains("map-pseudo-fullscreen"))toggleMapFullscreen();}});
 syncMapLayerUI();setTimeout(function(){state.map.invalidateSize({pan:false});},350);updateMarkers();showRfsWarningMap();loadRadar();}
-function updateMarkers(){if(!state.map||!state.markers)return;state.markers.clearLayers();showMapFireExtents();if(!state.incidentsEnabled)return;state.incidents.forEach(function(f){var pt=coordinatesOf(f);if(!pt||!Number.isFinite(pt[0])||!Number.isFinite(pt[1]))return;if(state.mapNearbyOnly&&km(state.location.lat,state.location.lon,pt[0],pt[1])>state.radius)return;var level=incidentAlertStyle(f);L.marker(pt,{icon:fireLeafletMarkerIcon(fireIncidentKind(f),level.level,incidentTitle(f)+": "+level.level),keyboard:true,riseOnHover:true}).bindPopup(hazardIncidentPopup(f)).addTo(state.markers);});}
+function updateMarkers(){if(!state.map||!state.markers)return;showMapFireExtents();renderRadarIncidentMarkers();}
 function showMapFireExtents(){
  if(!state.map||!state.fireAreaLayer)return;
  state.fireAreaLayer.clearLayers();
