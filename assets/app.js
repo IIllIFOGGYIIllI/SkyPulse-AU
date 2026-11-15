@@ -8,7 +8,7 @@ var radarStored=stored.radar&&typeof stored.radar==="object"&&!Array.isArray(sto
 function radarSettingBool(key,fallback){return typeof radarStored[key]==="boolean"?radarStored[key]:fallback;}
 function radarSettingSpeed(value){return [5000,3500,2200].includes(Number(value))?Number(value):3500;}
 function radarSettingOpacity(value){var x=Number(value);return Number.isFinite(x)&&x>=.2&&x<=1?Math.round(x*20)/20:.6;}
-var state={location:stored.location||DEFAULT,radius:Number(stored.radius)||50,theme:stored.theme||"dark",notify:!!stored.notify,weather:null,map:null,markers:null,radarLayer:null,peekMap:null,peekLayer:null,radarFrames:[],radarHost:"",radarEnabled:radarSettingBool("rain",true),incidentsEnabled:radarSettingBool("incidents",true),radarTimer:null,radarIndex:-1,radarFollowLatest:radarSettingBool("follow",true),
+var state={location:stored.location||DEFAULT,radius:Number(stored.radius)||50,theme:stored.theme||"dark",notify:!!stored.notify,weather:null,weatherLocationKey:"",weatherFetchedAt:0,weatherCached:false,weatherFetchFailed:false,weatherSeq:0,forecastChartMode:"temperature",forecastDayIndex:0,map:null,markers:null,radarLayer:null,peekMap:null,peekLayer:null,radarFrames:[],radarHost:"",radarEnabled:radarSettingBool("rain",true),incidentsEnabled:radarSettingBool("incidents",true),radarTimer:null,radarIndex:-1,radarFollowLatest:radarSettingBool("follow",true),
 radarAutocheck:radarSettingBool("auto",true),radarLoop:radarSettingBool("loop",true),
 radarShowTimestamp:radarSettingBool("timestamp",true),radarSpeed:radarSettingSpeed(radarStored.speed),
 radarShareView:null,radarSharedAt:null,radarCurrentRegion:"local",radarFetchedAt:0,radarAttemptAt:0,radarLoadingPromise:null,radarRenderedKey:"",radarOutgoing:null,radarSwapTimer:null,radarLastError:"",radarTileErrors:0,baseLayer:null,locationMarker:null,mapTileFailures:0,mapNearbyOnly:radarSettingBool("nearby",true),mapWheelZoom:radarSettingBool("wheel",false),radarOpacity:radarSettingOpacity(radarStored.opacity),gpsMarker:null,gpsAccuracy:null,mapStatusTimer:null,fireDanger:null,fireDistrict:stored.fireDistrict||"",rfsAlerts:[],warningLayer:null,warningsEnabled:radarSettingBool("warnings",true),incidents:[],lastIncidentFetch:null,seen:stored.seen||null,weatherError:false};
@@ -24,18 +24,236 @@ function message(text){var t=$("toast");t.textContent=text;t.hidden=false;clearT
 function formatDate(d,opt){try{return new Intl.DateTimeFormat("en-AU",opt).format(new Date(d));}catch(e){return "—";}}
 function relTime(value){var delta=Math.max(0,Date.now()-new Date(value).getTime()),mins=Math.round(delta/60000);if(!Number.isFinite(mins))return "unknown";return mins<2?"just now":mins<60?mins+" min ago":Math.round(mins/60)+" h ago";}
 function validUrl(s){try{var u=new URL(s);return u.protocol==="https:"?u.href:null;}catch(e){return null;}}
-function weatherMeta(code,isDay){var c=Number(code);if(c===0)return ["Clear sky",isDay?"☀️":"🌙"];if(c<=2)return ["Partly cloudy",isDay?"🌤️":"☁️"];if(c===3)return ["Overcast","☁️"];if(c<=48)return ["Foggy","🌫️"];if(c<=57)return ["Drizzle","🌦️"];if(c<=67)return ["Rain","🌧️"];if(c<=77)return ["Snow","🌨️"];if(c<=82)return ["Rain showers","🌦️"];if(c<=86)return ["Snow showers","🌨️"];if(c>=95)return ["Thunderstorms","⛈️"];return ["Variable conditions","🌤️"];}
+function weatherMeta(code,isDay){if(code===null||code===undefined||!Number.isFinite(Number(code)))return ["Conditions unavailable","☁️"];var c=Number(code);if(c===0)return ["Clear sky",isDay?"☀️":"🌙"];if(c<=2)return ["Partly cloudy",isDay?"🌤️":"☁️"];if(c===3)return ["Overcast","☁️"];if(c<=48)return ["Foggy","🌫️"];if(c<=57)return ["Drizzle","🌦️"];if(c<=67)return ["Rain","🌧️"];if(c<=77)return ["Snow","🌨️"];if(c<=82)return ["Rain showers","🌦️"];if(c<=86)return ["Snow showers","🌨️"];if(c===95||c===96||c===99)return ["Thunderstorms","⛈️"];return ["Conditions unavailable","☁️"];}
 function setText(id,s){var el=$(id);if(el)el.textContent=s;}
 function theme(){document.documentElement.dataset.theme=state.theme;setText("theme-name",state.theme==="dark"?"Dark":"Light");$("theme-button").setAttribute("aria-label",state.theme==="dark"?"Switch to Light Theme":"Switch to Dark Theme");$("theme-button").title=state.theme==="dark"?"Switch to Light Theme":"Switch to Dark Theme";}
 function updateLocationUI(){var l=state.location;setText("heading-location",l.name);setText("settings-location",l.name+(l.region?", "+l.region:""));setText("incident-range","Within "+state.radius+" km of "+l.name);$("location-input").value=l.name;setText("radius-label",state.radius+" km");if($("radius"))$("radius").value=state.radius;updateOfficialStation();if(state.fireDanger)renderFireDanger();}
 async function getJSON(url,timeout){var c=new AbortController(),tm=setTimeout(function(){c.abort();},timeout||13000);try{var r=await fetch(url,{signal:c.signal,cache:"no-store"});if(!r.ok)throw Error("HTTP "+r.status);return await r.json();}finally{clearTimeout(tm);}}
 function updateWeatherStatus(text,error){if(!$("weather-status"))return;$("weather-status").innerHTML='<span class="pulse-dot" style="'+(error?"background:var(--red)":"")+'"></span>'+esc(text);}
-function createChart(hours,values){if(!$("temp-chart"))return;var nums=values.filter(function(v){return typeof v==="number";});if(!nums.length)return;var min=Math.floor(Math.min.apply(null,nums)-2),max=Math.ceil(Math.max.apply(null,nums)+2),points=values.map(function(v,i){return [18+i*(562/(values.length-1||1)),164-((v-min)/(max-min||1))*140];}),path=points.map(function(p,i){return (i?"L":"M")+p[0].toFixed(1)+","+p[1].toFixed(1);}).join(" "),area=path+" L580,175 L18,175 Z";$("temp-chart").innerHTML='<svg role="img" aria-label="Temperature forecast chart" viewBox="0 0 600 185" preserveAspectRatio="none"><defs><linearGradient id="temp-grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#61bafa" stop-opacity=".27"/><stop offset="100%" stop-color="#61bafa" stop-opacity="0"/></linearGradient></defs><path d="M18 35H580 M18 91H580 M18 150H580" stroke="currentColor" opacity=".10" stroke-dasharray="4 6" fill="none"/><path d="'+area+'" fill="url(#temp-grad)"/><path d="'+path+'" fill="none" stroke="#63baff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';var indices=[0,6,12,18,23].filter(function(i){return i<hours.length;});$("chart-labels").innerHTML=indices.map(function(i){return "<span>"+esc(localClock(hours[i]))+"</span>";}).join("");}
+function createChart(hours,values,mode){
+ if(!$("temp-chart"))return;
+ mode=mode||"temperature";
+ var configs={temperature:{label:"Temperature",unit:"°C",color:"#63baff"},rain:{label:"Hourly Rain Chance",unit:"%",color:"#5ec9a2"},wind:{label:"Wind Gusts",unit:"km/h",color:"#f5ab6b"}};
+ var config=configs[mode]||configs.temperature;
+ var list=(values||[]).map(function(v){return v==null||!Number.isFinite(Number(v))?null:Number(v);});
+ var available=list.filter(function(v){return v!==null;});
+ if(!available.length||!hours.length){$("temp-chart").innerHTML='<p class="muted">No '+esc(config.label.toLowerCase())+' data available for this period.</p>';setText("chart-labels","");return;}
+ var lo=Math.min.apply(null,available),hi=Math.max.apply(null,available),span=Math.max(4,hi-lo);
+ var min=mode==="rain"?0:Math.floor(lo-Math.max(1,span*.15));
+ var max=mode==="rain"?100:Math.ceil(hi+Math.max(1,span*.15));
+ if(mode==="wind")min=0;
+ if(max<=min)max=min+1;
+ var plotX=40,plotRight=585,plotTop=14,plotBottom=164;
+ var xy=function(v,i){return [plotX+i*((plotRight-plotX)/Math.max(1,list.length-1)),plotBottom-(v-min)/(max-min)*(plotBottom-plotTop)];};
+ var segments=[],segment=[];
+ list.forEach(function(v,i){if(v===null){if(segment.length){segments.push(segment);segment=[];}return;}segment.push(xy(v,i));});
+ if(segment.length)segments.push(segment);
+ var paths=segments.map(function(points){return points.map(function(p,i){return (i?"L":"M")+p[0].toFixed(2)+","+p[1].toFixed(2);}).join(" ");});
+ var guides=[0,1,2,3].map(function(k){
+  var yy=plotTop+k*(plotBottom-plotTop)/3,value=max-(max-min)*k/3;
+  return '<line x1="'+plotX+'" y1="'+yy.toFixed(1)+'" x2="'+plotRight+'" y2="'+yy.toFixed(1)+'" stroke="currentColor" stroke-opacity=".12" stroke-dasharray="4 5"/>'+
+   '<text x="34" y="'+(yy+3).toFixed(1)+'" font-size="10" fill="currentColor" text-anchor="end" opacity=".7">'+esc(String(Math.round(value)))+'</text>';
+ }).join("");
+ var dataPaths=paths.map(function(p){return '<path d="'+p+'" fill="none" stroke="'+config.color+'" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>';}).join("");
+ var dots=segments.filter(function(part){return part.length===1;}).map(function(part){return '<circle cx="'+part[0][0].toFixed(2)+'" cy="'+part[0][1].toFixed(2)+'" r="3" fill="'+config.color+'"/>';}).join("");
+ $("temp-chart").innerHTML='<svg role="img" aria-label="'+esc(config.label)+' modelled forecast for the next 24 hours. Minimum '+esc(String(lo.toFixed(1)))+' and maximum '+esc(String(hi.toFixed(1)))+' '+esc(config.unit)+'." viewBox="0 0 600 185" preserveAspectRatio="xMidYMid meet">'+guides+dataPaths+dots+'</svg>';
+ var indexes=[0,6,12,18,23].filter(function(i){return i<hours.length;});
+ $("chart-labels").innerHTML=indexes.map(function(i){return "<span>"+esc(localClock(hours[i]))+"</span>";}).join("");
+}
+function forecastFinite(v){return v!==null&&v!==undefined&&Number.isFinite(Number(v))?Number(v):null;}
+function forecastDisplay(v,digits,unit){var n=forecastFinite(v);return n===null?"—":n.toFixed(digits)+(unit||"");}
+function forecastLocationKey(location){return Number(location.lat).toFixed(4)+":"+Number(location.lon).toFixed(4);}
+function forecastModelEpoch(data){
+ var current=data&&data.current||{},match=String(current.time||"").match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/);
+ if(!match||!Number.isFinite(Number(data.utc_offset_seconds)))return null;
+ var localMillis=Date.parse(match[1]+"T"+match[2]+":00Z");
+ return Number.isFinite(localMillis)?localMillis-Number(data.utc_offset_seconds)*1000:null;
+}
+function forecastLocalZone(data){return String(data.timezone_abbreviation||"local time").slice(0,18);}
+function forecastFetchedClock(data,epoch){
+ if(!Number.isFinite(epoch))return "—";
+ var zone=data&&typeof data.timezone==="string"?data.timezone:"Australia/Sydney";
+ try{return new Intl.DateTimeFormat("en-AU",{timeZone:zone,hour:"numeric",minute:"2-digit",hour12:true,timeZoneName:"short"}).format(epoch);}
+ catch(e){return new Date(epoch).toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"});}
+}
+function forecastValidate(data){
+ if(!data||data.error||!data.current||!data.hourly||!data.daily)throw Error("Weather model response incomplete");
+ if(!Number.isFinite(data.current.temperature_2m)||!data.current.time||!forecastModelEpoch(data))throw Error("Current model estimate or timezone missing");
+ var h=data.hourly,d=data.daily;
+ if(!Array.isArray(h.time)||h.time.length<24||!Array.isArray(h.temperature_2m)||h.temperature_2m.length!==h.time.length)throw Error("Hourly forecast unavailable");
+ if(!Array.isArray(d.time)||d.time.length<2||!Array.isArray(d.temperature_2m_max)||d.temperature_2m_max.length<2)throw Error("Daily forecast unavailable");
+ if(d.time.some(function(t){return !/^\d{4}-\d{2}-\d{2}$/.test(String(t));}))throw Error("Invalid model dates");
+ if(data.latitude!=null&&!Number.isFinite(Number(data.latitude)))throw Error("Invalid model coordinates");
+ return data;
+}
+const FORECAST_CACHE_KEY="skypulse.weather.cache.v1";
+const FORECAST_CACHE_MS=2*60*60*1000;
+function forecastCacheRead(key){
+ try{
+  var item=JSON.parse(localStorage.getItem(FORECAST_CACHE_KEY)||"null");
+  if(!item||item.key!==key||!Number.isFinite(item.checkedAt)||Date.now()-item.checkedAt<0||Date.now()-item.checkedAt>FORECAST_CACHE_MS)return null;
+  return {data:forecastValidate(item.data),checkedAt:item.checkedAt};
+ }catch(e){return null;}
+}
+function forecastCacheWrite(key,data){
+ try{localStorage.setItem(FORECAST_CACHE_KEY,JSON.stringify({key:key,data:data,checkedAt:Date.now()}));}catch(e){}
+}
+function forecastHealth(){
+ var data=state.weather,modelEpoch=forecastModelEpoch(data),age=modelEpoch===null?Infinity:Date.now()-modelEpoch;
+ var pill=$("forecast-health-pill"),kind="checking",title="Checking the weather forecast…",detail="Numerical weather model; not direct observations";
+ if(!data){
+  kind=state.weatherFetchFailed?"failed":"checking";
+  title=state.weatherFetchFailed?"Forecast unavailable":"Retrieving model forecast…";
+  detail=state.weatherFetchFailed?"No verified weather data available for this location. Try again or check BOM.":"Open-Meteo · Numerical forecast data";
+ }else{
+  var old=age>90*60000,delayed=age>55*60000;
+  kind=state.weatherCached?"cached":state.weatherFetchFailed?"failed":old?"stale":delayed?"delayed":"recent";
+  title=state.weatherCached?"CACHED FORECAST — not newly verified":
+   state.weatherFetchFailed?"UPDATE FAILED — previous forecast shown":
+   old?"OLD MODEL TIME — check official sources":
+   delayed?"DELAYED MODEL TIME":"FORECAST DATA AVAILABLE";
+  detail="Open-Meteo model estimate · "+(Number.isFinite(age)?Math.max(0,Math.round(age/60000))+" min since model valid time":"model time unavailable")+
+   (state.weatherFetchFailed?" · Latest refresh unsuccessful":"")+
+   (state.weatherCached?" · Stored locally on this device":"")+
+   " · Not a weather-station observation";
+ }
+ if(pill){pill.className="forecast-health-pill "+kind;pill.textContent=kind==="recent"?"MODEL DATA":kind==="delayed"?"DELAYED":kind==="stale"?"STALE":kind==="cached"?"CACHED":kind==="failed"?"CHECK FAILED":"CHECKING";}
+ setText("forecast-health-title",title);
+ setText("forecast-health-detail",detail);
+ setText("forecast-model-time",data&&modelEpoch!==null?localClock(data.current.time)+" "+forecastLocalZone(data):"—");
+ setText("forecast-checked-time",state.weatherFetchedAt?forecastFetchedClock(data,state.weatherFetchedAt):"—");
+}
+function forecastHours(data){
+ var h=data&&data.hourly||{},times=h.time||[],now=data.current&&data.current.time;
+ var start=times.findIndex(function(t){return typeof t==="string"&&now&&t.slice(0,13)>now.slice(0,13);});
+ if(start<0)start=0;
+ return {h:h,start:start,times:times.slice(start,start+24)};
+}
+function forecastSixHours(data){
+ var range=forecastHours(data),h=range.h,start=range.start,end=Math.min(start+6,(h.time||[]).length);
+ var indices=Array.from({length:Math.max(0,end-start)},function(_,i){return i+start;});
+ function validValues(key){return indices.map(function(i){return forecastFinite((h[key]||[])[i]);}).filter(function(v){return v!==null;});}
+ var p=validValues("precipitation_probability"),mm=validValues("precipitation"),gust=validValues("wind_gusts_10m"),temps=validValues("temperature_2m");
+ var max=function(arr){return arr.length?Math.max.apply(null,arr):null;},min=function(arr){return arr.length?Math.min.apply(null,arr):null;};
+ var tempString=temps.length?forecastDisplay(min(temps),0,"°")+"–"+forecastDisplay(max(temps),0,"°C"):"—";
+ var values=[p.length?forecastDisplay(max(p),0,"%"):"—",mm.length?forecastDisplay(mm.reduce(function(a,b){return a+b;},0),1," mm"):"—",
+ gust.length?forecastDisplay(max(gust),0," km/h"):"—",tempString];
+ var names=["rain-chance","rain-mm","gust","temps"];
+ names.forEach(function(name,i){setText("overview-next-"+name,values[i]);setText("forecast-next-"+name,values[i]);});
+ setText("forecast-brief-period",range.times.length?localClock(range.times[0])+" – "+localClock(range.times[Math.min(5,range.times.length-1)]):"Hourly data unavailable");
+}
+function forecastChartRender(){
+ if(!$("temp-chart")||!state.weather)return;
+ var m=state.forecastChartMode,mapping={
+  temperature:{field:"temperature_2m",title:"24-Hour Temperature Trend",subtitle:"Hourly model estimate · °C"},
+  rain:{field:"precipitation_probability",title:"24-Hour Rain Probability",subtitle:"Hourly probability · % · not measured rainfall"},
+  wind:{field:"wind_gusts_10m",title:"24-Hour Wind Gust Forecast",subtitle:"Hourly modelled gusts · km/h"}
+ };
+ var config=mapping[m]||mapping.temperature,range=forecastHours(state.weather),h=range.h;
+ createChart(range.times,(h[config.field]||[]).slice(range.start,range.start+24),m);
+ setText("forecast-chart-title",config.title);setText("forecast-chart-subtitle",config.subtitle);
+ document.querySelectorAll("[data-forecast-chart]").forEach(function(el){
+  var active=el.dataset.forecastChart===m;el.classList.toggle("active",active);el.setAttribute("aria-pressed",String(active));
+ });
+}
+function forecastHourlyRender(){
+ if(!$("hourly-list")||!state.weather)return;
+ var range=forecastHours(state.weather),h=range.h,start=range.start;
+ $("hourly-list").innerHTML=range.times.map(function(t,i){
+  var idx=start+i,condition=weatherMeta((h.weather_code||[])[idx],(h.is_day||[])[idx]===1),p=forecastFinite((h.precipitation_probability||[])[idx]),
+  rain=forecastFinite((h.precipitation||[])[idx]),gust=forecastFinite((h.wind_gusts_10m||[])[idx]);
+  return '<div class="hour-cell" aria-label="'+esc(localDay(t)+" "+localClock(t)+": "+condition[0])+'"><small>'+
+  esc(i===0?"Next · "+localClock(t):localClock(t))+'</small><span class="hour-icon" aria-hidden="true">'+condition[1]+'</span>'+
+  '<strong>'+forecastDisplay((h.temperature_2m||[])[idx],0,"°")+'</strong>'+
+  '<span class="hour-rain">☂ Chance '+(p===null?"—":Math.round(p)+"%")+'</span>'+
+  '<span class="hour-secondary">Rain '+forecastDisplay(rain,1," mm")+'</span>'+
+  '<span class="hour-secondary">Gust '+forecastDisplay(gust,0," km/h")+'</span></div>';
+ }).join("");
+ if(!range.times.length)$("hourly-list").textContent="Hourly forecast temporarily unavailable.";
+}
+function forecastDayDetails(){
+ if(!$("forecast-day-details")||!state.weather)return;
+ var d=state.weather.daily||{},i=Math.max(0,Math.min((d.time||[]).length-1,state.forecastDayIndex||0)),date=(d.time||[])[i];
+ if(!date)return;
+ var met=weatherMeta((d.weather_code||[])[i],true),h=state.weather.hourly||{},chance=dailyRainChance(d,h,i);
+ var fields=[
+  ["High",forecastDisplay((d.temperature_2m_max||[])[i],0,"°C")],
+  ["Low",forecastDisplay((d.temperature_2m_min||[])[i],0,"°C")],
+  ["Highest hourly rain chance",chance===null?"—":forecastDisplay(chance,0,"%")],
+  ["Forecast precipitation",forecastDisplay((d.precipitation_sum||[])[i],1," mm")],
+  ["Maximum wind gust",forecastDisplay((d.wind_gusts_10m_max||[])[i],0," km/h")],
+  ["Peak UV index",forecastDisplay((d.uv_index_max||[])[i],1,"")],
+  ["Sunrise",localClock((d.sunrise||[])[i])],
+  ["Sunset",localClock((d.sunset||[])[i])]
+ ];
+ $("forecast-day-details").innerHTML='<h4>'+esc(localDay(date))+' · '+esc(met[0])+'</h4><p>Model-based outlook for this date. Daily totals and probabilities are estimates and may change.</p>'+
+ '<div class="forecast-day-metrics">'+fields.map(function(f){return '<div><span>'+esc(f[0])+'</span><strong>'+esc(f[1])+'</strong></div>';}).join("")+'</div>';
+ document.querySelectorAll("[data-forecast-day]").forEach(function(el){var active=Number(el.dataset.forecastDay)===i;el.setAttribute("aria-pressed",String(active));});
+}
+function forecastDailyRender(){
+ if(!$("daily-list")||!state.weather)return;
+ var d=state.weather.daily||{},h=state.weather.hourly||{};
+ $("daily-list").innerHTML=(d.time||[]).slice(0,7).map(function(t,i){
+  var info=weatherMeta((d.weather_code||[])[i],true),rain=forecastFinite((d.precipitation_sum||[])[i]),chance=dailyRainChance(d,h,i);
+  return '<button type="button" class="day" data-forecast-day="'+i+'" aria-pressed="'+(i===state.forecastDayIndex?'true':'false')+'" aria-label="'+esc(localDay(t)+" forecast details")+'">'+
+  '<small>'+esc(i===0?"Today":localDay(t))+'</small><span class="day-icon" aria-hidden="true">'+info[1]+'</span>'+
+  '<strong>'+forecastDisplay((d.temperature_2m_max||[])[i],0,"°")+' <span class="min">'+forecastDisplay((d.temperature_2m_min||[])[i],0,"°")+'</span></strong>'+
+  '<span class="rain">☂ '+(rain===null?"—":forecastDisplay(rain,1," mm"))+'</span><span class="rain-chance">Peak hourly rain '+(chance===null?"—":forecastDisplay(chance,0,"%"))+'</span></button>';
+ }).join("");
+ $("daily-list").querySelectorAll("[data-forecast-day]").forEach(function(btn){
+  btn.addEventListener("click",function(){state.forecastDayIndex=Number(btn.dataset.forecastDay);forecastDayDetails();});
+ });
+ forecastDayDetails();
+}
+function forecastClear(){
+ ["current-temp","current-description","feels-like","today-high","today-low","current-date","current-clock",
+ "wind-speed","wind-gust","humidity","uv-index","uv-description","rain-total","today-rain","forecast-update",
+ "detail-dewpoint","detail-pressure","detail-wind-direction","detail-cloud-cover","detail-sunrise","detail-sunset",
+ "tomorrow-date","tomorrow-condition","tomorrow-min","tomorrow-max","tomorrow-rain-chance","tomorrow-rain-amount",
+ "tomorrow-gust","tomorrow-uv","tomorrow-narrative",
+ "overview-next-rain-chance","overview-next-rain-mm","overview-next-gust","overview-next-temps",
+ "forecast-next-rain-chance","forecast-next-rain-mm","forecast-next-gust","forecast-next-temps","forecast-brief-period"]
+ .forEach(function(id){setText(id,"—");});
+ ["temp-chart","chart-labels","hourly-list","daily-list","forecast-day-details"].forEach(function(id){
+  if($(id))$(id).textContent="Loading model forecast…";
+ });
+}
+function forecastRender(data){
+ var c=data.current||{},d=data.daily||{},h=data.hourly||{},meta=weatherMeta(c.weather_code,c.is_day===1);
+ setText("current-temp",num(c.temperature_2m));setText("current-description",meta[0]);setText("weather-symbol",meta[1]);
+ setText("feels-like","Feels like "+forecastDisplay(c.apparent_temperature,0,"°C"));
+ setText("today-high",forecastValue(d.temperature_2m_max,0,0,"°"));
+ setText("today-low",forecastValue(d.temperature_2m_min,0,0,"°"));
+ setText("current-date",localDay(c.time));
+ setText("current-clock","Modelled conditions in "+state.location.name+" · valid at "+localClock(c.time)+" "+forecastLocalZone(data));
+ setText("wind-speed",forecastDisplay(c.wind_speed_10m,0," km/h"));
+ setText("wind-gust","Modelled gusts "+forecastDisplay(c.wind_gusts_10m,0," km/h"));
+ setText("humidity",forecastDisplay(c.relative_humidity_2m,0,"%"));
+ var uv=forecastFinite((d.uv_index_max||[])[0]);
+ setText("uv-index",uv===null?"—":forecastDisplay(uv,0,""));
+ setText("uv-description",uv===null?"Today's estimated peak":uv>=11?"Extreme · Predicted daily peak":uv>=8?"Very High · Predicted daily peak":uv>=6?"High · Predicted daily peak":uv>=3?"Moderate · Predicted daily peak":"Low · Predicted daily peak");
+ setText("rain-total",forecastValue(d.precipitation_sum,0,1,"mm"));
+ var rainChance=dailyRainChance(d,h,0);
+ setText("today-rain",rainChance===null?"—":Math.round(rainChance)+"%");
+ setText("forecast-update",localClock(c.time));
+ setText("detail-dewpoint",forecastDisplay(c.dew_point_2m,1,"°C"));
+ setText("detail-pressure",forecastDisplay(c.pressure_msl,1," hPa"));
+ setText("detail-wind-direction",c.wind_direction_10m==null?"—":degreeBearing(c.wind_direction_10m));
+ setText("detail-cloud-cover",forecastDisplay(c.cloud_cover,0,"%"));
+ setText("detail-sunrise",localClock((d.sunrise||[])[0]));
+ setText("detail-sunset",localClock((d.sunset||[])[0]));
+ showTomorrow(data);updateOfficialStation();
+ forecastSixHours(data);forecastHourlyRender();forecastDailyRender();forecastChartRender();forecastHealth();
+}
+
 function degreeBearing(value){var n=Number(value);if(!Number.isFinite(n))return "—";var labels=["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];return labels[Math.round((n%360)/22.5)%16]+" · "+Math.round(n)+"°";}
 function localClock(iso){if(!iso||typeof iso!=="string"||!iso.includes("T"))return "—";var h=Number(iso.slice(11,13)),m=iso.slice(14,16);if(!Number.isFinite(h))return "—";return (h%12||12)+":"+m+" "+(h>=12?"pm":"am");}
 function localDay(iso){if(!iso)return "—";return formatDate(iso.slice(0,10)+"T12:00:00Z",{weekday:"long",day:"numeric",month:"short",timeZone:"UTC"});}
 function forecastValue(arr,index,digits,suffix){if(!Array.isArray(arr)||arr[index]===null||arr[index]===undefined||!Number.isFinite(Number(arr[index])))return "—";return Number(arr[index]).toFixed(digits)+" "+(suffix||"");}
-function dailyRainChance(day,hourly,index){var p=day.precipitation_probability_max;if(Array.isArray(p)&&p[index]!=null&&Number.isFinite(Number(p[index])))return Number(p[index]);var date=(day.time||[])[index],vals=(hourly.time||[]).map(function(t,i){return t&&t.slice(0,10)===date?Number((hourly.precipitation_probability||[])[i]):NaN;}).filter(Number.isFinite);return vals.length?Math.max.apply(null,vals):null;}
+function dailyRainChance(day,hourly,index){var p=day.precipitation_probability_max;if(Array.isArray(p)&&p[index]!=null&&Number.isFinite(Number(p[index])))return Number(p[index]);var date=(day.time||[])[index],vals=(hourly.time||[]).map(function(t,i){
+ var v=(hourly.precipitation_probability||[])[i];
+ return t&&t.slice(0,10)===date&&v!=null&&Number.isFinite(Number(v))?Number(v):NaN;
+}).filter(Number.isFinite);return vals.length?Math.max.apply(null,vals):null;}
 function narrativeFor(day,hourly,index){if(!day.time||!day.time[index])return "Next-day forecast unavailable.";var meta=weatherMeta((day.weather_code||[])[index],true),min=(day.temperature_2m_min||[])[index],max=(day.temperature_2m_max||[])[index],chance=dailyRainChance(day,hourly,index),rain=(day.precipitation_sum||[])[index],gust=(day.wind_gusts_10m_max||[])[index];var words=[meta[0]+" conditions are forecast for tomorrow."];
 if(Number.isFinite(Number(min))&&Number.isFinite(Number(max))&&min!=null&&max!=null)words.push("Temperatures are expected to range from "+Math.round(min)+"°C to "+Math.round(max)+"°C.");
 if(chance!=null)words.push("The highest forecast hourly rain probability is "+Math.round(chance)+"%.");
@@ -549,6 +767,10 @@ function init(){
   if($("weather-map")||$("radar-peek-map"))loadRadar(true);
  }
  on("refresh-button","click",refreshPage);
+ on("forecast-retry","click",loadWeather);
+ document.querySelectorAll("[data-forecast-chart]").forEach(function(btn){
+  btn.addEventListener("click",function(){state.forecastChartMode=btn.dataset.forecastChart;forecastChartRender();});
+ });
  on("hazards-refresh","click",loadHazards);
  on("radius","input",function(e){state.radius=Number(e.target.value);save();setText("radius-label",state.radius+" km");
    renderIncidents();updateMarkers();window.dispatchEvent(new Event("skypulse:watch-changed"));});
@@ -575,6 +797,7 @@ function init(){
  if($("incidents-list")||$("snapshot-incidents")||$("weather-map"))loadHazards();
  setInterval(function(){if(document.visibilityState==="visible"){if($("current-temp")||$("temp-chart"))loadWeather();
    if($("incidents-list")||$("snapshot-incidents")||$("weather-map"))loadHazards();}},15*60*1000);
+ setInterval(function(){if(document.visibilityState==="visible"&&state.weather)forecastHealth();},60000);
 }
 document.addEventListener("DOMContentLoaded",init);
 })();
