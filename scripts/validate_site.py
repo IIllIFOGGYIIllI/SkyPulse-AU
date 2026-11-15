@@ -35,6 +35,16 @@ check("Peak UV is labelled daily", "TODAY'S PEAK UV" in html)
 check("Weather station clearly identified", "Cessnock Airport AWS" in html)
 check("Model values never labelled as measured readings", "CURRENT MODEL ESTIMATE" in html)
 check("FDR integration present", "loadFireDanger" in js and "renderFireDanger" in js)
+for item in ["rfs-alert-feed-state", "rfs-alerts-list", "wmo-warnings-list", "map-layer-warnings",
+             "push-consent", "push-include-incidents", "push-status", "push-enable",
+             "push-disable", "push-update", "push-test"]:
+    check("Official warnings / Push panel: " + item, 'id="' + item + '"' in html)
+check("Push client script included", "assets/push.js" in html and "assets/push-config.js" in html)
+check("RFS CAP integration", "loadOfficialRfsWarnings()" in js and "showRfsWarningMap" in js)
+check("WMO references labelled as recent", "Recent WMO-Indexed BOM Updates" in html)
+check("Background alerts require explicit opt-in", "push-consent" in (ROOT / "assets/push.js").read_text(encoding="utf-8"))
+check("Worker has VAPID and source-age safeguards", "VAPID_PRIVATE_PKCS8" in (ROOT / "notifications/src/index.js").read_text(encoding="utf-8") and "MAX_FEED_AGE" in (ROOT / "notifications/src/index.js").read_text(encoding="utf-8"))
+check("Client config has no active credentials", 'SKYPULSE_PUSH_API = ""' in (ROOT / "assets/push-config.js").read_text(encoding="utf-8"))
 check("Emergency safety disclaimer displayed", "For emergencies call" in html)
 check("BOM fallback for unavailable warnings", "Warning feed unavailable" in js)
 if errors:

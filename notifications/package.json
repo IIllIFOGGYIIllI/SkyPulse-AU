@@ -1,0 +1,8 @@
+{
+  "name": "skypulse-au-alerts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node test/smoke.mjs"
+  }
+}
