@@ -130,3 +130,17 @@ body.map-lock-scroll{overflow:hidden}
 @media(max-width:890px){.enhanced-dashboard{grid-template-columns:1fr}.detail-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:620px){.enhanced-dashboard,.weather-media-grid{grid-template-columns:1fr;gap:13px}.weather-insight-note{margin:14px 0;line-height:1.7}.enhanced-dashboard>.card,.weather-media-grid>.card{padding:19px}.detail-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.detail-item{padding:13px}.detail-item strong{font-size:18px}.tomorrow-temps>span{min-width:49px;height:43px;font-size:17px}.tomorrow-condition>span{font-size:39px}.tomorrow-condition b{font-size:15px}.tomorrow-snapshot{gap:9px}.enhanced-dashboard .card-title-row{flex-wrap:wrap}.radar-peek-map{height:200px}}
 @media(max-width:350px){.tomorrow-snapshot{align-items:start;flex-direction:column}.detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Official RFS Fire Danger District Forecasts */
+.fire-danger-panel{margin-top:16px;padding:22px 24px}
+.fdr-selector-row{display:flex;align-items:center;gap:16px;margin:12px 0;flex-wrap:wrap}.fdr-selector-row label{font-size:12px;color:var(--muted);font-weight:700}
+.fdr-selector-row select{color:var(--text);background:var(--panel-2);border:1px solid var(--border);border-radius:9px;padding:10px 13px;min-width:220px;max-width:100%;cursor:pointer}
+.fdr-selector-row select:focus-visible{outline:2px solid var(--accent)}
+.fdr-forecast-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:15px}
+.fdr-day{display:grid;gap:6px;align-content:start;background:var(--panel-2);border:1px solid var(--border);border-radius:12px;padding:17px}
+.fdr-day>span{font-size:11px;font-weight:800;letter-spacing:.6px;color:var(--muted)}
+.fdr-day>strong{font:800 20px Manrope;line-height:1.4;color:var(--text)}
+.fdr-day>small{font-size:11px;color:var(--muted);line-height:1.5}
+.fdr-day[data-level=catastrophic]{border-color:#bf2828}.fdr-day[data-level=extreme]{border-color:#e54f4a}.fdr-day[data-level=high]{border-color:#e6a338}
+.fire-danger-panel>.text-link{display:inline-block;margin-top:13px}
+@media(max-width:620px){.fire-danger-panel{padding:18px}.fdr-selector-row{display:grid;gap:7px}.fdr-selector-row select{width:100%}.fdr-day{padding:13px}.fdr-day>strong{font-size:16px}}
