@@ -105,3 +105,6 @@ SkyPulse AU links directly to the [Bureau of Meteorology radar](https://www.bom.
 
 ### Forecast and overview reliability (16 November 2026)
 The Open-Meteo weather pages now show a model-valid timestamp, last successful retrieval, an explicit recent/delayed/stale/cached/failed status, and a six-hour model summary. The dedicated forecast includes three hourly chart modes, 24 hourly cards and selectable 7-day details. The source is numerical weather modelling, not observed station conditions, and precipitation probabilities refer to the modelled hour. The app validates the response and uses a location-keyed, time-limited cache only with visible labelling. Failed requests never imply that old values are newly verified.
+
+### NSW Fire Area Explorer (16 November 2026)
+[NSW Hazards](hazards.html) includes a dedicated map of official RFS CAP warning polygons, a separate incident GeoJSON polygon layer, incident point locations, monitoring-radius overlay and warning proximity assessment. Clicking warning/incident cards focuses the relevant mapped area. The [radar](radar.html) map also has a distinct incident extent layer. Stale/unavailable feeds disable automated overlap conclusions. Published geometry may be incomplete or delayed: no-overlap does **not** mean safe. Tests: `scripts/test_fire_geometry.py` and `scripts/test_fire_areas.mjs`.

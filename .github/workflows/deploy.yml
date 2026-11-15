@@ -44,6 +44,7 @@ jobs:
           node --check notifications/generate-vapid.mjs
           node notifications/test/smoke.mjs
           python scripts/validate_site.py
+          python scripts/test_fire_geometry.py
       - name: Check Forecast API Fields
         continue-on-error: true
         run: python scripts/check_weather_api.py
@@ -58,6 +59,7 @@ jobs:
           node scripts/check_mobile_layout.mjs
           node scripts/test_radar_studio.mjs
           node scripts/test_forecast_reliability.mjs
+          node scripts/test_fire_areas.mjs
           rm -rf node_modules package-lock.json
       - name: Configure Pages
         uses: actions/configure-pages@v5
