@@ -64,6 +64,47 @@ def load_bom():
         print("BOM feed unavailable:", type(exc).__name__, str(exc)[:200])
         write("bom.json", {"source": source, "retrieved_at": None, "warnings": [], "error": "Source retrieval failed; verify with BOM."})
 
+def load_fire_danger():
+    """Parse the RFS's CC BY district ratings and total fire bans (today/tomorrow)."""
+    source = "https://www.rfs.nsw.gov.au/feeds/fdrToban.xml"
+    try:
+        root = ET.fromstring(download(source))
+        if root.tag.split("}")[-1] != "FireDangerMap":
+            raise ValueError("Unexpected Fire Danger Map root element")
+        districts = []
+        for item in root.iter():
+            if item.tag.split("}")[-1] != "District":
+                continue
+            data = {child.tag.split("}")[-1]: (child.text or "").strip() for child in item}
+            name = data.get("Name", "")
+            if not name:
+                continue
+            toban_today = data.get("FireBanToday", "").lower()
+            toban_tomorrow = data.get("FireBanTomorrow", "").lower()
+            districts.append({
+                "name": name[:100],
+                "rating_today": data.get("DangerLevelToday", "")[:60],
+                "rating_tomorrow": data.get("DangerLevelTomorrow", "")[:60],
+                "ban_today": toban_today == "yes" if toban_today in ("yes", "no") else None,
+                "ban_tomorrow": toban_tomorrow == "yes" if toban_tomorrow in ("yes", "no") else None
+            })
+        if not districts:
+            raise ValueError("No district data found")
+        write("fdr.json", {
+            "source": source,
+            "retrieved_at": now(),
+            "districts": districts,
+            "scope": "NSW RFS fire weather districts",
+            "warning": "Check the official NSW RFS site for current fire danger and total fire ban instructions."
+        })
+        print("RFS fire-danger districts:", len(districts),
+              "Greater Hunter:", next((x for x in districts if x["name"].lower() == "greater hunter"), "not present"))
+    except Exception as exc:
+        print("RFS fire danger unavailable:", type(exc).__name__, str(exc)[:220])
+        write("fdr.json", {"source": source, "retrieved_at": None, "districts": [], "error": "Source retrieval failed. Check NSW RFS."})
+
+
 if __name__ == "__main__":
     load_rfs()
     load_bom()
+    load_fire_danger()
