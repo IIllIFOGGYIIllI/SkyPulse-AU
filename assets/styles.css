@@ -573,3 +573,52 @@ body[data-page=forecast] .day .rain-chance{font-size:10px;font-weight:700;color:
  body[data-page=forecast] .day{min-height:125px;padding:11px 8px}
  body[data-page=forecast] .day .day-icon{font-size:25px}
 }
+
+/* NSW Fire Area Explorer — geographic warning polygons != published incident footprints */
+.fire-map-workspace{padding:22px 23px;margin:0 0 18px}
+.fire-map-head{display:flex;justify-content:space-between;align-items:center;gap:13px;margin-bottom:15px}
+.fire-map-head .eyebrow{margin-bottom:5px}
+.fire-map-head h3{font:800 18px/1.35 Manrope,sans-serif;color:var(--text);margin:0 0 5px}
+.fire-map-head p{font-size:12px;line-height:1.6;color:var(--muted);margin:0;max-width:750px}
+.fire-map-actions{display:flex;gap:7px;flex-wrap:wrap;flex:none}
+.fire-map-actions button{font:800 11px Manrope,sans-serif;min-height:36px}
+.fire-map-statuses{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:13px}
+.fire-map-statuses span{display:inline-flex;border:1px solid var(--border);border-radius:8px;background:var(--panel-2);padding:9px 11px;font:700 10.5px/1.4 Manrope,sans-serif;color:var(--muted)}
+.fire-map-statuses span.warn{color:var(--amber);border-color:var(--amber)}
+.fire-area-layout{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(270px,.85fr);gap:16px;align-items:stretch}
+.fire-map-body{min-width:0}
+.fire-area-map{height:470px;border:1px solid var(--border);border-radius:12px;background:#112943;overflow:hidden;z-index:0}
+.fire-area-map .leaflet-container{height:100%;width:100%}
+.fire-area-map .leaflet-control-attribution{font-size:9px!important}
+.fire-area-map>p{padding:18px;color:#dae9f5;font-size:12px}
+.fire-map-legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 0 8px;font-size:10px;color:var(--muted)}
+.fire-map-legend>span{display:inline-flex;gap:6px;align-items:center}
+.fire-key{display:inline-block;width:11px;height:11px;border-radius:3px;border:2px solid currentColor;background:color-mix(in srgb,currentColor 18%,transparent)}
+.fire-key.advice{color:#e1b74f}.fire-key.watch{color:#ed8c41}.fire-key.emergency{color:#e9555c}
+.fire-key.other{color:#9aabc2}.fire-key.footprint{color:#c59cea;border-style:dashed}
+.fire-map-controls{display:flex;flex-wrap:wrap;gap:6px 17px;border-top:1px solid var(--border);padding:11px 0 0}
+.fire-map-controls label{display:inline-flex;gap:7px;align-items:center;cursor:pointer;color:var(--text);font-size:11px;font-weight:700}
+.fire-map-controls input{accent-color:var(--accent);width:16px;height:16px}
+.fire-zone-inspector{border:1px solid var(--border);border-radius:12px;background:var(--panel-2);padding:17px;min-width:0;display:flex;flex-direction:column}
+.fire-zone-inspector h4{font:800 17px Manrope,sans-serif;margin:0 0 5px}
+.fire-zone-inspector p{font-size:11px;color:var(--muted);line-height:1.6;margin:0}
+.fire-geofence-state{font:800 12px/1.5 Manrope,sans-serif;padding:12px;border-radius:9px;margin:14px 0;background:var(--panel-3);border:1px solid var(--border);color:var(--text)}
+.fire-geofence-state.intersect{border-color:#e9555c;color:#ed9ba0;background:#ec586a14}
+.fire-geofence-state.near{border-color:var(--amber);color:var(--amber)}
+.fire-geofence-state.unknown{border-color:var(--amber);color:var(--amber)}
+.fire-overlaps{display:grid;gap:8px;align-content:start}
+.fire-overlap-entry{padding:11px;border:1px solid var(--border);border-radius:9px;background:var(--panel);display:grid;gap:5px}
+.fire-overlap-entry strong{font-size:11px;line-height:1.4}
+.fire-overlap-entry small{font-size:10px;line-height:1.5;color:var(--muted)}
+.fire-overlap-entry a,.fire-inspector-foot a{font-size:11px;font-weight:800;color:var(--accent)}
+.fire-inspector-foot{display:grid;gap:10px;padding-top:15px;margin-top:auto}
+.fire-attribution{font-size:10px;color:var(--muted);margin:13px 0 0;line-height:1.6}
+.fire-attribution a{color:var(--accent)}
+.rfs-alert-entry .rfs-alert-map-button,.feed-item .fire-area-view-button{font:800 11px Manrope,sans-serif;min-height:33px;padding:7px 10px;color:var(--accent);border:1px solid var(--border);border-radius:8px;background:var(--panel-2);justify-self:start}
+.rfs-alert-entry .rfs-alert-area{color:var(--muted);font-size:11px;line-height:1.5}
+.rfs-alert-entry .warning-severity.aws-advice{color:#e5bc58}
+.rfs-alert-entry .warning-severity.aws-watch{color:#ee9b50}
+.rfs-alert-entry .warning-severity.aws-emergency{color:#f27480;border-color:#ed6472}
+@media(max-width:1150px){.fire-area-layout{grid-template-columns:minmax(0,1fr)}.fire-zone-inspector{min-height:140px}.fire-inspector-foot{display:flex;gap:15px;flex-wrap:wrap}}
+@media(max-width:620px){.fire-map-workspace{padding:15px 12px}.fire-map-head{display:grid}.fire-map-actions{display:grid;grid-template-columns:1fr 1fr}.fire-area-map{height:380px}
+.fire-zone-inspector{padding:13px}.fire-map-legend{gap:9px}}

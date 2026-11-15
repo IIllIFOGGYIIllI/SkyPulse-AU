@@ -52,13 +52,52 @@
 </nav>
 <section id="hazards" class="section">
           <div class="section-header compact"><div><div class="eyebrow">OFFICIAL INFORMATION SOURCES</div><h2>NSW Hazard Monitoring</h2><p class="muted">Statewide notices and nearby mapped fire incidents are displayed separately.</p></div><button type="button" id="hazards-refresh" class="outline-button">↻ Refresh Feeds</button></div>
+
+          <article class="card fire-map-workspace" id="fire-map-workspace" aria-labelledby="fire-map-heading">
+            <div class="fire-map-head">
+              <div><div class="eyebrow">OFFICIAL RFS GEOSPATIAL INFORMATION</div><h3 id="fire-map-heading">Fire Warning Areas &amp; Incident Boundaries</h3>
+                <p>Published NSW RFS warning polygons and available mapped incident extents. These are different layers, with different meaning and update times.</p></div>
+              <div class="fire-map-actions"><button type="button" id="fire-map-home" class="outline-button">⌖ Selected Location</button><button type="button" id="fire-map-fit" class="outline-button">Fit Mapped Areas</button></div>
+            </div>
+            <div class="fire-map-statuses" role="status">
+              <span id="fire-warning-feed-health">Warning areas: checking official CAP feed…</span>
+              <span id="fire-incident-feed-health">Incident geometry: checking RFS feed…</span>
+            </div>
+            <div class="fire-area-layout">
+              <div class="fire-map-body">
+                <div id="fire-area-map" class="fire-area-map" role="region" aria-label="Interactive NSW RFS fire warning polygons and reported incident area map"><p>Loading NSW fire areas…</p></div>
+                <div class="fire-map-legend" aria-label="Official mapped area legend">
+                  <span><i class="fire-key advice"></i>Advice</span>
+                  <span><i class="fire-key watch"></i>Watch and Act</span>
+                  <span><i class="fire-key emergency"></i>Emergency Warning</span>
+                  <span><i class="fire-key other"></i>Unspecified Warning</span>
+                  <span><i class="fire-key footprint"></i>Mapped Incident Extent</span>
+                </div>
+                <div class="fire-map-controls" role="group" aria-label="Fire map visible layers">
+                  <label><input id="fire-map-warnings" type="checkbox" checked> Warning Areas</label>
+                  <label><input id="fire-map-boundaries" type="checkbox" checked> Incident Extents</label>
+                  <label><input id="fire-map-points" type="checkbox" checked> Fire Locations</label>
+                  <label><input id="fire-map-radius" type="checkbox" checked> My Monitoring Radius</label>
+                </div>
+                <p class="data-footnote">Warning polygons show where an RFS warning is directed; incident extents are published spatial geometry, not confirmed active flame fronts or evacuation boundaries. A missing map area is not an all-clear.</p>
+              </div>
+              <aside class="fire-zone-inspector" aria-label="My location and official mapped warnings">
+                <div class="fire-inspector-intro"><div class="eyebrow">LOCATION AWARENESS</div><h4 id="fire-location-heading">Selected Location</h4><p id="fire-radius-caption">Checking available official geometry…</p></div>
+                <div class="fire-geofence-state unknown" id="fire-geofence-state" role="status">Checking mapped warning areas…</div>
+                <div id="fire-overlaps" class="fire-overlaps"><p>Loading RFS warning geometry…</p></div>
+                <div class="fire-inspector-foot"><a href="https://www.rfs.nsw.gov.au/fire-information/alerts-and-warnings" target="_blank" rel="noopener">Official NSW RFS Warnings ↗</a><a href="https://www.nsw.gov.au/emergency/hazards-near-me-app" target="_blank" rel="noopener">Hazards Near Me NSW ↗</a></div>
+              </aside>
+            </div>
+            <p class="fire-attribution">© State of New South Wales (NSW Rural Fire Service). For current information go to <a href="https://www.rfs.nsw.gov.au/" target="_blank" rel="noopener">www.rfs.nsw.gov.au</a>. Map © OpenStreetMap contributors.</p>
+          </article>
+
           <div class="hazards-grid"><article class="card hazards-card"><div class="card-title-row"><div><h3>Nearby RFS Incidents</h3><p class="muted" id="incident-range">Within 50 km of Cessnock</p></div><span class="source-badge">NSW RFS</span></div><div id="rfs-feed-state" class="feed-state">Loading feed…</div><div id="incidents-list" class="feed-list"><p class="muted">Waiting for feed data…</p></div><a href="https://www.rfs.nsw.gov.au/fire-information/fires-near-me" target="_blank" rel="noopener" class="text-link">View official NSW RFS incident information ↗</a></article>
           <article class="card hazards-card"><div class="card-title-row"><div><h3>NSW &amp; ACT Weather Warnings</h3><p class="muted">Statewide BOM notices · not location-filtered</p></div><span class="source-badge">BOM</span></div><div id="bom-feed-state" class="feed-state">Loading feed…</div><div id="warnings-list" class="feed-list"><p class="muted">Waiting for feed data…</p></div>
     <div class="wmo-subsection"><div class="card-title-row"><div><h3>Recent WMO-Indexed BOM Updates</h3><p class="muted">Recent NSW/ACT-related publications; not verified active or location-filtered</p></div><span class="source-badge">WMO CAP</span></div>
     <div id="wmo-feed-state" class="feed-state">Checking WMO Feed…</div>
     <div id="wmo-warnings-list" class="feed-list"><p class="muted">Loading Supplementary Records…</p></div></div><a href="https://www.bom.gov.au/weather-and-climate/warnings-and-alerts" target="_blank" rel="noopener" class="text-link">View official BOM warnings ↗</a></article></div>
           <article class="card rfs-warning-card">
-  <div class="card-title-row"><div><h3>NSW RFS Official Warnings</h3><p class="muted">Published RFS CAP alerts · Geographic warning areas shown only when provided</p></div><span class="source-badge">NSW RFS CAP</span></div>
+  <div class="card-title-row"><div><h3>NSW RFS Official Warnings</h3><p class="muted">Official published warnings with affected locations, issue times and mapped areas where provided. Select a warning to inspect it on the map.</p></div><span class="source-badge">NSW RFS CAP</span></div>
   <div id="rfs-alert-feed-state" class="feed-state">Loading Official RFS Warnings…</div>
   <div id="rfs-alerts-list" class="feed-list"><p class="feed-empty">Checking Official Warning Feed…</p></div>
   <a href="https://www.rfs.nsw.gov.au/fire-information/alerts-and-warnings" class="text-link" target="_blank" rel="noopener">View Official NSW RFS Alerts &amp; Warnings ↗</a>

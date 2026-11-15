@@ -74,7 +74,11 @@ def polygons_from_info(info):
             if local(item.tag) != "polygon" or not (item.text or "").strip():
                 continue
             points = []
-            for pair in item.text.strip().split()[:3000]:
+            raw_points = item.text.strip().split()
+            if len(raw_points) > 3000:
+                # Never truncate a warning polygon: partial shapes misrepresent its boundary.
+                continue
+            for pair in raw_points:
                 try:
                     lat, lon = [float(v) for v in pair.split(",", 1)]
                     if -44 <= lat <= -10 and 110 <= lon <= 155:
@@ -84,6 +88,28 @@ def polygons_from_info(info):
             if len(points) >= 3:
                 polygons.append(points)
     return polygons[:12]
+
+def alert_level_from_info(info):
+    """Use an explicitly published AWS level; CAP severity is not an AWS alert level."""
+    words = " ".join((value(info, "event"), value(info, "headline")))
+    if re.search(r"\bEmergency Warning\b", words, re.I):
+        return "Emergency Warning"
+    if re.search(r"\bWatch\s*(?:and|&)\s*Act\b", words, re.I):
+        return "Watch and Act"
+    if re.search(r"\bAdvice\b", words, re.I):
+        return "Advice"
+    return "Unspecified"
+
+
+def area_names_from_info(info):
+    areas = []
+    for area in info:
+        if local(area.tag) == "area":
+            area_name = value(area, "areaDesc")[:230]
+            if area_name and area_name not in areas:
+                areas.append(area_name)
+    return areas[:8]
+
 
 def load_rfs():
     try:
@@ -116,6 +142,10 @@ def load_rfs():
                     "event": value(info, "event")[:150],
                     "headline": value(info, "headline")[:450] or value(info, "event")[:150],
                     "severity": value(info, "severity")[:80],
+                    "alert_level": alert_level_from_info(info),
+                    "area_names": area_names_from_info(info),
+                    "instruction": value(info, "instruction")[:1400],
+                    "description": value(info, "description")[:1400],
                     "urgency": value(info, "urgency")[:80],
                     "expires": value(info, "expires"),
                     "web": link or "https://www.rfs.nsw.gov.au/fire-information/alerts-and-warnings",
