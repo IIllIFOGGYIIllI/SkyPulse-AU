@@ -33,7 +33,11 @@ try{
      sent:now,severity:"Severe",instruction:"Follow RFS advice",area_names:["Cessnock"],polygons:[poly]},
     {id:"warning2",headline:"Bushfire information",alert_level:"Unspecified",sent:now,polygons:[]}]};
    if(file==="rfs.json")payload={retrieved_at:stale?old:now,features:[
-    {id:"fire1",properties:{title:"Test Fire"},geometry:{type:"GeometryCollection",geometries:[
+    {id:"fire1",properties:{title:"Test Fire",category:"Advice",details:{
+      alert_level:"Advice",location:"MCFARLANE ST, CESSNOCK 2325",council_area:"Cessnock",
+      status:"Under control",incident_type:"Bush Fire",fire:"Yes",size:"93 ha",
+      responsible_agency:"Rural Fire Service",updated:"16 Nov 2026 09:50",
+      updated_at:"2026-11-16T09:50:00+11:00"}},geometry:{type:"GeometryCollection",geometries:[
      {type:"Point",coordinates:[151.345,-32.83]},{type:"Polygon",coordinates:[footprint]}]}}]};
    if(file==="fdr.json")payload={retrieved_at:now,districts:[{name:"Greater Hunter",rating_today:"Moderate",rating_tomorrow:"Moderate"}]};
    return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(payload)});
@@ -51,6 +55,20 @@ try{
  }));
  if(!rows.polygons.some(x=>x.colour==="#e9555c"&&x.popup.includes("Warning area")))throw Error("Warning polygon not correctly labelled");
  if(!rows.polygons.some(x=>x.colour==="#bc94e7"&&x.popup.includes("Not a warning")))throw Error("Incident extent not separate");
+ const popup=rows.polygons.find(x=>x.colour==="#bc94e7").popup;
+ for(const value of ["Advice","Under control","93 ha","MCFARLANE ST, CESSNOCK 2325","Cessnock","Bush Fire","Rural Fire Service","16 Nov"]){
+   if(!popup.includes(value))throw Error("Official incident popup missing "+value);
+ }
+ const listed=await page.locator("#incidents-list .incident-rich-card").first().textContent();
+ for(const value of ["Advice","Under control","93 ha","MCFARLANE ST, CESSNOCK 2325"]){
+   if(!listed.includes(value))throw Error("Nearby incident summary missing "+value);
+ }
+ await page.locator("#incidents-list .incident-details-panel summary").first().click();
+ const expanded=await page.locator("#incidents-list .incident-details-panel").first().textContent();
+ for(const value of ["Council area","Responsible agency","Rural Fire Service","Incident updated"]){
+   if(!expanded.includes(value))throw Error("Expandable incident details missing "+value);
+ }
+
  if(rows.cards!==1||!rows.health.includes("1 published polygon")||!rows.fire.includes("1 published mapped area"))throw Error("Polygon source status/count incorrect: "+JSON.stringify(rows));
  await page.locator('[data-warning-index="0"]').click();
  if(await page.evaluate(()=>window.__fireZooms)<1)throw Error("Warning focus didn't pan the map");

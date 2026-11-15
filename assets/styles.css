@@ -622,3 +622,46 @@ body[data-page=forecast] .day .rain-chance{font-size:10px;font-weight:700;color:
 @media(max-width:1150px){.fire-area-layout{grid-template-columns:minmax(0,1fr)}.fire-zone-inspector{min-height:140px}.fire-inspector-foot{display:flex;gap:15px;flex-wrap:wrap}}
 @media(max-width:620px){.fire-map-workspace{padding:15px 12px}.fire-map-head{display:grid}.fire-map-actions{display:grid;grid-template-columns:1fr 1fr}.fire-area-map{height:380px}
 .fire-zone-inspector{padding:13px}.fire-map-legend{gap:9px}}
+
+/* RFS incident details: official fields extracted from the GeoJSON description */
+.incident-rich-card{gap:9px!important}
+.incident-rich-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:9px}
+.incident-rich-heading>b{font-size:12px;line-height:1.45;min-width:0;overflow-wrap:anywhere}
+.incident-alert-pill{display:inline-flex;align-items:center;border:1px solid var(--border);border-radius:7px;padding:5px 7px;
+  background:var(--panel-3);font-size:10px;line-height:1.3;font-weight:800;white-space:nowrap}
+.incident-alert-pill.advice{border-color:#d2aa4f66;color:#e7bd64;background:#e7bd641a}
+.incident-alert-pill.watch{border-color:#ed8c4170;color:#ed9d58;background:#ed8c4120}
+.incident-alert-pill.emergency{border-color:#e9555c85;color:#f37f86;background:#e9555c1b}
+.incident-alert-pill.other{color:var(--muted)}
+.incident-quick-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 13px}
+.incident-quick-facts span{display:block;font-size:11px;color:var(--text);line-height:1.5;overflow-wrap:anywhere}
+.incident-quick-facts b{font-weight:800;color:var(--muted)}
+.incident-rich-card .incident-updated-label{display:block;font-size:10px;color:var(--muted);line-height:1.5}
+.incident-rich-actions{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap}
+.incident-rich-actions a{font-size:11px;font-weight:800;color:var(--accent)}
+.incident-details-panel{border:1px solid var(--border);border-radius:10px;background:var(--panel-2);padding:0 11px}
+.incident-details-panel summary{cursor:pointer;padding:11px 2px;color:var(--accent);font-size:11px;font-weight:800}
+.incident-details-panel[open] summary{border-bottom:1px solid var(--border)}
+.incident-detail-list{display:grid;gap:0;margin:0;padding:4px 0}
+.incident-detail-row{display:grid;grid-template-columns:minmax(92px,.7fr) minmax(0,1.3fr);gap:9px;align-items:start;padding:7px 0;border-bottom:1px solid var(--border)}
+.incident-detail-row:last-child{border-bottom:0}
+.incident-detail-row dt{font-size:10px;font-weight:800;color:var(--muted);line-height:1.5}
+.incident-detail-row dd{margin:0;font-size:11px;color:var(--text);font-weight:700;line-height:1.55;overflow-wrap:anywhere}
+.incident-popup{font-family:Manrope,Arial,sans-serif;min-width:215px;max-width:310px}
+.incident-popup-heading{display:flex;justify-content:space-between;align-items:start;gap:8px;margin-bottom:7px}
+.incident-popup-heading>b{font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.incident-popup .incident-detail-list{margin:7px 0}
+.incident-popup .incident-detail-row{grid-template-columns:100px minmax(0,1fr);border-color:#d3dbe4}
+.incident-popup .incident-detail-row dt{color:#4e6177}
+.incident-popup .incident-detail-row dd{color:#1f3044}
+.incident-popup .incident-alert-pill{white-space:normal;max-width:118px}
+.incident-popup .incident-map-note{font-size:10px;line-height:1.5;color:#61778b;margin:10px 0}
+.incident-popup a{font-weight:800;font-size:11px}
+.leaflet-popup-content:has(.incident-popup){max-height:min(60vh,460px);overflow:auto}
+@media(max-width:600px){
+ .incident-rich-heading{flex-wrap:wrap}
+ .incident-rich-actions{display:grid;grid-template-columns:minmax(0,1fr)}
+ .incident-quick-facts{grid-template-columns:minmax(0,1fr)}
+ .incident-popup{min-width:180px;max-width:min(270px,70vw)}
+ .incident-popup .incident-detail-row{grid-template-columns:85px minmax(0,1fr)}
+}

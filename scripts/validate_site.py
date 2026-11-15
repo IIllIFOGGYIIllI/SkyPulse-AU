@@ -68,6 +68,8 @@ check("Forecast missing-value safety", 'return ["Conditions unavailable","☁️
 check("Forecast hourly field support", "wind_gusts_10m,is_day" in js)
 check("Fire area test suites exist", (ROOT / "scripts/test_fire_areas.mjs").exists() and (ROOT / "scripts/test_fire_geometry.py").exists())
 check("CAP polygons and incident footprints handled separately", "function hazardWarningPolygons(" in js and "function hazardIncidentPolygons(" in js)
+check("NSW RFS published incident description parser", "def parse_rfs_incident_description(" in (ROOT / "scripts/sync_feeds.py").read_text())
+check("Incident details shown in both map and cards", "function incidentDetailList(" in js and "incident-rich-card" in js and "hazardIncidentPopup(" in js)
 check("Stale feed guarding", "state.incidentsFresh=false" in js and "state.warningsFresh=false" in js)
 check("Radar poll cadence at 5 minutes", "RADAR_CHECK_MS=300000" in js)
 check("Source generation timestamp shown in Sydney time", 'timeZone:"Australia/Sydney"' in js)
