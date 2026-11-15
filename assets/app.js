@@ -273,40 +273,45 @@ setText("tomorrow-narrative",narrativeFor(d,h,i));}
 function updateOfficialStation(){var p=state.location,nearCessnock=km(p.lat,p.lon,-32.8321,151.3497)<36;
 var link=$("official-observation-link");if(!link)return;if(nearCessnock){setText("official-station-name","Cessnock Airport AWS · Bureau of Meteorology");setText("official-observation-description","Access official readings from Cessnock Airport, including measured temperature, pressure, dew point, wind and rainfall since 9 am. Observations are not the same as the model estimates above.");link.href="https://www.bom.gov.au/products/IDN60801/IDN60801.95771.shtml";link.innerHTML='Open Cessnock Airport Observations <span aria-hidden="true">↗</span>';}
 else{setText("official-station-name","Bureau of Meteorology · Australian Observations");setText("official-observation-description","Find a relevant official weather station near "+p.name+" on the Bureau website. Observations vary by station and may be different from model forecasts.");link.href="https://www.bom.gov.au/places/";link.innerHTML='Find Official Weather Observations <span aria-hidden="true">↗</span>';}}
-async function loadWeather(){updateWeatherStatus("Updating Forecast",false);
-var l=state.location,query=new URLSearchParams({latitude:l.lat,longitude:l.lon,current:"temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code,is_day,pressure_msl,cloud_cover,dew_point_2m",hourly:"temperature_2m,precipitation_probability,weather_code",daily:"weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_sum,precipitation_probability_max,wind_gusts_10m_max",timezone:"auto",forecast_days:"7"});
-try{var data=await getJSON("https://api.open-meteo.com/v1/forecast?"+query.toString());if(l.lat!==state.location.lat||l.lon!==state.location.lon)return;
-state.weather=data;state.weatherError=false;var c=data.current||{},d=data.daily||{},h=data.hourly||{},meta=weatherMeta(c.weather_code,c.is_day===1);
-setText("current-temp",num(c.temperature_2m));
-setText("current-description",meta[0]);setText("weather-symbol",meta[1]);
-setText("feels-like","Feels Like "+num(c.apparent_temperature)+"°C");
-setText("today-high",forecastValue(d.temperature_2m_max,0,0,"°"));
-setText("today-low",forecastValue(d.temperature_2m_min,0,0,"°"));
-setText("current-date",localDay(c.time||new Date().toISOString()));
-setText("current-clock","Modelled Local Conditions in "+state.location.name+" · "+localClock(c.time));
-setText("wind-speed",num(c.wind_speed_10m)+" km/h");
-setText("wind-gust","Forecast Gusts "+num(c.wind_gusts_10m)+" km/h");
-setText("humidity",num(c.relative_humidity_2m)+"%");
-var peakUV=(d.uv_index_max||[])[0];setText("uv-index",num(peakUV));
-var uv=peakUV===null?NaN:Number(peakUV);
-setText("uv-description",!Number.isFinite(uv)?"Today's Predicted Peak":uv>=11?"Extreme · Daily Peak":uv>=8?"Very High · Daily Peak":uv>=6?"High · Daily Peak":uv>=3?"Moderate · Daily Peak":"Low · Daily Peak");
-setText("rain-total",forecastValue(d.precipitation_sum,0,1,"mm"));
-var rainChance=dailyRainChance(d,h,0);
-setText("today-rain",rainChance===null?"—":Math.round(rainChance)+"%");
-setText("forecast-update",localClock(c.time));
-setText("detail-dewpoint",c.dew_point_2m==null?"—":num(c.dew_point_2m,1)+"°C");
-setText("detail-pressure",c.pressure_msl==null?"—":num(c.pressure_msl,1));
-setText("detail-wind-direction",degreeBearing(c.wind_direction_10m));
-setText("detail-cloud-cover",c.cloud_cover==null?"—":num(c.cloud_cover)+"%");
-setText("detail-sunrise",localClock((d.sunrise||[])[0]));
-setText("detail-sunset",localClock((d.sunset||[])[0]));
-showTomorrow(data);updateOfficialStation();
-updateWeatherStatus("Model Forecast Available",false);
-var times=h.time||[],start=times.findIndex(function(t){return t&&c.time&&t.slice(0,13)>=c.time.slice(0,13);});if(start<0)start=0;
-var hours=times.slice(start,start+24),temps=(h.temperature_2m||[]).slice(start,start+24);createChart(hours,temps);
-if($("hourly-list"))$("hourly-list").innerHTML=hours.slice(0,12).map(function(t,i){var idx=start+i,info=weatherMeta((h.weather_code||[])[idx],true),p=(h.precipitation_probability||[])[idx];return '<div class="hour-cell"><small>'+esc(i===0?"Now":localClock(t))+'</small><span class="hour-icon">'+info[1]+'</span><strong>'+num((h.temperature_2m||[])[idx])+'°</strong><span class="hour-rain">☂ '+(p==null?"—":num(p)+"%")+'</span></div>';}).join("");
-if($("daily-list"))$("daily-list").innerHTML=(d.time||[]).map(function(t,i){var info=weatherMeta((d.weather_code||[])[i],true),rain=(d.precipitation_sum||[])[i];return '<div class="day"><small>'+esc(i===0?"Today":formatDate(t+"T12:00:00Z",{weekday:"short",timeZone:"UTC"}))+'</small><span class="day-icon">'+info[1]+'</span><strong>'+num((d.temperature_2m_max||[])[i])+'° <span class="min">'+num((d.temperature_2m_min||[])[i])+'°</span></strong><span class="rain">☂ '+(rain==null?"—":num(rain,1)+" mm")+'</span></div>';}).join("");
-}catch(e){state.weatherError=true;updateWeatherStatus("Forecast Unavailable",true);setText("current-description","Weather Data Temporarily Unavailable");setText("tomorrow-narrative","Unable to verify the current forecast. Please try again or check the Bureau of Meteorology.");message("Weather service unavailable. Try refreshing.");console.warn("SkyPulse forecast",e);}}
+async function loadWeather(){
+ var loc=state.location,key=forecastLocationKey(loc),seq=++state.weatherSeq;
+ var changed=state.weatherLocationKey!==key;
+ if(changed){
+  state.weather=null;state.weatherFetchedAt=0;state.weatherCached=false;state.weatherFetchFailed=false;
+  state.weatherLocationKey=key;state.forecastDayIndex=0;forecastClear();
+  var prior=forecastCacheRead(key);
+  if(prior){state.weather=prior.data;state.weatherFetchedAt=prior.checkedAt;state.weatherCached=true;forecastRender(prior.data);}
+ }
+ updateWeatherStatus("Checking Model Forecast",false);
+ if($("forecast-retry"))$("forecast-retry").disabled=true;
+ forecastHealth();
+ var q=new URLSearchParams({
+  latitude:loc.lat,longitude:loc.lon,
+  current:"temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code,is_day,pressure_msl,cloud_cover,dew_point_2m",
+  hourly:"temperature_2m,precipitation_probability,precipitation,weather_code,relative_humidity_2m,wind_speed_10m,wind_gusts_10m,is_day",
+  daily:"weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_sum,precipitation_probability_max,wind_gusts_10m_max",
+  timezone:"auto",forecast_days:"7"
+ });
+ try{
+  var data=forecastValidate(await getJSON("https://api.open-meteo.com/v1/forecast?"+q.toString(),15000));
+  if(seq!==state.weatherSeq||key!==forecastLocationKey(state.location))return;
+  state.weather=data;state.weatherCached=false;state.weatherFetchFailed=false;state.weatherFetchedAt=Date.now();
+  forecastCacheWrite(key,data);forecastRender(data);
+  updateWeatherStatus("Model Forecast Available",false);
+ }catch(e){
+  if(seq!==state.weatherSeq||key!==forecastLocationKey(state.location))return;
+  state.weatherFetchFailed=true;updateWeatherStatus("Forecast Update Failed",true);
+  if(!state.weather){
+   forecastClear();forecastHealth();
+   setText("current-description","Current model estimate unavailable");
+   setText("tomorrow-narrative","Forecast could not be verified. Check the official Bureau of Meteorology forecast and warnings.");
+  }else forecastHealth();
+  message("Weather update failed. Any previous model values are labelled as unverified.");
+  console.warn("SkyPulse forecast",e);
+ }finally{
+  if(seq===state.weatherSeq&&$("forecast-retry"))$("forecast-retry").disabled=false;
+ }
+}
 
 function km(lat1,lon1,lat2,lon2){var rad=Math.PI/180,a=Math.sin((lat2-lat1)*rad/2)**2+Math.cos(lat1*rad)*Math.cos(lat2*rad)*Math.sin((lon2-lon1)*rad/2)**2;return 12742*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
 function coordinatesOf(feature){var g=feature.geometry||{};if(g.type==="GeometryCollection"&&Array.isArray(g.geometries)){var pt=g.geometries.find(function(x){return x&&x.type==="Point"&&Array.isArray(x.coordinates);});if(pt)return [Number(pt.coordinates[1]),Number(pt.coordinates[0])];g=g.geometries.find(function(x){return x&&Array.isArray(x.coordinates);})||g;}var c=g.coordinates;if(!c)return null;if(g.type==="Point"&&c.length>=2)return [Number(c[1]),Number(c[0])];var points=[];function walk(x){if(!Array.isArray(x))return;if(x.length>=2&&typeof x[0]==="number"&&typeof x[1]==="number"){points.push(x);return;}x.forEach(walk);}walk(c);if(!points.length)return null;return [points.reduce(function(a,v){return a+v[1];},0)/points.length,points.reduce(function(a,v){return a+v[0];},0)/points.length];}
