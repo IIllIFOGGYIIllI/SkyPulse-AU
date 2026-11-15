@@ -11,7 +11,10 @@ pages = {
     "radar.html": ("map-section", ["weather-map", "map-locate", "map-home", "map-zoom-in", "map-zoom-out",
                                   "map-fit", "map-layers-button", "map-fullscreen", "map-layer-radar",
                                   "map-layer-rfs", "map-layer-warnings", "map-radar-opacity",
-                                  "map-coordinates", "radar-step-back", "radar-step-forward"]),
+                                  "map-coordinates", "radar-step-back", "radar-step-forward",
+                                  "radar-check-now", "radar-freshness-indicator", "radar-latest-issued",
+                                  "radar-last-check", "radar-map-clock", "radar-latest", "radar-speed",
+                                  "radar-slider", "radar-frame-kind", "radar-data-age"]),
     "hazards.html": ("hazards", ["hazards-refresh", "incidents-list", "rfs-alerts-list", "fdr-district-select", "wmo-warnings-list"]),
     "news.html": ("news", []),
     "settings.html": ("alerts", ["settings-location", "radius", "notify-toggle", "push-enable",
@@ -48,6 +51,11 @@ for path, (page_id, required) in pages.items():
           len(set(re.findall(r'\sid="([^"]+)"', h))))
     for id in required:
         check(path + ": element " + id, 'id="' + id + '"' in h)
+check("Radar poll cadence at 5 minutes", "RADAR_CHECK_MS=300000" in js)
+check("Source generation timestamp shown in Sydney time", 'timeZone:"Australia/Sydney"' in js)
+check("Radar recent vs stale explicitly distinguished", '"STALE IMAGE"' in js and '"RECENT FRAME"' in js)
+check("Radar latest selection survives new frames", "state.radarFollowLatest" in js)
+check("Radar browser smoke test present", (ROOT / "scripts/test_radar_studio.mjs").exists())
 check("Self-hosted Leaflet CSS", ".leaflet-tile," in leaflet and "position: absolute" in leaflet)
 check("Radar page loads Leaflet styles", 'href="./assets/leaflet.css' in text["radar.html"])
 check("SW offline caches all pages", all('"./' + p + '"' in sw for p in list(pages)[1:]))
