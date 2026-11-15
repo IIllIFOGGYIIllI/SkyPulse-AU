@@ -72,7 +72,9 @@ check("RFS map incidents cluster without a dependency", "function fireClusterGro
 check("Radar and Fire Explorer share clustering", 'state.map.on("zoomend",renderRadarIncidentMarkers)' in js and 'state.hazardMap.on("zoomend",renderFireIncidentMarkers)' in js)
 check("Cluster legend and accessibility", "Grouped Incidents" in js and "highest level" in js and ".fire-map-cluster" in css)
 check("Fire Explorer has category-specific local SVG markers", "function fireIconSvg(" in js and "function fireIncidentKind(" in js and "L.divIcon(" in js)
-check("Fire Explorer renders exactly one incident panel", 'function fireSelectMapItem(' in js and '.bindPopup(hazardIncidentPopup(feature))' not in js)
+check("Fire Explorer renders exactly one incident panel", 'function fireSelectMapItem(' in js and
+      'marker.on("click",function(){fireSelectMapItem("incident",entry.index);});' in js and
+      '.bindPopup(' not in js[js.index("function renderFireAreaMap()"):js.index("function renderFireAreaStatus()")])
 check("Fire Explorer has matched marker and warning legends", 'id="fire-map-legend-incidents"' in text["hazards.html"] and 'id="fire-map-legend-warnings"' in text["hazards.html"])
 check("CAP polygons and incident footprints handled separately", "function hazardWarningPolygons(" in js and "function hazardIncidentPolygons(" in js)
 check("NSW RFS published incident description parser", "def parse_rfs_incident_description(" in (ROOT / "scripts/sync_feeds.py").read_text())
