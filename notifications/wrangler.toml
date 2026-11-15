@@ -9,8 +9,8 @@ ALLOWED_ORIGIN = "https://iillifoggyiilli.github.io"
 [triggers]
 crons = ["*/15 * * * *"]
 
-# Create a free D1 database and replace this ID before deployment.
+# SkyPulse AU D1 database created in Cloudflare (Oceania).
 [[d1_databases]]
 binding = "DB"
 database_name = "skypulse-au-alerts"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "5d2ae7bd-1eba-4d49-8d24-6f7bc3d31380"
