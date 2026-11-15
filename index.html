@@ -13,20 +13,21 @@
   <link rel="preconnect" href="https://tile.openstreetmap.org">
   <link rel="stylesheet" href="./assets/leaflet.css?v=1">
   <link rel="stylesheet" href="./assets/styles.css?v=7">
-  <title>SkyPulse AU | Australian Weather &amp; Warnings</title>
+  <title>Weather Overview | SkyPulse AU</title>
+  <script>if(location.hash){const routes={"#forecast":"forecast.html","#map-section":"radar.html","#hazards":"hazards.html","#news":"news.html","#alerts":"settings.html"};const next=routes[location.hash];if(next)location.replace(new URL(next,location.href).href)}</script>
 </head>
-<body>
+<body data-page="overview">
   <div class="shell">
     <aside class="sidebar" aria-label="Main navigation">
-      <a href="#overview" class="brand"><span class="brand-mark"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M7 29a9 9 0 0 1 9-9h2a13 13 0 0 1 25 5 9 9 0 0 1-8 17H16A9 9 0 0 1 7 29Z" fill="none" stroke="currentColor" stroke-width="3"/><path d="M23 10V4M8 17l-5-3M39 11l5-4" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span><span class="brand-text">SkyPulse <b>AU</b><small>WEATHER &amp; HAZARDS</small></span></a>
+      <a href="./" class="brand"><span class="brand-mark"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M7 29a9 9 0 0 1 9-9h2a13 13 0 0 1 25 5 9 9 0 0 1-8 17H16A9 9 0 0 1 7 29Z" fill="none" stroke="currentColor" stroke-width="3"/><path d="M23 10V4M8 17l-5-3M39 11l5-4" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span><span class="brand-text">SkyPulse <b>AU</b><small>WEATHER &amp; HAZARDS</small></span></a>
       <div class="nav-caption">PLATFORM</div>
       <nav class="nav-list">
-        <a class="nav-item active" href="#overview"><span>◫</span> Overview</a>
-        <a class="nav-item" href="#forecast"><span>☀</span> Forecast</a>
-        <a class="nav-item" href="#map-section"><span>◎</span> Live Radar &amp; Map</a>
-        <a class="nav-item" href="#hazards"><span>⚠</span> NSW Hazards</a>
-        <a class="nav-item" href="#news"><span>▤</span> News &amp; Updates</a>
-        <a class="nav-item" href="#alerts"><span>♧</span> Alert Settings</a>
+        <a class="nav-item active" aria-current="page" href="./"><span>◫</span> Overview</a>
+        <a class="nav-item" href="./forecast.html"><span>☀</span> Forecast</a>
+        <a class="nav-item" href="./radar.html"><span>◎</span> Live Radar &amp; Map</a>
+        <a class="nav-item" href="./hazards.html"><span>⚠</span> NSW Hazards</a>
+        <a class="nav-item" href="./news.html"><span>▤</span> News &amp; Updates</a>
+        <a class="nav-item" href="./settings.html"><span>♧</span> Alert Settings</a>
       </nav>
       <div class="sidebar-bottom">
         <div class="sidebar-info"><span class="pulse-dot"></span><div><b>Independent platform</b><small>Source times shown with each feed</small></div></div>
@@ -41,7 +42,16 @@
       </header>
       <div class="content">
         <div class="independent-note"><span class="notice-dot">!</span> <span><b>Independent information service.</b> For emergencies call <b>000</b>. Always follow <a href="https://www.nsw.gov.au/emergency/hazards-near-me-app" target="_blank" rel="noopener">official NSW alerts</a> and <a href="https://www.bom.gov.au/" target="_blank" rel="noopener">BOM warnings</a>. App notifications are not a replacement for emergency services.</span></div>
-        <section id="overview" class="section overview">
+        
+<nav class="page-shortcuts" aria-label="Explore SkyPulse AU">
+<a data-route="overview" href="./">Overview</a>
+<a data-route="forecast" href="./forecast.html">Forecast</a>
+<a data-route="map-section" href="./radar.html">Radar & Map</a>
+<a data-route="hazards" href="./hazards.html">NSW Hazards</a>
+<a data-route="news" href="./news.html">News & Updates</a>
+<a data-route="alerts" href="./settings.html">Settings</a>
+</nav>
+<section id="overview" class="section overview">
           <div class="section-header"><div><div class="eyebrow">YOUR LOCAL OUTLOOK</div><h1 class="overview-title"><span class="overview-title-label">Weather Overview</span><span id="heading-location" class="overview-title-location">Cessnock</span></h1><p class="muted" id="current-clock">Loading local conditions…</p></div><div class="status-pill" id="weather-status"><span class="pulse-dot"></span> Loading weather</div></div>
           <div class="hero-grid">
             <article class="card hero-card">
@@ -68,7 +78,7 @@
             <article class="card local-warnings-panel">
               <div class="card-title-row"><div><div class="eyebrow">EMERGENCY AWARENESS</div><h2>Local Hazard Snapshot</h2><p class="muted">Current status of available official information</p></div><span class="source-badge">NSW</span></div>
               <div class="hazard-snapshot-list">
-                <div class="hazard-snapshot-item"><span class="hazard-symbol">🔥</span><div><b>NSW RFS Incidents</b><p id="snapshot-incidents">Loading Incident Data…</p></div><a href="#hazards">View ↗</a></div>
+                <div class="hazard-snapshot-item"><span class="hazard-symbol">🔥</span><div><b>NSW RFS Incidents</b><p id="snapshot-incidents">Loading Incident Data…</p></div><a href="./hazards.html">View ↗</a></div>
                 <div class="hazard-snapshot-item"><span class="hazard-symbol">⚠️</span><div><b>Official Weather Warnings</b><p id="snapshot-warnings">Checking Warning Feed…</p></div><a href="https://www.bom.gov.au/weather-and-climate/warnings-and-alerts" target="_blank" rel="noopener">BOM ↗</a></div>
                 <div class="hazard-snapshot-item"><span class="hazard-symbol">🌡️</span><div><b>Fire Danger Ratings &amp; Total Fire Bans</b><p id="snapshot-fire-danger">Check Official Fire Danger Ratings</p></div><a href="https://www.rfs.nsw.gov.au/fire-information/fdr-and-tobans" target="_blank" rel="noopener">RFS ↗</a></div>
               </div>
@@ -94,7 +104,7 @@
           </div>
           <div class="weather-media-grid">
             <article class="card radar-peek"><div class="card-title-row"><div><div class="eyebrow">WEATHER IMAGERY</div><h3>Recent Rain Radar</h3><p class="muted">Historical Rainfall Imagery · Not a Forecast</p></div><span id="radar-peek-time" class="small-chip">Loading Radar…</span></div>
-              <a href="#map-section" class="radar-peek-link" aria-label="Open Interactive Radar"><div id="radar-peek-map" class="radar-peek-map"><div class="peek-placeholder">Loading Map Preview…</div></div><span class="radar-peek-action">Open Interactive Radar <span aria-hidden="true">↗</span></span></a>
+              <a href="./radar.html" class="radar-peek-link" aria-label="Open Interactive Radar"><div id="radar-peek-map" class="radar-peek-map"><div class="peek-placeholder">Loading Map Preview…</div></div><span class="radar-peek-action">Open Interactive Radar <span aria-hidden="true">↗</span></span></a>
             </article>
             <article class="card satellite-peek"><div class="card-title-row"><div><div class="eyebrow">CLOUD IMAGERY</div><h3>Australian Satellite Viewer</h3><p class="muted">View Satellite Images and Cloud Systems</p></div></div>
               <div class="satellite-graphic" aria-hidden="true"><div class="satellite-orb"></div><span class="satellite-cloud satellite-cloud-one">☁</span><span class="satellite-cloud satellite-cloud-two">☁</span></div>
@@ -103,75 +113,16 @@
             </article>
           </div>
         </section>
-        <section id="forecast" class="section">
-          <div class="section-header compact"><div><div class="eyebrow">DETAILED FORECAST</div><h2>Weather Forecast</h2></div><span class="source-small">Powered by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo ↗</a></span></div>
-          <div class="forecast-grid"><article class="card chart-card"><div class="card-title-row"><div><h3>Temperature Trend</h3><p class="muted">Next 24 hours · °C</p></div><span class="small-chip">24 HOURS</span></div><div id="temp-chart" class="temp-chart"><p class="muted">Loading chart…</p></div><div class="chart-labels" id="chart-labels"></div></article><article class="card hours-card"><div class="card-title-row"><div><h3>Hourly Outlook</h3><p class="muted">Conditions and rain probability</p></div></div><div class="hours-scroll" id="hourly-list"><span class="muted">Loading hours…</span></div></article></div>
-          <article class="card seven-day"><div class="card-title-row"><div><h3>7-Day Forecast</h3><p class="muted">Daily temperature range and conditions</p></div></div><div class="days-list" id="daily-list"><span class="muted">Loading forecast…</span></div></article>
-        </section>
-        <section id="map-section" class="section">
-          <div class="section-header compact"><div><div class="eyebrow">INTERACTIVE GEOSPATIAL VIEW</div><h2>Live Radar &amp; Incident Map</h2><p class="muted">Past radar frames and NSW RFS incident locations. Coverage may be incomplete or delayed.</p></div><div class="source-small"><a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer ↗</a> · <a href="https://www.rfs.nsw.gov.au/" target="_blank" rel="noopener">NSW RFS ↗</a></div></div>
-          <div class="card map-card"><div class="map-toolbar"><div class="segmented"><button type="button" id="radar-toggle" class="selected" aria-pressed="true">Rain Radar</button><button type="button" id="incidents-toggle" class="selected" aria-pressed="true">⚠ NSW RFS Incidents</button></div><div class="map-side-actions"><span id="radar-time" class="small-chip">Radar Loading…</span><button id="map-retry" class="outline-button" type="button">↻ Reload Map</button></div></div><div class="map-viewport" id="map-viewport"><div id="weather-map" role="region" aria-label="Interactive weather radar and NSW RFS incident map"><p class="map-fallback">Loading Interactive Map… <a href="https://www.bom.gov.au/australia/radar/" target="_blank" rel="noopener">Open Official BOM Radar ↗</a></p></div><div class="map-control-column" role="toolbar" aria-label="Map Navigation">
-  <div class="map-control-group"><button type="button" id="map-zoom-in" class="map-control-button" title="Zoom In" aria-label="Zoom In"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button><button type="button" id="map-zoom-out" class="map-control-button" title="Zoom Out" aria-label="Zoom Out"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button></div>
-  <div class="map-control-group"><button type="button" id="map-locate" class="map-control-button" title="Go to My Current Location" aria-label="Go to My Current Location"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button><button type="button" id="map-home" class="map-control-button" title="Return to Selected Location" aria-label="Return to Selected Location"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9 21v-7h6v7"/></svg></button><button type="button" id="map-fit" class="map-control-button" title="Show Nearby Incidents" aria-label="Show Nearby Incidents"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><circle cx="12" cy="12" r="2"/></svg></button></div>
-  <div class="map-control-group"><button type="button" id="map-layers-button" class="map-control-button" title="Map Layers" aria-label="Map Layers" aria-expanded="false" aria-controls="map-layers-panel"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 5-9 5-9-5 9-5z"/><path d="m3 12 9 5 9-5M3 17l9 5 9-5"/></svg></button><button type="button" id="map-fullscreen" class="map-control-button" title="Full Screen Map" aria-label="Full Screen Map"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/></svg></button></div>
+<div class="overview-explore">
+<div><span class="eyebrow">EXPLORE SKYPULSE AU</span><h2>Explore Weather &amp; Safety</h2><p class="muted">Each section opens on its own dedicated page.</p></div>
+<div class="overview-explore-grid">
+<a href="./forecast.html"><span aria-hidden="true">☀</span><strong>Weather Forecast</strong><small>Hourly and 7-day outlook</small><span class="explore-arrow">↗</span></a>
+<a href="./radar.html"><span aria-hidden="true">◎</span><strong>Live Radar &amp; Map</strong><small>Interactive rainfall and fires</small><span class="explore-arrow">↗</span></a>
+<a href="./hazards.html"><span aria-hidden="true">⚠</span><strong>NSW Hazards</strong><small>Warnings and fire danger</small><span class="explore-arrow">↗</span></a>
+<a href="./news.html"><span aria-hidden="true">▤</span><strong>News &amp; Resources</strong><small>Official and local sources</small><span class="explore-arrow">↗</span></a>
 </div>
-<div id="map-layers-panel" class="map-layers-panel" hidden>
-  <div class="map-panel-title">Map Layers</div>
-  <label class="map-layer-check"><input type="checkbox" id="map-layer-radar" checked><span>Rain Radar<small>Historical rainfall imagery</small></span></label>
-  <label class="map-layer-check"><input type="checkbox" id="map-layer-warnings" checked><span>Official RFS Warning Areas<small>Only polygons published by NSW RFS</small></span></label>
-  <label class="map-layer-check"><input type="checkbox" id="map-layer-rfs" checked><span>NSW RFS Incidents<small>Mapped incident locations</small></span></label>
-  <label class="map-layer-check"><input type="checkbox" id="map-nearby-only" checked><span>Nearby Incidents Only<small>Uses your selected alert radius</small></span></label>
-  <label class="map-layer-check"><input type="checkbox" id="map-wheel-zoom"><span>Mouse Wheel Zoom<small>Scroll to zoom when enabled</small></span></label><div class="map-layer-slider"><label for="map-radar-opacity">Radar Opacity <strong id="map-opacity-label">60%</strong></label><input id="map-radar-opacity" type="range" min="20" max="100" value="60" step="5"></div>
-  <div class="map-panel-title minor">Map Data</div><p>Street map: OpenStreetMap<br>Rain radar: RainViewer<br>Incidents: NSW Rural Fire Service</p>
 </div>
-<div class="map-legend" aria-label="Map marker legend"><span class="map-legend-dot"></span><span>Mapped RFS Incidents <small>Not Official Warning Boundaries</small></span></div><div id="map-coordinates" class="map-coordinates" aria-live="off">Move the Map to Inspect Coordinates</div>
-<div id="map-location-status" class="map-location-status" role="status" hidden></div></div><div id="map-tile-status" class="map-tile-status" role="status" hidden></div><div class="map-footer"><div class="radar-controls"><button id="radar-step-back" aria-label="Previous Radar Frame" title="Previous Radar Frame"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></button><button id="radar-play" aria-label="Play Radar Animation" title="Play Radar Animation">▶</button><button id="radar-step-forward" aria-label="Next Radar Frame" title="Next Radar Frame"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10 6 6 6-6 6"/></svg></button><input id="radar-slider" type="range" min="0" max="0" value="0" aria-label="Radar time frame" disabled><span id="radar-frame-label">Historical Radar</span></div><span class="muted">Map © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> · Radar © RainViewer</span></div></div>
-        </section>
-        <section id="hazards" class="section">
-          <div class="section-header compact"><div><div class="eyebrow">OFFICIAL INFORMATION SOURCES</div><h2>NSW Hazard Monitoring</h2><p class="muted">Statewide notices and nearby mapped fire incidents are displayed separately.</p></div><button type="button" id="hazards-refresh" class="outline-button">↻ Refresh Feeds</button></div>
-          <div class="hazards-grid"><article class="card hazards-card"><div class="card-title-row"><div><h3>Nearby RFS Incidents</h3><p class="muted" id="incident-range">Within 50 km of Cessnock</p></div><span class="source-badge">NSW RFS</span></div><div id="rfs-feed-state" class="feed-state">Loading feed…</div><div id="incidents-list" class="feed-list"><p class="muted">Waiting for feed data…</p></div><a href="https://www.rfs.nsw.gov.au/fire-information/fires-near-me" target="_blank" rel="noopener" class="text-link">View official NSW RFS incident information ↗</a></article>
-          <article class="card hazards-card"><div class="card-title-row"><div><h3>NSW &amp; ACT Weather Warnings</h3><p class="muted">Statewide BOM notices · not location-filtered</p></div><span class="source-badge">BOM</span></div><div id="bom-feed-state" class="feed-state">Loading feed…</div><div id="warnings-list" class="feed-list"><p class="muted">Waiting for feed data…</p></div>
-    <div class="wmo-subsection"><div class="card-title-row"><div><h3>Recent WMO-Indexed BOM Updates</h3><p class="muted">Recent NSW/ACT-related publications; not verified active or location-filtered</p></div><span class="source-badge">WMO CAP</span></div>
-    <div id="wmo-feed-state" class="feed-state">Checking WMO Feed…</div>
-    <div id="wmo-warnings-list" class="feed-list"><p class="muted">Loading Supplementary Records…</p></div></div><a href="https://www.bom.gov.au/weather-and-climate/warnings-and-alerts" target="_blank" rel="noopener" class="text-link">View official BOM warnings ↗</a></article></div>
-          <article class="card rfs-warning-card">
-  <div class="card-title-row"><div><h3>NSW RFS Official Warnings</h3><p class="muted">Published RFS CAP alerts · Geographic warning areas shown only when provided</p></div><span class="source-badge">NSW RFS CAP</span></div>
-  <div id="rfs-alert-feed-state" class="feed-state">Loading Official RFS Warnings…</div>
-  <div id="rfs-alerts-list" class="feed-list"><p class="feed-empty">Checking Official Warning Feed…</p></div>
-  <a href="https://www.rfs.nsw.gov.au/fire-information/alerts-and-warnings" class="text-link" target="_blank" rel="noopener">View Official NSW RFS Alerts &amp; Warnings ↗</a>
-  <p class="data-footnote">Warnings may omit polygons. Geographic targeting requires verified geometry; absence of a displayed warning does not establish safety.</p>
-</article>
-          <article class="card fire-danger-panel" id="fire-danger-panel">
-  <div class="card-title-row"><div><h3>Fire Danger Ratings &amp; Total Fire Bans</h3><p class="muted">Official NSW RFS District Ratings · Today and Tomorrow</p></div><span class="source-badge">NSW RFS</span></div>
-  <div class="fdr-selector-row"><label for="fdr-district-select">Fire Weather District</label><select id="fdr-district-select" aria-label="Choose NSW Fire Weather District"><option value="">Choose a District</option></select></div>
-  <div id="fdr-feed-status" class="feed-state">Loading Official Fire Danger Data…</div>
-  <div class="fdr-forecast-grid"><div class="fdr-day"><span>Today</span><strong id="fdr-today-rating">—</strong><small id="fdr-today-ban">Total Fire Ban: Unknown</small></div><div class="fdr-day"><span>Tomorrow</span><strong id="fdr-tomorrow-rating">—</strong><small id="fdr-tomorrow-ban">Total Fire Ban: Unknown</small></div></div>
-  <p class="data-footnote">Ratings apply to NSW RFS fire weather districts, not individual properties. Check official advice before acting.</p>
-  <a href="https://www.rfs.nsw.gov.au/fire-information/fdr-and-tobans" class="text-link" target="_blank" rel="noopener">View Current Official Fire Danger Ratings ↗</a>
-</article>
-<div class="resource-grid"><a href="https://www.nsw.gov.au/emergency/hazards-near-me-app" target="_blank" rel="noopener" class="resource"><span>🚨</span><span><b>Hazards Near Me NSW</b><small>Official local warning service</small></span><span>↗</span></a><a href="https://hazardwatch.gov.au/" target="_blank" rel="noopener" class="resource"><span>🌊</span><span><b>NSW SES HazardWatch</b><small>Flood, storm and tsunami warnings</small></span><span>↗</span></a><a href="https://www.livetraffic.com/" target="_blank" rel="noopener" class="resource"><span>🚗</span><span><b>Live Traffic NSW</b><small>Road incidents and closures</small></span><span>↗</span></a><a href="https://www.ausgrid.com.au/Outages" target="_blank" rel="noopener" class="resource"><span>⚡</span><span><b>Power outage information</b><small>Check your electricity distributor</small></span><span>↗</span></a></div>
-        </section>
-        <section id="news" class="section">
-          <div class="section-header compact"><div><div class="eyebrow">NEWS &amp; DEVELOPMENTS</div><h2>Australian News &amp; Resources</h2><p class="muted">Direct links to established publishers and local information; articles remain on their original websites.</p></div></div>
-          <div class="news-grid"><a class="news-card" href="https://www.abc.net.au/newcastle/news" target="_blank" rel="noopener"><span class="news-label">HUNTER REGION</span><b>ABC Newcastle &amp; Hunter</b><p>Local reporting, weather developments and regional updates.</p><span class="text-link">Browse stories ↗</span></a><a class="news-card" href="https://www.abc.net.au/news/" target="_blank" rel="noopener"><span class="news-label">NATIONAL NEWS</span><b>ABC News Australia</b><p>Current Australian and breaking national news coverage.</p><span class="text-link">Browse stories ↗</span></a><a class="news-card" href="https://www.bom.gov.au/" target="_blank" rel="noopener"><span class="news-label">WEATHER UPDATES</span><b>Bureau of Meteorology</b><p>Official severe weather advice, analysis and forecasts.</p><span class="text-link">Browse updates ↗</span></a></div>
-        </section>
-        <section id="alerts" class="section">
-          <div class="section-header compact"><div><div class="eyebrow">PREFERENCES</div><h2>Alert Centre &amp; Settings</h2><p class="muted">Configure local information monitoring. Settings stay on this device.</p></div></div>
-          <div class="settings-grid"><article class="card settings-card"><div class="card-title-row"><div><h3>Nearby Incidents</h3><p class="muted">Filter fire incident markers by distance</p></div></div><label for="radius" class="field-label">Incident Search Radius <strong id="radius-label">50 km</strong></label><input id="radius" type="range" min="10" max="150" step="10" value="50"><div class="range-labels"><span>10 km</span><span>150 km</span></div><label class="switch-row"><span><b>In-App New-Incident Notifications</b><small>Only while SkyPulse is open; may be delayed</small></span><input type="checkbox" id="notify-toggle" role="switch"></label><button id="notify-permission" class="outline-button">Enable Browser Notifications</button><div id="notification-state" class="tiny-note">Background push is not yet available. Official emergency alerts remain essential.</div></article><article class="card settings-card"><div class="card-title-row"><div><h3>Location &amp; App Settings</h3><p class="muted">Location search, appearance and installation</p></div></div><div class="setting-fact"><span>Active Location</span><strong id="settings-location">Cessnock, NSW</strong></div><div class="setting-fact"><span>Theme</span><strong id="theme-name">Dark</strong></div><div class="setting-fact"><span>Weather Units</span><strong>Metric · °C · km/h</strong></div>
-<div class="setting-fact"><span>Installed App Version</span><strong id="app-version-value">Checking…</strong></div>
-<div id="app-update-status" class="update-status" role="status">Checking for the latest release…</div>
-<div class="app-update-actions"><button id="app-update-check" class="outline-button" type="button">Check for Updates</button><button id="app-update-apply" class="outline-button" type="button" hidden>Update Now</button></div><button id="settings-install" class="outline-button">Install App / Instructions</button><div class="tiny-note">This first release has browser-only alert monitoring. Background push requires a dedicated notification service and additional verification.</div></article></div>
-          <article class="card background-alert-card" id="background-alert-card">
-  <div class="card-title-row"><div><div class="eyebrow">OPTIONAL BACKGROUND MONITORING</div><h3>Background Push Notifications</h3><p class="muted">NSW RFS warning areas near your saved watch location, plus optional incident updates.</p></div><span id="push-status-badge" class="source-badge">NOT CONFIGURED</span></div>
-  <p id="push-status" class="push-status" role="status">Checking notification service configuration…</p>
-  <label class="push-choice"><input type="checkbox" id="push-include-incidents"><span><b>Include Nearby RFS Incident Updates</b><small>Informational location markers; not an official emergency warning.</small></span></label>
-  <label class="push-choice"><input type="checkbox" id="push-consent"><span><b>I Consent to Background Monitoring</b><small>If enabled, a push service stores my subscription endpoint and approximate watch-zone coordinates (rounded to about 1 km). I can disable it at any time.</small></span></label>
-  <div class="push-buttons"><button id="push-enable" class="outline-button" type="button">Enable Background Alerts</button><button id="push-update" class="outline-button" type="button" hidden>Update Watch Zone</button><button id="push-disable" class="outline-button" type="button" hidden>Disable Alerts</button><button id="push-test" class="outline-button" type="button" hidden>Test Notification</button></div>
-  <p class="data-footnote">Requires a configured backend and a compatible browser. On iPhone, install the PWA to the Home Screen. Delivery is best-effort, may be delayed and never replaces Hazards Near Me, BOM warnings or emergency broadcasts.</p>
-  <a href="https://github.com/IIllIFOGGYIIllI/SkyPulse-AU/blob/main/docs/PUSH_SETUP.md" target="_blank" rel="noopener" class="text-link">Push Service Setup &amp; Status ↗</a>
-</article>
-        </section>
-        <footer class="footer"><span>© <span id="year"></span> SkyPulse AU · Independent weather information platform</span><span><a href="./privacy.html">Privacy Policy</a> · <a href="./terms.html">Terms</a> · <a href="./sources.html">Data Sources</a> · <a href="https://github.com/IIllIFOGGYIIllI/SkyPulse-AU" target="_blank" rel="noopener">GitHub ↗</a></span></footer>
+<footer class="footer"><span>© <span id="year"></span> SkyPulse AU · Independent weather information platform</span><span><a href="./privacy.html">Privacy Policy</a> · <a href="./terms.html">Terms</a> · <a href="./sources.html">Data Sources</a> · <a href="https://github.com/IIllIFOGGYIIllI/SkyPulse-AU" target="_blank" rel="noopener">GitHub ↗</a></span></footer>
       </div>
     </main>
   </div>
@@ -181,16 +132,15 @@
 <button id="app-update-banner-button" type="button">Update Now</button>
 </div>
   <nav class="mobile-tabs" aria-label="Primary Mobile Navigation">
-  <a class="mobile-tab is-active" href="#overview" data-tab="overview" aria-label="Home" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V10Z"/><path d="M9 21v-7h6v7"/></svg><span>Home</span></a>
-  <a class="mobile-tab" href="#forecast" data-tab="forecast" aria-label="Forecast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><span>Forecast</span></a>
-  <a class="mobile-tab" href="#map-section" data-tab="map-section" aria-label="Map"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3"/></svg><span>Map</span></a>
-  <a class="mobile-tab" href="#hazards" data-tab="hazards" aria-label="Hazards"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 10 18H2L12 3Z"/><path d="M12 9v5m0 3h.01"/></svg><span>Hazards</span></a>
-  <a class="mobile-tab" href="#alerts" data-tab="alerts" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a2 2 0 0 1 2 2l.1.7 1.1.5.7-.2a2 2 0 0 1 2.4 1l.6 1a2 2 0 0 1-.5 2.6l-.5.5v1.3l.5.5a2 2 0 0 1 .5 2.6l-.6 1a2 2 0 0 1-2.4 1l-.7-.2-1.1.5-.1.7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2l-.1-.7-1.1-.5-.7.2a2 2 0 0 1-2.4-1l-.6-1a2 2 0 0 1 .5-2.6l.5-.5v-1.3l-.5-.5a2 2 0 0 1-.5-2.6l.6-1a2 2 0 0 1 2.4-1l.7.2 1.1-.5.1-.7a2 2 0 0 1 2-2h1Z"/><circle cx="12" cy="12" r="2.5"/></svg><span>Settings</span></a>
+  <a class="mobile-tab is-active" href="./" data-tab="overview" aria-label="Home" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V10Z"/><path d="M9 21v-7h6v7"/></svg><span>Home</span></a>
+  <a class="mobile-tab" href="./forecast.html" data-tab="forecast" aria-label="Forecast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><span>Forecast</span></a>
+  <a class="mobile-tab" href="./radar.html" data-tab="map-section" aria-label="Map"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3"/></svg><span>Map</span></a>
+  <a class="mobile-tab" href="./hazards.html" data-tab="hazards" aria-label="Hazards"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 10 18H2L12 3Z"/><path d="M12 9v5m0 3h.01"/></svg><span>Hazards</span></a>
+  <a class="mobile-tab" href="./settings.html" data-tab="alerts" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a2 2 0 0 1 2 2l.1.7 1.1.5.7-.2a2 2 0 0 1 2.4 1l.6 1a2 2 0 0 1-.5 2.6l-.5.5v1.3l.5.5a2 2 0 0 1 .5 2.6l-.6 1a2 2 0 0 1-2.4 1l-.7-.2-1.1.5-.1.7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2l-.1-.7-1.1-.5-.7.2a2 2 0 0 1-2.4-1l-.6-1a2 2 0 0 1 .5-2.6l.5-.5v-1.3l-.5-.5a2 2 0 0 1-.5-2.6l.6-1a2 2 0 0 1 2.4-1l.7.2 1.1-.5.1-.7a2 2 0 0 1 2-2h1Z"/><circle cx="12" cy="12" r="2.5"/></svg><span>Settings</span></a>
 </nav>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
   <script src="./assets/push-config.js?v=1" defer></script>
   <script src="./assets/app.js?v=7" defer></script>
-  <script src="./assets/push.js?v=1" defer></script>
   <script src="./assets/update.js?v=1" defer></script>
 </body>
 </html>
