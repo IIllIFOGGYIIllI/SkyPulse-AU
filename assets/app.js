@@ -561,9 +561,19 @@ function renderFireDirectory(){
 }
 function fireSelectMapItem(kind,index){
  if(state.hazardMap&&typeof state.hazardMap.closePopup==="function")state.hazardMap.closePopup();
+ var feature=kind==="incident"?state.incidents[index]:state.rfsAlerts[index];
+ if(!feature)return;
  state.fireSelected={kind,index};
- var feature=kind==="incident"?state.incidents[index]:state.rfsAlerts[index],
-  pane=$("fire-map-selection"),body=$("fire-map-selection-body");
+ state.fireDirectoryMode=kind==="warning"?"warnings":"incidents";
+ if(kind==="incident"&&!hazardNearbyIncident(feature)){
+  state.fireDirectoryScope="statewide";
+  if($("fire-directory-scope"))$("fire-directory-scope").value="statewide";
+ }
+ if(!fireDirectoryItems().some(function(item){return item.kind===kind&&item.index===index;})){
+  state.fireDirectoryQuery="";
+  if($("fire-directory-search"))$("fire-directory-search").value="";
+ }
+ var pane=$("fire-map-selection"),body=$("fire-map-selection-body");
  if(pane&&body&&feature){
   setText("fire-map-selection-kind",kind==="warning"?"OFFICIAL NSW RFS WARNING":"NSW RFS INCIDENT DETAIL");
   if(kind==="incident"){

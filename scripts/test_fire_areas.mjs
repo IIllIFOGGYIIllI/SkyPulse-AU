@@ -57,7 +57,11 @@ try{
       updated_at:"2026-11-16T09:50:00+11:00"}},geometry:{type:"GeometryCollection",geometries:[
      {type:"Point",coordinates:[151.345,-32.83]},{type:"Polygon",coordinates:[footprint]}]}},
      {id:"fire2",properties:{title:"Remote Northern NSW Fire",category:"Advice",details:{alert_level:"Advice",status:"Being controlled",location:"Northern NSW"}},
-      geometry:{type:"Point",coordinates:[153.15,-28.55]}}]};
+      geometry:{type:"Point",coordinates:[153.15,-28.55]}},
+    ...["Grass Fire","Hazardous Materials Spill","Flood Incident","Severe Storm","Road Crash","Rescue Incident"].map((name,i)=>({
+      id:"typed-"+i,properties:{title:name,details:{incident_type:name,location:"Northern NSW"}},
+      geometry:{type:"Point",coordinates:[153.1+i*.04,-28.6-i*.03]}
+    }))]};
    if(file==="fdr.json")payload={retrieved_at:now,districts:[{name:"Greater Hunter",rating_today:"Moderate",rating_tomorrow:"Moderate"}]};
    return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(payload)});
   }
@@ -108,10 +112,10 @@ try{
  for(const value of ["Bush Fire","Grass Fire","Hazmat","Flood","Storm","Road","Advice","Watch and Act","Emergency Warning","Incident Extent"]){
    if(!rows.legend.includes(value))throw Error("Missing "+value+" in icon/area legend");
  }
- const kinds=await page.evaluate(()=>["Bush Fire","Grass Fire","Hazardous Materials","Flood","Severe Storm","Road Crash","Rescue","Other Incident"].map(t=>
-  fireIncidentKind({properties:{details:{incident_type:t}}})));
- if(kinds.join(",")!=="fire,grass,hazmat,flood,storm,road,rescue,incident")
-  throw Error("Incident icons are not matched to their published event types: "+kinds);
+ for(const kind of ["fire","grass","hazmat","flood","storm","road","rescue"]){
+  if(!rows.markers.some(x=>x.html.includes("fire-map-pin-"+kind)))
+   throw Error("Official incident-type marker missing symbol "+kind);
+ }
  const listed=await page.locator("#incidents-list .incident-rich-card").first().textContent();
  for(const value of ["Advice","Under control","93 ha","MCFARLANE ST, CESSNOCK 2325"]){
    if(!listed.includes(value))throw Error("Nearby incident summary missing "+value);
@@ -169,8 +173,8 @@ try{
  await page.locator("#fire-map-selection-close").click();
 
  await page.locator("#fire-directory-scope").selectOption("statewide");
- if(await page.locator("#fire-directory-list [data-fire-dir-kind]").count()!==2)
-  throw Error("All NSW reports filter didn't reveal remote incident");
+ if(await page.locator("#fire-directory-list [data-fire-dir-kind]").count()!==8)
+  throw Error("All NSW reports filter didn't reveal published incident types");
  await page.locator("#fire-directory-search").fill("remote northern");
  if(await page.locator("#fire-directory-list [data-fire-dir-kind]").count()!==1)
   throw Error("Report search didn't filter by incident name");
