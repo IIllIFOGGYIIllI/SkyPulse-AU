@@ -109,7 +109,7 @@ if(hunter.includes(n)||km(l.lat,l.lon,-32.8321,151.3497)<=35)return "Greater Hun
 return "";}
 function renderFireDanger(){var v=state.fireDanger,p=$("fdr-district-select"),box=$("snapshot-fire-danger");
 if(!p){if(box){var district=(v?.districts||[]).find(function(x){return x.name===(state.fireDistrict||preferredFireDistrict());});box.textContent=!v?.retrieved_at?"Official Feed Unavailable · View NSW RFS":district?district.name+" · Today: "+(district.rating_today||"Not Issued")+(district.ban_today===true?" · Total Fire Ban":""):"Choose Your Fire Weather District in Settings or Check NSW RFS";}return;}
-if(!v||!Array.isArray(v.districts)||!v.retrieved_at){setText("fdr-feed-status","Fire Danger Feed Unavailable — Use the Official NSW RFS Website");$("fdr-feed-status").className="feed-state warn";setText("fdr-today-rating","Unavailable");setText("fdr-tomorrow-rating","Unavailable");setText("fdr-today-ban","Total Fire Ban: Unverified");setText("fdr-tomorrow-ban","Total Fire Ban: Unverified");box.textContent="Official Feed Unavailable · View RFS";return;}
+if(!v||!Array.isArray(v.districts)||!v.retrieved_at){setText("fdr-feed-status","Fire Danger Feed Unavailable — Use the Official NSW RFS Website");$("fdr-feed-status").className="feed-state warn";setText("fdr-today-rating","Unavailable");setText("fdr-tomorrow-rating","Unavailable");setText("fdr-today-ban","Total Fire Ban: Unverified");setText("fdr-tomorrow-ban","Total Fire Ban: Unverified");if(box)box.textContent="Official Feed Unavailable · View RFS";return;}
 var stale=Date.now()-new Date(v.retrieved_at).getTime()>DATA_MAX_AGE;
 if(!p.options.length||p.options.length!==v.districts.length+1){p.innerHTML='<option value="">Choose a District</option>';v.districts.forEach(function(d){var o=document.createElement("option");o.value=d.name;o.textContent=d.name;p.appendChild(o);});}
 var recommended=preferredFireDistrict(),chosen=state.fireDistrict||recommended;
@@ -117,7 +117,7 @@ if(!v.districts.some(function(d){return d.name===chosen;}))chosen=recommended&&v
 p.value=chosen;
 var selected=v.districts.find(function(d){return d.name===chosen;});
 feedState("fdr-feed-status",v.retrieved_at);
-if(!selected){setText("fdr-today-rating","Select District");setText("fdr-tomorrow-rating","Select District");setText("fdr-today-ban","Total Fire Ban: Check RFS");setText("fdr-tomorrow-ban","Total Fire Ban: Check RFS");box.textContent="Select Your Fire Weather District · Check RFS";return;}
+if(!selected){setText("fdr-today-rating","Select District");setText("fdr-tomorrow-rating","Select District");setText("fdr-today-ban","Total Fire Ban: Check RFS");setText("fdr-tomorrow-ban","Total Fire Ban: Check RFS");if(box)box.textContent="Select Your Fire Weather District · Check RFS";return;}
 var rating=function(val){return val&&val.trim()?val.trim():"Not Issued";};
 var ban=function(val){return val===true?"YES — Total Fire Ban":val===false?"No Total Fire Ban Listed":"Status Not Available";};
 var today=rating(selected.rating_today),tomorrow=rating(selected.rating_tomorrow);
@@ -126,7 +126,7 @@ setText("fdr-today-ban",ban(selected.ban_today));
 setText("fdr-tomorrow-ban",ban(selected.ban_tomorrow));
 $("fdr-today-rating").parentElement.dataset.level=today.toLowerCase();
 $("fdr-tomorrow-rating").parentElement.dataset.level=tomorrow.toLowerCase();
-box.textContent=selected.name+" · Today: "+today+" · Fire Ban: "+(selected.ban_today===true?"Yes":selected.ban_today===false?"No Listed":"Unverified")+(stale?" · Feed May Be Stale":"");
+if(box)box.textContent=selected.name+" · Today: "+today+" · Fire Ban: "+(selected.ban_today===true?"Yes":selected.ban_today===false?"No Listed":"Unverified")+(stale?" · Feed May Be Stale":"");
 }
 async function loadFireDanger(){try{var v=await getJSON("./data/fdr.json?cache="+Date.now());
 if(!v||!v.retrieved_at||!Array.isArray(v.districts)||!v.districts.length||v.error)throw Error("RFS fire danger data not available");
