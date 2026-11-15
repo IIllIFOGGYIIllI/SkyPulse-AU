@@ -936,3 +936,73 @@ body[data-page=hazards] .fire-attribution{border-top:1px solid var(--border);mar
  }
  .rfs-warning-popup-field{grid-template-columns:75px minmax(0,1fr);gap:8px}
 }
+
+/* RFS semantic iconography: consistent across report rows, Leaflet markers and details. */
+.fire-symbol{--symbol:#a8bed3;display:inline-flex;align-items:center;justify-content:center;
+ width:29px;height:29px;flex:0 0 29px;border-radius:9px;border:1px solid color-mix(in srgb,var(--symbol) 40%,transparent);
+ background:color-mix(in srgb,var(--symbol) 13%,transparent);color:var(--symbol);
+ box-shadow:inset 0 1px 0 #ffffff0b;vertical-align:middle}
+.fire-symbol svg{width:18px;height:18px;display:block}
+.fire-symbol-advice{--symbol:#e2bc61}
+.fire-symbol-watch{--symbol:#ee9753}
+.fire-symbol-emergency{--symbol:#f2757d}
+.fire-symbol-other{--symbol:#a8bed3}
+.fire-symbol-location{--symbol:#6fc8f6}
+.fire-symbol-fire.fire-symbol-other,.fire-symbol-grass.fire-symbol-other{--symbol:#e9a26b}
+.fire-symbol-hazmat.fire-symbol-other{--symbol:#c7a5ed}
+.fire-symbol-flood.fire-symbol-other{--symbol:#74c7ee}
+.fire-symbol-storm.fire-symbol-other{--symbol:#b9c5f9}
+.fire-symbol-road.fire-symbol-other{--symbol:#e2c18a}
+.fire-symbol-zone.fire-symbol-other{border-style:dashed;--symbol:#92a7c0}
+.fire-symbol-perimeter.fire-symbol-other{border-style:dashed;--symbol:#c49fe8}
+.fire-symbol-radius.fire-symbol-other{border-style:dashed;--symbol:#69cafa}
+.fire-directory-entry-top>.fire-symbol{width:28px;height:28px;flex-basis:28px}
+.fire-directory-entry-top>.fire-symbol svg{width:17px;height:17px}
+.fire-directory-entry-area,.fire-directory-entry-metrics,.fire-directory-entry-updated{padding-left:36px}
+.incident-rich-heading>b{display:flex;gap:10px;align-items:center}
+.incident-rich-heading>b .fire-symbol{flex-shrink:0}
+.fire-map-selection-title>.fire-symbol,.rfs-warning-popup-heading>.fire-symbol,
+.incident-popup-heading>.fire-symbol{flex-shrink:0}
+.fire-map-selection-title{align-items:center;flex-wrap:wrap}
+.fire-map-selection-title strong{flex:1 1 130px}
+.fire-map-selection-title .incident-alert-pill{margin-left:auto}
+.incident-popup-heading{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rfs-warning-popup-heading{align-items:center;gap:10px}
+.rfs-warning-popup-heading strong{flex:1}
+.fire-map-legend{display:grid!important;gap:9px!important;padding:12px 0!important}
+.fire-legend-group{display:grid;gap:8px;min-width:0}
+.fire-legend-heading{font-size:9px;font-weight:850;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.fire-legend-items{display:flex;gap:7px 13px;flex-wrap:wrap;align-items:center}
+.fire-legend-item{display:inline-flex;gap:6px;align-items:center;font-size:10px;font-weight:650;color:var(--muted);white-space:nowrap}
+.fire-legend-item>.fire-symbol{width:23px;height:23px;flex:0 0 23px;border-radius:7px}
+.fire-legend-item>.fire-symbol svg{width:15px;height:15px}
+.fire-leaflet-icon{background:transparent!important;border:0!important;overflow:visible!important}
+.fire-map-pin{--pin:#abbcd0;display:block;width:40px;height:48px;position:relative;isolation:isolate;
+ filter:drop-shadow(0 4px 6px #071826ab);transition:transform .16s ease,filter .16s ease;cursor:pointer}
+.fire-map-pin-body{position:absolute;z-index:2;left:3px;top:3px;width:34px;height:34px;
+ display:grid;place-items:center;border-radius:13px;background:#122a42;border:2px solid var(--pin);
+ color:var(--pin);box-shadow:inset 0 1px 0 #fff2,0 0 0 2px #0b233ec7}
+.fire-map-pin-body svg{width:21px;height:21px;display:block}
+.fire-map-pin-point{position:absolute;z-index:1;left:15px;bottom:6px;width:10px;height:11px;
+ background:var(--pin);transform:rotate(45deg);border-radius:1px}
+.fire-map-pin-advice{--pin:#eac268}
+.fire-map-pin-watch{--pin:#f29c58}
+.fire-map-pin-emergency{--pin:#ef6877}
+.fire-map-pin-other{--pin:#9fb4ca}
+.fire-map-pin-location{--pin:#72cfff}
+.fire-map-pin-other.fire-map-pin-fire,.fire-map-pin-other.fire-map-pin-grass{--pin:#efa56b}
+.fire-map-pin-other.fire-map-pin-hazmat{--pin:#cda5f2}
+.fire-map-pin-other.fire-map-pin-flood{--pin:#78c9ee}
+.fire-map-pin-other.fire-map-pin-storm{--pin:#c1c4ff}
+.fire-map-pin-other.fire-map-pin-road{--pin:#dfbd86}
+.fire-map-pin.is-selected{transform:translateY(-5px) scale(1.1);filter:drop-shadow(0 0 9px var(--pin))}
+.fire-map-pin.is-selected .fire-map-pin-body{background:#1e4261;box-shadow:0 0 0 3px #f9fdffb3}
+.fire-leaflet-icon:hover .fire-map-pin{transform:translateY(-3px) scale(1.06)}
+.fire-leaflet-icon:focus-visible .fire-map-pin-body{outline:3px solid #fff;outline-offset:3px}
+@media(max-width:620px){
+ .fire-legend-items{gap:6px 9px}
+ .fire-legend-item{font-size:9px}
+ .fire-legend-item>.fire-symbol{width:21px;height:21px;flex-basis:21px}
+ .fire-directory-entry-area,.fire-directory-entry-metrics,.fire-directory-entry-updated{padding-left:36px}
+ .fire-map-selection-title .fire-symbol{width:27px;height:27px;flex-basis:27px}
+}

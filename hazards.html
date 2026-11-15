@@ -100,10 +100,9 @@
                   </div>
                 </div>
                 <div class="fire-map-bottom">
-                  <div class="fire-map-legend" aria-label="Official mapped area legend">
-                    <span><i class="fire-key advice"></i>Advice</span><span><i class="fire-key watch"></i>Watch &amp; Act</span>
-                    <span><i class="fire-key emergency"></i>Emergency</span><span><i class="fire-key other"></i>Other warning</span>
-                    <span><i class="fire-key footprint"></i>Incident extent</span>
+                  <div id="fire-map-legend" class="fire-map-legend" aria-label="Incident types and warning area symbols">
+                    <div class="fire-legend-group"><span class="fire-legend-heading">Incident Types</span><div id="fire-map-legend-incidents" class="fire-legend-items">Loading symbols…</div></div>
+                    <div class="fire-legend-group"><span class="fire-legend-heading">Warning Levels &amp; Areas</span><div id="fire-map-legend-warnings" class="fire-legend-items">Loading symbols…</div></div>
                   </div>
                   <div class="fire-map-controls" role="group" aria-label="Visible fire map layers">
                     <label><input id="fire-map-warnings" type="checkbox" checked> Warning Areas</label>
