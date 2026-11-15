@@ -2,9 +2,18 @@ name = "skypulse-au-alerts"
 main = "src/index.js"
 compatibility_date = "2026-11-15"
 workers_dev = true
+# Preserve dashboard-managed non-secret variables between GitHub deployments.
+# Cloudflare always preserves encrypted Worker secrets on deploy.
+keep_vars = true
 
 [vars]
 ALLOWED_ORIGIN = "https://iillifoggyiilli.github.io"
+
+# VAPID_PUBLIC_KEY is managed through Cloudflare Variables and Secrets.
+# It may be entered as a plaintext variable OR as a Cloudflare Secret.
+# Never commit the actual key pair to this public repository.
+[secrets]
+required = ["VAPID_PRIVATE_PKCS8"]
 
 [triggers]
 crons = ["*/15 * * * *"]
