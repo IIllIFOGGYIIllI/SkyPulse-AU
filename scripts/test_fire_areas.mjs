@@ -49,6 +49,38 @@ try{
  });
  await page.goto("http://127.0.0.1:8768/hazards.html",{waitUntil:"domcontentloaded"});
  await page.waitForFunction(()=>document.querySelector("#fire-geofence-state")?.textContent.includes("contain your selected location"),{timeout:15000});
+ // Fire Explorer appearance must match the site, without recolouring warning polygons.
+ const initialAppearance=await page.evaluate(()=>{
+  const map=document.querySelector("#fire-area-map"),base=window.__fireLayers.find(l=>l.kind==="tiles");
+  const wrapper=document.createElement("div");wrapper.className="skypulse-osm-basemap";
+  const tile=document.createElement("img");tile.className="leaflet-tile";wrapper.append(tile);map.append(wrapper);
+  const hazard=document.createElement("img");hazard.className="leaflet-tile";map.append(hazard);
+  return {tone:map.dataset.mapTone,baseClass:base?.opts?.className,
+   baseFilter:getComputedStyle(tile).filter,hazardFilter:getComputedStyle(hazard).filter};
+ });
+ if(initialAppearance.tone!=="dark"||initialAppearance.baseClass!=="skypulse-osm-basemap"||
+   !initialAppearance.baseFilter.includes("invert(1)")||initialAppearance.hazardFilter!=="none")
+  throw Error("Map's original OSM imagery only should use dark treatment: "+JSON.stringify(initialAppearance));
+ await page.locator("#fire-map-style").selectOption("light");
+ const manual=await page.evaluate(()=>({
+  tone:document.querySelector("#fire-area-map").dataset.mapTone,
+  filter:getComputedStyle(document.querySelector("#fire-area-map .skypulse-osm-basemap img")).filter,
+  saved:JSON.parse(localStorage.getItem("skypulse.preferences")).mapStyle
+ }));
+ if(manual.tone!=="light"||manual.filter!=="none"||manual.saved!=="light")
+  throw Error("Fire map Light override failed: "+JSON.stringify(manual));
+ await page.locator("#fire-map-style").selectOption("auto");
+ await page.locator("#theme-button").click();
+ if((await page.locator("#fire-area-map").getAttribute("data-map-tone"))!=="light")
+  throw Error("Fire map Auto mode didn't match site Light");
+ await page.locator("#fire-map-style").selectOption("dark");
+ await page.reload({waitUntil:"domcontentloaded"});
+ await page.waitForFunction(()=>document.querySelector("#fire-map-style")?.value==="dark");
+ if((await page.locator("#fire-area-map").getAttribute("data-map-tone"))!=="dark")
+  throw Error("Persisted fire-map Dark override didn't survive reload");
+ await page.locator("#fire-map-style").selectOption("auto");
+ await page.locator("#theme-button").click();
+ console.log("Fire Explorer basemap theme PASSED: dark OSM-only tiles, warnings unaffected, site Auto mode and saved override.");
  const rows=await page.evaluate(()=>({
   polygons:window.__fireLayers.filter(x=>x.kind==="polygon").map(x=>({colour:x.opts.color,popup:x.popup})),
   health:document.querySelector("#fire-warning-feed-health").textContent,

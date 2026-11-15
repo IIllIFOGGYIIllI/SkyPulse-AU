@@ -20,8 +20,8 @@ pages = {
                                   "radar-check-now", "radar-freshness-indicator", "radar-latest-issued",
                                   "radar-last-check", "radar-map-clock", "radar-latest", "radar-speed",
                                   "radar-slider", "radar-frame-kind", "radar-data-age", "radar-source-bom",
-                                  "radar-source-weatherzone", "radar-quality-status"]),
-    "hazards.html": ("hazards", ["fire-area-map", "fire-command-summary", "fire-summary-incidents", "fire-summary-warnings", "fire-summary-extents", "fire-summary-location", "fire-directory-list", "fire-directory-incidents", "fire-directory-warnings", "fire-directory-search", "fire-directory-scope", "fire-directory-sort", "fire-map-selection", "fire-map-selection-close", "fire-geofence-state", "fire-map-warnings", "fire-map-boundaries", "fire-overlaps", "fire-map-fit", "fire-warning-feed-health", "fire-incident-feed-health", "hazards-refresh", "incidents-list", "rfs-alerts-list", "fdr-district-select", "wmo-warnings-list"]),
+                                  "radar-source-weatherzone", "radar-quality-status", "radar-map-style"]),
+    "hazards.html": ("hazards", ["fire-area-map", "fire-map-style", "fire-command-summary", "fire-summary-incidents", "fire-summary-warnings", "fire-summary-extents", "fire-summary-location", "fire-directory-list", "fire-directory-incidents", "fire-directory-warnings", "fire-directory-search", "fire-directory-scope", "fire-directory-sort", "fire-map-selection", "fire-map-selection-close", "fire-geofence-state", "fire-map-warnings", "fire-map-boundaries", "fire-overlaps", "fire-map-fit", "fire-warning-feed-health", "fire-incident-feed-health", "hazards-refresh", "incidents-list", "rfs-alerts-list", "fdr-district-select", "wmo-warnings-list"]),
     "news.html": ("news", []),
     "settings.html": ("alerts", ["settings-location", "radius", "notify-toggle", "push-enable",
                                "push-consent", "push-include-incidents", "push-disable", "push-test",
@@ -72,6 +72,8 @@ check("CAP polygons and incident footprints handled separately", "function hazar
 check("NSW RFS published incident description parser", "def parse_rfs_incident_description(" in (ROOT / "scripts/sync_feeds.py").read_text())
 check("Incident details shown in both map and cards", "function incidentDetailList(" in js and "incident-rich-card" in js and "hazardIncidentPopup(" in js)
 check("Stale feed guarding", "state.incidentsFresh=false" in js and "state.warningsFresh=false" in js)
+check("Dark basemap scoped to original OSM image tiles", 'skypulse-osm-basemap' in js and '[data-map-tone=dark]' in (ROOT / "assets/styles.css").read_text())
+check("Basemap preferences respect site theme", 'function resolvedMapStyle()' in js and 'mapStyle:state.mapStyle' in js)
 check("Radar poll cadence at 5 minutes", "RADAR_CHECK_MS=300000" in js)
 check("Source generation timestamp shown in Sydney time", 'timeZone:"Australia/Sydney"' in js)
 check("Radar recent vs stale explicitly distinguished", '"STALE IMAGE"' in js and '"RECENT FRAME"' in js)
