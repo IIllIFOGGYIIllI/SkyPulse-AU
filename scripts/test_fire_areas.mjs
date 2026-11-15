@@ -74,7 +74,7 @@ try{
   fire:document.querySelector("#fire-incident-feed-health").textContent,
   cards:document.querySelectorAll("[data-warning-index]").length
  }));
- if(!rows.polygons.some(x=>x.colour==="#e9555c"&&x.popup.includes("Warning area")))throw Error("Warning polygon not correctly labelled");
+ if(!rows.polygons.some(x=>x.colour==="#e9555c"&&x.popup.includes("Official warning area")))throw Error("Warning polygon not correctly labelled");
  if(!rows.polygons.some(x=>x.colour==="#bc94e7"&&x.popup.includes("Not a warning")))throw Error("Incident extent not separate");
  const popup=rows.polygons.find(x=>x.colour==="#bc94e7").popup;
  for(const value of ["Advice","Under control","93 ha","MCFARLANE ST, CESSNOCK 2325","Cessnock","Bush Fire","Rural Fire Service","16 Nov"]){
