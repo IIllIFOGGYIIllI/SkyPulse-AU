@@ -438,8 +438,66 @@ function fireDirectoryItems(){
  });
  return incidents;
 }
+// All incident/alert artwork is local SVG, not external agency branding.
+const FIRE_ICONS={
+ fire:'<path d="M12 22c5 0 8-3.8 8-8 0-3.2-2.1-5.8-4-7-.2 3-2 3.7-2 3.7C14.6 5.6 12 2 9.7 1 10 6.4 4 8.8 4 14a8 8 0 0 0 8 8Z"/><path d="M12 20a3.5 3.5 0 0 0 3.5-3.5c0-1.4-.7-2.6-1.9-3.4.1 1.5-.8 2-1.2 2.2-.2-1.5-1-2.8-2-3.2.2 1.8-1.9 2.9-1.9 4.4A3.5 3.5 0 0 0 12 20Z"/>',
+ grass:'<path d="M4 21v-5l3.2 3M9 21l1.5-7.5L13 18l2.5-8L19 21"/><path d="M15 2c1 3-2 3.8-1.5 6.6 2-1 3-2.5 2.7-4.3 2.4 2.3 3.3 4.1 2.1 6.2-1 2-3.4 2.6-5.4 1.6-3.9-1.9-2.8-5.9 2.1-9.1Z"/>',
+ hazmat:'<path d="M12 3 2 21h20L12 3Z"/><circle cx="12" cy="13" r="1.8"/><path d="M11.3 11.3 9.4 8.4M12.7 11.3l1.9-2.9M10 15l-2.7 1.2M14 15l2.7 1.2"/>',
+ flood:'<path d="M4 9 12 3l8 6v4H4V9Z"/><path d="M2 17c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2M2 21c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2"/>',
+ storm:'<path d="M6.5 17H6a4 4 0 0 1-.2-8 6.5 6.5 0 0 1 12.6 1A3.5 3.5 0 0 1 18 17h-.5"/><path d="m13 11-4 6h4l-2 5 6-8h-4l2-3"/>',
+ road:'<path d="m9 3-5 18M15 3l5 18M12 4v4m0 4v3m0 4v2"/><path d="M4 21h16"/>',
+ rescue:'<circle cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/>',
+ incident:'<path d="M12 22s7-6.9 7-12A7 7 0 0 0 5 10c0 5.1 7 12 7 12Z"/><circle cx="12" cy="10" r="2.5"/>',
+ location:'<path d="M12 22s7-7.1 7-12A7 7 0 1 0 5 10c0 4.9 7 12 7 12Z"/><circle cx="12" cy="10" r="3"/>',
+ advice:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.3"/>',
+ watch:'<path d="m12 3 10 18H2L12 3Z"/><path d="M12 9v5m0 3v.2"/>',
+ emergency:'<path d="m12 2 3.2 3.2h4.6v4.6L23 13l-3.2 3.2v4.6h-4.6L12 24l-3.2-3.2H4.2v-4.6L1 13l3.2-3.2V5.2h4.6L12 2Z"/><path d="M12 8v7m0 3v.3"/>',
+ perimeter:'<path d="m3 8 8-5 9 4 1 10-9 4-9-5V8Z" stroke-dasharray="3 3"/><path d="m11 3 1 8 9 6"/>',
+ zone:'<path d="M4 5h16v14H4z" stroke-dasharray="3 2"/><path d="m8 10 3-3 5 5-3 5-5-2z"/>',
+ radius:'<circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="3"/>'
+};
+function fireIconSvg(kind){
+ return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+(FIRE_ICONS[kind]||FIRE_ICONS.incident)+'</svg>';
+}
+function fireIncidentKind(feature){
+ var raw=incidentDetailValue(feature,"incident_type","type")||incidentTitle(feature),type=String(raw).toLowerCase();
+ if(/grass|vegetation|scrub|crop|stubble/.test(type)&&/fire|burn|grass|vegetation/.test(type))return "grass";
+ if(/bush\s*fire|wildfire|forest\s*fire|structure\s*fire|house\s*fire|vehicle\s*fire|fire|burning/.test(type))return "fire";
+ if(/hazard|hazmat|chemical|toxic|spill|gas leak/.test(type))return "hazmat";
+ if(/flood|flash\s*water/.test(type))return "flood";
+ if(/storm|wind\s*damage|thunder|lightning/.test(type))return "storm";
+ if(/road|traffic|collision|crash|motorway/.test(type))return "road";
+ if(/rescue|medical/.test(type))return "rescue";
+ return "incident";
+}
+function fireIncidentKindLabel(kind){
+ return {fire:"Fire Incident",grass:"Grass or Vegetation Fire",hazmat:"Hazardous Materials",flood:"Flood Incident",
+  storm:"Storm Incident",road:"Road Incident",rescue:"Rescue Incident",incident:"Reported Incident",location:"Selected Location"}[kind]||"Reported Incident";
+}
+function fireWarningIconKind(level){
+ return level==="Emergency Warning"?"emergency":level==="Watch and Act"?"watch":level==="Advice"?"advice":"watch";
+}
+function fireIconBadge(kind,level,label){
+ var cls=level==="Emergency Warning"?"emergency":level==="Watch and Act"?"watch":level==="Advice"?"advice":"other";
+ return '<span class="fire-symbol fire-symbol-'+esc(kind)+' fire-symbol-'+cls+'" role="img" aria-label="'+esc(label||fireIncidentKindLabel(kind))+'">'+fireIconSvg(kind)+'</span>';
+}
+function fireLeafletMarkerIcon(kind,level,label,featureKind,index){
+ var cls=level==="Emergency Warning"?"emergency":level==="Watch and Act"?"watch":level==="Advice"?"advice":kind==="location"?"location":"other";
+ return L.divIcon({className:"fire-leaflet-icon",iconSize:[40,48],iconAnchor:[20,45],popupAnchor:[0,-42],
+  html:'<span class="fire-map-pin fire-map-pin-'+esc(cls)+' fire-map-pin-'+esc(kind)+'" '+
+   (featureKind?'data-fire-marker-kind="'+esc(featureKind)+'" data-fire-marker-index="'+Number(index)+'" ':'')+
+   'role="img" aria-label="'+esc(label)+'"><span class="fire-map-pin-body">'+fireIconSvg(kind)+'</span><span class="fire-map-pin-point"></span></span>'});
+}
+function syncFireMapSelection(){
+ var container=$("fire-area-map");if(!container)return;
+ container.querySelectorAll("[data-fire-marker-kind]").forEach(function(node){
+  node.classList.toggle("is-selected",!!state.fireSelected&&node.dataset.fireMarkerKind===state.fireSelected.kind&&
+   Number(node.dataset.fireMarkerIndex)===state.fireSelected.index);
+ });
+}
+
 function fireDirectoryHTML(item){
- var level=item.level,style=fireDirectorySeverity(level),
+ var level=item.level,
   colour=level==="Emergency Warning"?"emergency":level==="Watch and Act"?"watch":
    level==="Advice"?"advice":"other";
  var selected=state.fireSelected&&state.fireSelected.kind===item.kind&&state.fireSelected.index===item.index;
@@ -461,8 +519,10 @@ function fireDirectoryHTML(item){
  }
  return '<button type="button" class="fire-directory-entry '+(selected?"is-active":"")+
   '" data-fire-dir-kind="'+item.kind+'" data-fire-dir-index="'+item.index+'" aria-pressed="'+(selected?"true":"false")+'">'+
-  '<span class="fire-directory-entry-top"><span class="fire-directory-entry-symbol '+colour+'" aria-hidden="true">'+
-   (item.kind==="warning"?"!":"●")+'</span><strong>'+esc(item.title)+'</strong></span>'+
+  '<span class="fire-directory-entry-top">'+
+  (item.kind==="warning"?fireIconBadge(fireWarningIconKind(level),level,level+" Warning"):
+   fireIconBadge(fireIncidentKind(item.feature),level,fireIncidentKindLabel(fireIncidentKind(item.feature))))+
+  '<strong>'+esc(item.title)+'</strong></span>'+
   '<span class="fire-directory-entry-area">'+esc(subtitle)+'</span>'+
   '<span class="fire-directory-entry-metrics"><span class="incident-alert-pill '+colour+'">'+esc(level)+'</span>'+
    '<span>'+esc(details)+'</span></span>'+
@@ -526,12 +586,12 @@ function fireSelectMapItem(kind,index){
   }
   pane.hidden=false;
  }
- renderFireDirectory();
+ renderFireDirectory();syncFireMapSelection();
 }
 function fireCloseSelection(){
  state.fireSelected=null;
  var pane=$("fire-map-selection");if(pane)pane.hidden=true;
- renderFireDirectory();
+ renderFireDirectory();syncFireMapSelection();
 }
 function initFireDirectory(){
  on("fire-directory-incidents","click",function(){state.fireDirectoryMode="incidents";renderFireDirectory();});
@@ -585,15 +645,12 @@ function renderFireAreaMap(){
    L.circle([state.location.lat,state.location.lon],{radius:state.radius*1000,
     color:"#53b8ed",weight:1.5,fillOpacity:.035,dashArray:"6 5"}).addTo(layers.locality);
   }
-  L.circleMarker([state.location.lat,state.location.lon],{radius:6,color:"#ffffff",weight:2,
-   fillColor:"#269be4",fillOpacity:1}).bindPopup("Selected monitoring location: "+esc(state.location.name))
-    .addTo(layers.locality);
+  L.marker([state.location.lat,state.location.lon],{icon:fireLeafletMarkerIcon("location","location","Selected location: "+state.location.name),keyboard:true,zIndexOffset:800}).addTo(layers.locality);
   if(state.warningsFresh&&hazardMapEnabled("fire-map-warnings")){
    state.rfsAlerts.slice(0,35).forEach(function(alert){
     var style=hazardLevelStyle(alert);
     hazardWarningPolygons(alert).forEach(function(points){
      L.polygon(points,{color:style.color,weight:3,fillColor:style.color,fillOpacity:.19})
-      .bindPopup(hazardWarningPopup(alert))
       .on("click",function(){fireSelectMapItem("warning",state.rfsAlerts.indexOf(alert));})
       .addTo(layers.warnings);
     });
@@ -604,7 +661,6 @@ function renderFireAreaMap(){
     if(hazardMapEnabled("fire-map-boundaries")){
      hazardIncidentPolygons(feature).forEach(function(poly){
       L.polygon(poly,{color:"#bc94e7",weight:2.2,dashArray:"6 4",fillColor:"#b991e6",fillOpacity:.10})
-       .bindPopup(hazardIncidentPopup(feature))
        .on("click",function(){fireSelectMapItem("incident",state.incidents.indexOf(feature));})
        .addTo(layers.extents);
      });
@@ -612,8 +668,9 @@ function renderFireAreaMap(){
     if(hazardMapEnabled("fire-map-points")){
      var p=coordinatesOf(feature);
      if(p&&Number.isFinite(p[0])&&Number.isFinite(p[1])){
-      L.circleMarker(p,{radius:6,weight:1.5,color:"#fff",fillColor:incidentAlertStyle(feature).color,fillOpacity:.92})
-       .bindPopup(hazardIncidentPopup(feature))
+      L.marker(p,{icon:fireLeafletMarkerIcon(fireIncidentKind(feature),incidentAlertLevel(feature),
+         incidentTitle(feature)+": "+incidentAlertLevel(feature),"incident",state.incidents.indexOf(feature)),
+         keyboard:true,riseOnHover:true})
        .on("click",function(){fireSelectMapItem("incident",state.incidents.indexOf(feature));})
        .addTo(layers.incidents);
      }
@@ -621,7 +678,7 @@ function renderFireAreaMap(){
    });
   }
  }
- renderFireAreaStatus();
+ renderFireAreaStatus();syncFireMapSelection();
 }
 function renderFireAreaStatus(){
  var area=hazardAssessWarnings(),current=state.location||{},title=current.name+(current.region?", "+current.region:"");
@@ -988,7 +1045,7 @@ state.map.on("click",function(){$("map-layers-panel").hidden=true;$("map-layers-
 document.addEventListener("fullscreenchange",function(){setTimeout(function(){if(state.map)state.map.invalidateSize({pan:false});},100);});
 document.addEventListener("keydown",function(e){if(e.key==="Escape"){$("map-layers-panel").hidden=true;$("map-layers-button").setAttribute("aria-expanded","false");if($("map-viewport").classList.contains("map-pseudo-fullscreen"))toggleMapFullscreen();}});
 syncMapLayerUI();setTimeout(function(){state.map.invalidateSize({pan:false});},350);updateMarkers();showRfsWarningMap();loadRadar();}
-function updateMarkers(){if(!state.map||!state.markers)return;state.markers.clearLayers();showMapFireExtents();if(!state.incidentsEnabled)return;state.incidents.forEach(function(f){var pt=coordinatesOf(f);if(!pt||!Number.isFinite(pt[0])||!Number.isFinite(pt[1]))return;if(state.mapNearbyOnly&&km(state.location.lat,state.location.lon,pt[0],pt[1])>state.radius)return;var level=incidentAlertStyle(f);L.circleMarker(pt,{radius:7,color:"white",weight:1.5,fillColor:level.color,fillOpacity:.85}).bindPopup(hazardIncidentPopup(f)).addTo(state.markers);});}
+function updateMarkers(){if(!state.map||!state.markers)return;state.markers.clearLayers();showMapFireExtents();if(!state.incidentsEnabled)return;state.incidents.forEach(function(f){var pt=coordinatesOf(f);if(!pt||!Number.isFinite(pt[0])||!Number.isFinite(pt[1]))return;if(state.mapNearbyOnly&&km(state.location.lat,state.location.lon,pt[0],pt[1])>state.radius)return;var level=incidentAlertStyle(f);L.marker(pt,{icon:fireLeafletMarkerIcon(fireIncidentKind(f),level.level,incidentTitle(f)+": "+level.level),keyboard:true,riseOnHover:true}).bindPopup(hazardIncidentPopup(f)).addTo(state.markers);});}
 function showMapFireExtents(){
  if(!state.map||!state.fireAreaLayer)return;
  state.fireAreaLayer.clearLayers();
