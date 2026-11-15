@@ -105,6 +105,8 @@ try{
  if(lightPanel!=="rgb(255, 255, 255)")throw Error("Light site theme should use a light information panel, not change the map: "+lightPanel);
  await page.locator("#theme-button").click();
  console.log("Fire map panels PASSED: original map imagery, dark details in dark UI, light details in light UI.");
+ // Inspect every category at a close zoom, where clusters intentionally separate.
+ await page.evaluate(()=>window.__fireTestMap.setView([-32.8321,151.3497],13));
  const rows=await page.evaluate(()=>({
   polygons:window.__fireLayers.filter(x=>x.kind==="polygon").map(x=>({
    colour:x.opts.color,hasPopup:!!x.popup,clickable:typeof x.handlers.click==="function"})),
@@ -218,6 +220,7 @@ try{
  if(!(await page.locator("#fire-geofence-state").textContent()).includes("contain"))throw Error("Hidden layer incorrectly suppresses risk status");
  // Re-check with several source-accurate incident locations close together.
  // At NSW zoom, one number badge should replace the overlapping markers.
+ await page.evaluate(()=>window.__fireTestMap.setView([-32.8321,151.3497],8));
  dense=true;await page.locator("#hazards-refresh").click();
  await page.waitForFunction(()=>document.querySelector("#fire-summary-incidents")?.textContent==="3");
  const grouped=await page.evaluate(()=>{
