@@ -1,0 +1,16 @@
+name = "skypulse-au-alerts"
+main = "src/index.js"
+compatibility_date = "2026-11-15"
+workers_dev = true
+
+[vars]
+ALLOWED_ORIGIN = "https://iillifoggyiilli.github.io"
+
+[triggers]
+crons = ["*/15 * * * *"]
+
+# Create a free D1 database and replace this ID before deployment.
+[[d1_databases]]
+binding = "DB"
+database_name = "skypulse-au-alerts"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
