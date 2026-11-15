@@ -250,23 +250,23 @@ try{
   if(!result)break;
   if(!(result.after>result.before))throw Error("Cluster click didn't zoom into grouped incidents");
  }
- const expanded=await page.evaluate(()=>({
+ const expandedClusters=await page.evaluate(()=>({
   zoom:window.__fireTestMap.getZoom(),
   markers:window.__fireLayers.filter(x=>x.kind==="marker"&&x.domNode?.isConnected&&
    x.opts.icon?.options?.html?.includes('data-fire-marker-kind="incident"')).length,
   cluster:window.__fireLayers.some(x=>x.kind==="marker"&&x.domNode?.isConnected&&
    x.opts.icon?.options?.html?.includes('data-fire-cluster-members="0,8,9"'))
  }));
- if(expanded.zoom!==13||expanded.cluster||expanded.markers!==10)
-  throw Error("Zooming into clusters didn't reveal all ten source records: "+JSON.stringify(expanded));
+ if(expandedClusters.zoom!==13||expandedClusters.cluster||expandedClusters.markers!==10)
+  throw Error("Zooming into clusters didn't reveal all ten source records: "+JSON.stringify(expandedClusters));
  if(await page.locator("#fire-map-selection").isVisible())
   throw Error("Zooming a cluster must not open a misleading combined incident detail panel");
- const details=await page.evaluate(()=>{
+ const expandedDetails=await page.evaluate(()=>{
   const icon=window.__fireLayers.find(x=>x.kind==="marker"&&x.domNode?.isConnected&&
    x.opts.icon?.options?.html?.includes('data-fire-marker-index="8"'));
   if(!icon)return false;icon.handlers.click();return true;
  });
- if(!details||!(await page.locator("#fire-map-selection").isVisible())||
+ if(!expandedDetails||!(await page.locator("#fire-map-selection").isVisible())||
    !(await page.locator("#fire-map-selection-body").textContent()).includes("Nearby Grass Fire"))
   throw Error("Expanded incident icon didn't open its individual RFS detail panel");
  await page.locator("#fire-map-selection-close").click();
