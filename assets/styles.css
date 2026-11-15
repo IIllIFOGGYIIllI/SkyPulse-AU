@@ -977,13 +977,13 @@ body[data-page=hazards] .fire-attribution{border-top:1px solid var(--border);mar
 .fire-legend-item>.fire-symbol{width:23px;height:23px;flex:0 0 23px;border-radius:7px}
 .fire-legend-item>.fire-symbol svg{width:15px;height:15px}
 .fire-leaflet-icon{background:transparent!important;border:0!important;overflow:visible!important}
-.fire-map-pin{--pin:#abbcd0;display:block;width:40px;height:48px;position:relative;isolation:isolate;
+.fire-map-pin{--pin:#abbcd0;display:block;width:32px;height:39px;position:relative;isolation:isolate;
  filter:drop-shadow(0 4px 6px #071826ab);transition:transform .16s ease,filter .16s ease;cursor:pointer}
-.fire-map-pin-body{position:absolute;z-index:2;left:3px;top:3px;width:34px;height:34px;
- display:grid;place-items:center;border-radius:13px;background:#122a42;border:2px solid var(--pin);
+.fire-map-pin-body{position:absolute;z-index:2;left:2px;top:2px;width:28px;height:28px;
+ display:grid;place-items:center;border-radius:10px;background:#122a42;border:2px solid var(--pin);
  color:var(--pin);box-shadow:inset 0 1px 0 #fff2,0 0 0 2px #0b233ec7}
-.fire-map-pin-body svg{width:21px;height:21px;display:block}
-.fire-map-pin-point{position:absolute;z-index:1;left:15px;bottom:6px;width:10px;height:11px;
+.fire-map-pin-body svg{width:17px;height:17px;display:block}
+.fire-map-pin-point{position:absolute;z-index:1;left:12px;bottom:5px;width:8px;height:9px;
  background:var(--pin);transform:rotate(45deg);border-radius:1px}
 .fire-map-pin-advice{--pin:#eac268}
 .fire-map-pin-watch{--pin:#f29c58}
@@ -1005,4 +1005,33 @@ body[data-page=hazards] .fire-attribution{border-top:1px solid var(--border);mar
  .fire-legend-item>.fire-symbol{width:21px;height:21px;flex-basis:21px}
  .fire-directory-entry-area,.fire-directory-entry-metrics,.fire-directory-entry-updated{padding-left:36px}
  .fire-map-selection-title .fire-symbol{width:27px;height:27px;flex-basis:27px}
+}
+
+/* Source-accurate incident clustering for free Leaflet maps. Cluster numbers
+   count published incident points, not affected areas, people or fire sizes. */
+.fire-leaflet-cluster-icon{background:transparent!important;border:0!important;overflow:visible!important}
+.fire-map-cluster{--cluster:#abbcd0;display:grid;place-items:center;position:relative;
+ box-sizing:border-box;width:38px;height:38px;border-radius:13px;
+ background:#102b45;border:2px solid var(--cluster);color:#f7fbff;
+ box-shadow:inset 0 1px 0 #ffffff1d,0 4px 14px #071c30c9,0 0 0 3px #0d293d8c;
+ cursor:pointer;transition:transform .16s ease,box-shadow .16s ease;
+ font:850 14px/1 Manrope,sans-serif;font-variant-numeric:tabular-nums}
+.fire-map-cluster::after{content:"";position:absolute;right:-5px;top:-5px;
+ width:11px;height:11px;border:2px solid #102b45;background:var(--cluster);
+ border-radius:50%;box-shadow:0 1px 5px #08162390}
+.fire-map-cluster-count{position:relative;z-index:1;letter-spacing:-.3px}
+.fire-map-cluster-advice{--cluster:#edc26c}
+.fire-map-cluster-watch{--cluster:#f39d60}
+.fire-map-cluster-emergency{--cluster:#f16e7a}
+.fire-map-cluster-other{--cluster:#7bbadf}
+.fire-map-cluster.is-selected{transform:translateY(-2px) scale(1.1);
+ box-shadow:0 0 0 3px #f2f8ff9a,0 0 16px var(--cluster),0 5px 13px #061625bf}
+.fire-leaflet-cluster-icon:hover .fire-map-cluster{transform:translateY(-2px) scale(1.06)}
+.fire-leaflet-cluster-icon:focus-visible .fire-map-cluster{outline:3px solid #f7fbff;outline-offset:3px}
+.fire-legend-cluster{display:grid;place-items:center;flex:none;border:2px solid #77bee7;
+ border-radius:7px;width:23px;height:23px;background:#132e47;color:#fff;
+ font:850 11px/1 Manrope,sans-serif;box-sizing:border-box}
+@media(max-width:620px){
+ .fire-map-cluster{width:36px;height:36px;border-radius:12px}
+ .fire-legend-cluster{width:21px;height:21px}
 }
