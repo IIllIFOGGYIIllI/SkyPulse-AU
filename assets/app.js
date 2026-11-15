@@ -504,6 +504,7 @@ function fireSelectMapItem(kind,index){
  var feature=kind==="incident"?state.incidents[index]:state.rfsAlerts[index],
   pane=$("fire-map-selection"),body=$("fire-map-selection-body");
  if(pane&&body&&feature){
+  setText("fire-map-selection-kind",kind==="warning"?"OFFICIAL NSW RFS WARNING":"NSW RFS INCIDENT DETAIL");
   if(kind==="incident"){
    var style=incidentAlertStyle(feature),status=incidentDetailValue(feature,"status","status");
    body.innerHTML='<div class="fire-map-selection-title"><strong>'+esc(incidentTitle(feature))+'</strong>'+
@@ -665,11 +666,13 @@ function renderFireAreaStatus(){
  }
 }
 function focusHazardWarning(i){
- var alert=state.rfsAlerts[i],polygons=hazardWarningPolygons(alert);
- if(!polygons.length){message("No official mapped warning area is available for this warning.");return;}
+ var alert=state.rfsAlerts[i];if(!alert)return;
+ var polygons=hazardWarningPolygons(alert);
  if(!state.hazardMap){window.location.href="./radar.html";return;}
- try{state.hazardMap.fitBounds(L.latLngBounds(polygons.flat()).pad(.12),{maxZoom:12});
+ try{
   fireSelectMapItem("warning",i);
+  if(polygons.length)state.hazardMap.fitBounds(L.latLngBounds(polygons.flat()).pad(.12),{maxZoom:12});
+  else message("No mapped boundary was published for this warning; details shown in the incident panel.");
   if($("fire-map-warnings")&&!$("fire-map-warnings").checked){$("fire-map-warnings").checked=true;renderFireAreaMap();}
   $("fire-map-workspace")?.scrollIntoView({behavior:"smooth",block:"start"});
  }catch(e){message("Unable to zoom to the published warning area.");}
@@ -888,6 +891,7 @@ async function loadOfficialRfsWarnings(){
   var age=Date.now()-new Date(data.retrieved_at).getTime();
   if(!Number.isFinite(age)||age<0||age>DATA_MAX_AGE)throw Error("RFS warning snapshot is stale");
   state.rfsAlerts=data.alerts;state.warningsFresh=true;
+  if(state.fireSelected&&state.fireSelected.kind==="warning"&&!state.rfsAlerts[state.fireSelected.index])fireCloseSelection();
   feedState("rfs-alert-feed-state",data.retrieved_at);
   if($("rfs-alerts-list")){
    $("rfs-alerts-list").innerHTML=data.alerts.length?data.alerts.slice(0,35).map(function(alert,i){
@@ -908,6 +912,7 @@ async function loadOfficialRfsWarnings(){
   }
  }catch(e){
   state.rfsAlerts=[];state.warningsFresh=false;
+  if(state.fireSelected&&state.fireSelected.kind==="warning")fireCloseSelection();
   if($("rfs-alert-feed-state")){$("rfs-alert-feed-state").textContent="Official CAP warning feed unavailable or stale — current areas cannot be verified";$("rfs-alert-feed-state").className="feed-state warn";}
   if($("rfs-alerts-list"))$("rfs-alerts-list").innerHTML='<p class="feed-empty">Warning coverage cannot be verified from this snapshot. Open NSW RFS or Hazards Near Me for official instructions.</p>';
  }
@@ -937,7 +942,10 @@ async function loadHazards(){if($("fdr-district-select")||$("snapshot-fire-dange
  var incidentAge=Date.now()-new Date(data.retrieved_at).getTime();
  if(!Number.isFinite(incidentAge)||incidentAge<0||incidentAge>DATA_MAX_AGE)throw Error("RFS incident feed stale");
  state.incidents=data.features;state.lastIncidentFetch=data.retrieved_at;state.incidentsFresh=true;
- feedState("rfs-feed-state",data.retrieved_at);renderIncidents();updateMarkers();renderFireAreaMap();}catch(e){state.incidents=[];state.lastIncidentFetch=null;state.incidentsFresh=false;if($("rfs-feed-state"))$("rfs-feed-state").textContent="Incident data unavailable; use the official NSW RFS link below. Check Pages publishing source if persistent.";if($("rfs-feed-state"))$("rfs-feed-state").className="feed-state warn";renderIncidents();updateMarkers();renderFireAreaMap();}if(!$("warnings-list")&&!$("snapshot-warnings"))return;try{var bom=await getJSON("./data/bom.json?cache="+Date.now());if(!Array.isArray(bom.warnings)||!bom.retrieved_at||bom.error)throw Error("BOM feed is unavailable");feedState("bom-feed-state",bom.retrieved_at);setText("snapshot-warnings",bom.warnings.length+" Statewide NSW/ACT Notices · Check for Local Relevance");if($("warnings-list"))$("warnings-list").innerHTML=bom.warnings.length?bom.warnings.slice(0,7).map(function(w){var link=validUrl(w.link)||"https://www.bom.gov.au/nsw/warnings/";return '<div class="feed-item"><b>⚠ '+esc(w.title||"Weather warning")+'</b><small>'+esc(w.published||"See original warning for issue time")+'</small><a href="'+esc(link)+'" target="_blank" rel="noopener">Read full warning at BOM ↗</a></div>';}).join(""):'<p class="feed-empty">No current warnings were listed in the retrieved statewide BOM RSS feed. Check BOM directly before making safety decisions.</p>';}catch(e){setText("snapshot-warnings","Warning Feed Unavailable — Check Official BOM Warnings");if($("bom-feed-state"))$("bom-feed-state").textContent="Warning feed unavailable. Open BOM for the latest notices.";if($("bom-feed-state"))$("bom-feed-state").className="feed-state warn";if($("warnings-list"))$("warnings-list").innerHTML='<p class="feed-empty">Unable to verify current warning status.</p>';}}
+ if(state.fireSelected&&state.fireSelected.kind==="incident"&&!state.incidents[state.fireSelected.index])fireCloseSelection();
+ feedState("rfs-feed-state",data.retrieved_at);renderIncidents();updateMarkers();renderFireAreaMap();}catch(e){state.incidents=[];state.lastIncidentFetch=null;state.incidentsFresh=false;
+ if(state.fireSelected&&state.fireSelected.kind==="incident")fireCloseSelection();
+ if($("rfs-feed-state"))$("rfs-feed-state").textContent="Incident data unavailable; use the official NSW RFS link below. Check Pages publishing source if persistent.";if($("rfs-feed-state"))$("rfs-feed-state").className="feed-state warn";renderIncidents();updateMarkers();renderFireAreaMap();}if(!$("warnings-list")&&!$("snapshot-warnings"))return;try{var bom=await getJSON("./data/bom.json?cache="+Date.now());if(!Array.isArray(bom.warnings)||!bom.retrieved_at||bom.error)throw Error("BOM feed is unavailable");feedState("bom-feed-state",bom.retrieved_at);setText("snapshot-warnings",bom.warnings.length+" Statewide NSW/ACT Notices · Check for Local Relevance");if($("warnings-list"))$("warnings-list").innerHTML=bom.warnings.length?bom.warnings.slice(0,7).map(function(w){var link=validUrl(w.link)||"https://www.bom.gov.au/nsw/warnings/";return '<div class="feed-item"><b>⚠ '+esc(w.title||"Weather warning")+'</b><small>'+esc(w.published||"See original warning for issue time")+'</small><a href="'+esc(link)+'" target="_blank" rel="noopener">Read full warning at BOM ↗</a></div>';}).join(""):'<p class="feed-empty">No current warnings were listed in the retrieved statewide BOM RSS feed. Check BOM directly before making safety decisions.</p>';}catch(e){setText("snapshot-warnings","Warning Feed Unavailable — Check Official BOM Warnings");if($("bom-feed-state"))$("bom-feed-state").textContent="Warning feed unavailable. Open BOM for the latest notices.";if($("bom-feed-state"))$("bom-feed-state").className="feed-state warn";if($("warnings-list"))$("warnings-list").innerHTML='<p class="feed-empty">Unable to verify current warning status.</p>';}}
 function mapInfo(text){var e=$("map-location-status");e.textContent=text;e.hidden=false;clearTimeout(state.mapStatusTimer);state.mapStatusTimer=setTimeout(function(){e.hidden=true;},5200);}
 function updateMapCoords(){if(!state.map)return;var p=state.map.getCenter();setText("map-coordinates",Math.abs(p.lat).toFixed(4)+"°"+(p.lat<0?"S":"N")+", "+Math.abs(p.lng).toFixed(4)+"°"+(p.lng<0?"W":"E")+" · Zoom "+state.map.getZoom());}
 function mapResize(){if(state.map)state.map.invalidateSize({pan:false});}
