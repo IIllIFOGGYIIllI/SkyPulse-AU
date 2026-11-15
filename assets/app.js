@@ -549,6 +549,9 @@ function fireClusterIcon(group){
 }
 function fireZoomCluster(map,group){
  if(!map||!group||!group.members.length)return;
+ // A count badge is a zoom control, not an incident. Clear any old inspector
+ // so previously selected information is not mistaken for this group.
+ if(map===state.hazardMap&&state.fireSelected)fireCloseSelection();
  var zoom=Number(map.getZoom()),next=Math.min(FIRE_CLUSTER_BREAK_ZOOM,zoom+2);
  if(!Number.isFinite(next)||next<=zoom)next=FIRE_CLUSTER_BREAK_ZOOM;
  map.setView(group.point,next,{animate:true});
