@@ -15,7 +15,7 @@ function relTime(value){var delta=Math.max(0,Date.now()-new Date(value).getTime(
 function validUrl(s){try{var u=new URL(s);return u.protocol==="https:"?u.href:null;}catch(e){return null;}}
 function weatherMeta(code,isDay){var c=Number(code);if(c===0)return ["Clear sky",isDay?"☀️":"🌙"];if(c<=2)return ["Partly cloudy",isDay?"🌤️":"☁️"];if(c===3)return ["Overcast","☁️"];if(c<=48)return ["Foggy","🌫️"];if(c<=57)return ["Drizzle","🌦️"];if(c<=67)return ["Rain","🌧️"];if(c<=77)return ["Snow","🌨️"];if(c<=82)return ["Rain showers","🌦️"];if(c<=86)return ["Snow showers","🌨️"];if(c>=95)return ["Thunderstorms","⛈️"];return ["Variable conditions","🌤️"];}
 function setText(id,s){$(id).textContent=s;}
-function theme(){document.documentElement.dataset.theme=state.theme;setText("theme-name",state.theme==="dark"?"Dark":"Light");$("theme-button").textContent=state.theme==="dark"?"☀":"◐";}
+function theme(){document.documentElement.dataset.theme=state.theme;setText("theme-name",state.theme==="dark"?"Dark":"Light");$("theme-button").setAttribute("aria-label",state.theme==="dark"?"Switch to Light Theme":"Switch to Dark Theme");$("theme-button").title=state.theme==="dark"?"Switch to Light Theme":"Switch to Dark Theme";}
 function updateLocationUI(){var l=state.location;setText("heading-location",l.name);setText("settings-location",l.name+(l.region?", "+l.region:""));setText("incident-range","Within "+state.radius+" km of "+l.name);$("location-input").value=l.name;setText("radius-label",state.radius+" km");$("radius").value=state.radius;updateOfficialStation();if(state.fireDanger)renderFireDanger();}
 async function getJSON(url,timeout){var c=new AbortController(),tm=setTimeout(function(){c.abort();},timeout||13000);try{var r=await fetch(url,{signal:c.signal,cache:"no-store"});if(!r.ok)throw Error("HTTP "+r.status);return await r.json();}finally{clearTimeout(tm);}}
 function updateWeatherStatus(text,error){$("weather-status").innerHTML='<span class="pulse-dot" style="'+(error?"background:var(--red)":"")+'"></span>'+esc(text);}
@@ -228,7 +228,35 @@ function toggleRadarPlay(){if(state.radarTimer){clearInterval(state.radarTimer);
 function changeLocation(l){state.location=l;save();updateLocationUI();if(state.peekMap)state.peekMap.setView([l.lat,l.lon],8);if(state.map){state.map.setView([l.lat,l.lon],9);if(state.locationMarker)state.locationMarker.setLatLng([l.lat,l.lon]).bindPopup("Selected Location: "+esc(l.name));updateMarkers();}state.seen=null;loadWeather();renderIncidents();window.dispatchEvent(new Event("skypulse:watch-changed"));message("Location changed to "+l.name);}
 var searchTimer=null;function searchLocation(text){clearTimeout(searchTimer);if(text.trim().length<2){$("location-results").hidden=true;return;}searchTimer=setTimeout(async function(){try{var q=new URLSearchParams({name:text.trim(),count:"7",language:"en",countryCode:"AU"});var data=await getJSON("https://geocoding-api.open-meteo.com/v1/search?"+q,9000),results=data.results||[];if($("location-input").value.trim()!==text.trim())return;var box=$("location-results");box.innerHTML="";if(!results.length){box.innerHTML='<div class="muted" style="padding:10px">No Australian matches</div>';}results.forEach(function(r){var b=document.createElement("button");b.type="button";b.setAttribute("role","option");b.innerHTML=esc(r.name)+'<small>'+esc([r.admin1,r.country].filter(Boolean).join(", "))+'</small>';b.addEventListener("click",function(){changeLocation({name:r.name,region:r.admin1||"",lat:r.latitude,lon:r.longitude});box.hidden=true;});box.appendChild(b);});box.hidden=false;}catch(e){$("location-results").hidden=true;}},350);}
 function setupInstall(){var deferred=null;window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();deferred=e;$("install-button").hidden=false;});function install(){if(deferred){deferred.prompt();deferred.userChoice.finally(function(){deferred=null;$("install-button").hidden=true;});}else message("Install via your browser menu: Add to Home Screen / Install App. On iPhone use Safari → Share → Add to Home Screen.");}$("install-button").addEventListener("click",install);$("settings-install").addEventListener("click",install);}
-function setupNav(){document.querySelectorAll(".nav-item").forEach(function(a){a.addEventListener("click",function(){document.querySelectorAll(".nav-item").forEach(function(b){b.classList.remove("active");});a.classList.add("active");});});}
+function setupNav(){
+ var ids=["overview","forecast","map-section","hazards","alerts"];
+ function activate(id){
+  document.querySelectorAll(".mobile-tab").forEach(function(a){
+   var active=a.dataset.tab===id;a.classList.toggle("is-active",active);
+   if(active)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current");
+  });
+  document.querySelectorAll(".nav-item").forEach(function(a){
+   a.classList.toggle("active",a.getAttribute("href")==="#"+id);
+  });
+ }
+ document.querySelectorAll(".mobile-tab,.nav-item").forEach(function(a){
+  a.addEventListener("click",function(){var id=a.getAttribute("href").slice(1);if(ids.includes(id))activate(id);});
+ });
+ var scheduled=false;
+ function syncActive(){
+  scheduled=false;
+  if(window.innerWidth>890)return;
+  var anchor=Math.max(100,Math.min(230,window.innerHeight*.30)),selected="overview";
+  ids.forEach(function(id){var el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<=anchor)selected=id;});
+  activate(selected);
+ }
+ window.addEventListener("scroll",function(){
+  if(!scheduled){scheduled=true;requestAnimationFrame(syncActive);}
+ },{passive:true});
+ window.addEventListener("hashchange",function(){var id=location.hash.slice(1);if(ids.includes(id))activate(id);else syncActive();});
+ window.addEventListener("resize",syncActive,{passive:true});
+ if(ids.includes(location.hash.slice(1)))activate(location.hash.slice(1));else syncActive();
+}
 function init(){window.SkyPulseWatchContext=function(){return {latitude:state.location.lat,longitude:state.location.lon,radiusKm:state.radius,locationName:state.location.name};};$("fdr-district-select").addEventListener("change",function(e){state.fireDistrict=e.target.value;save();renderFireDanger();});if(state.location&&state.location.name==="My location"){state.location.name="My Location";save();}theme();updateLocationUI();$("year").textContent=new Date().getFullYear();$("theme-button").addEventListener("click",function(){state.theme=state.theme==="dark"?"light":"dark";save();theme();});$("location-input").addEventListener("input",function(e){searchLocation(e.target.value);});$("location-input").addEventListener("blur",function(){setTimeout(function(){$("location-results").hidden=true;},200);});$("geo-button").addEventListener("click",function(){if(!navigator.geolocation){message("Location is not supported on this device.");return;}navigator.geolocation.getCurrentPosition(function(p){changeLocation({name:"My Location",region:"Australia",lat:p.coords.latitude,lon:p.coords.longitude});},function(){message("Location access denied or unavailable. Use the location search instead.");},{timeout:10000,enableHighAccuracy:false});});$("refresh-button").addEventListener("click",function(){loadWeather();loadHazards();loadRadar();});$("hazards-refresh").addEventListener("click",loadHazards);$("radius").addEventListener("input",function(e){state.radius=Number(e.target.value);save();setText("radius-label",state.radius+" km");renderIncidents();updateMarkers();window.dispatchEvent(new Event("skypulse:watch-changed"));});$("notify-toggle").checked=state.notify;$("notify-toggle").addEventListener("change",function(e){state.notify=e.target.checked;save();setText("notification-state",state.notify?"Only on-screen monitoring while the app is open. Background push is not active.":"Background push is not yet available. Official emergency alerts remain essential.");});$("notify-permission").addEventListener("click",async function(){if(!("Notification" in window)){message("This browser does not support notifications.");return;}var p=await Notification.requestPermission();message("Browser notifications: "+p+". New incident notices work only with SkyPulse open.");});$("radar-toggle").addEventListener("click",function(){setMapLayer("radar",!state.radarEnabled);});$("incidents-toggle").addEventListener("click",function(){setMapLayer("incidents",!state.incidentsEnabled);});$("radar-slider").addEventListener("input",function(e){showRadarFrame(Number(e.target.value));});$("radar-play").addEventListener("click",toggleRadarPlay);$("radar-step-back").addEventListener("click",function(){if(state.radarTimer)toggleRadarPlay();showRadarFrame(Number($("radar-slider").value)-1);});$("radar-step-forward").addEventListener("click",function(){if(state.radarTimer)toggleRadarPlay();showRadarFrame(Number($("radar-slider").value)+1);});setupInstall();setupNav();loadWeather();initMap();loadHazards();setInterval(function(){loadWeather();loadHazards();},15*60*1000);}
 document.addEventListener("DOMContentLoaded",init);
 })();

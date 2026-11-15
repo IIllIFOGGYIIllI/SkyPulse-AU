@@ -200,3 +200,105 @@ body.map-lock-scroll{overflow:hidden}
 .app-update-banner button{border:0;border-radius:9px;padding:10px 13px;background:var(--accent-strong);color:#fff;font-size:12px;font-weight:800;white-space:nowrap}
 @media(max-width:890px){.app-update-banner{bottom:calc(83px + env(safe-area-inset-bottom));right:10px;width:calc(100vw - 20px)}}
 @media(max-width:450px){.app-update-banner{align-items:stretch;flex-direction:column}.app-update-banner button{width:100%}}
+
+
+/* v9 — Mobile layout containment and genuinely viewport-bound navigation.
+ * Forecast timelines can scroll inside their cards, not stretch the page.
+ */
+html,body{width:100%;max-width:100%;min-width:0}
+.shell,.main,.content,.section,.forecast-grid,.forecast-grid>.card,
+.hours-card,.chart-card,.seven-day,.days-list,.hours-scroll,
+.hero-grid,.hero-grid>.card,.metric-grid,.hazards-grid,.settings-grid,
+.news-grid,.enhanced-dashboard,.weather-media-grid,.map-card,.map-viewport{
+  min-width:0;max-width:100%;
+}
+.content{width:100%}
+.section,.forecast-grid,.forecast-grid>.card,.seven-day{width:100%}
+.forecast-grid{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr)}
+.forecast-grid>.card,.seven-day{overflow:hidden}
+.temp-chart,.temp-chart svg{min-width:0;max-width:100%;width:100%}
+.temp-chart svg{overflow:hidden}
+.hours-scroll,.days-list{
+  width:100%;max-width:100%;min-width:0;
+  overflow-x:auto;overflow-y:hidden;
+  overscroll-behavior-x:contain;
+  -webkit-overflow-scrolling:touch;
+}
+.hours-scroll .hour-cell{flex:0 0 85px}
+.card-title-row,.card-title-row>div{min-width:0}
+.mobile-action>svg,.theme-icon svg{width:19px;height:19px;display:block}
+.theme-icon-sun{display:inline-flex}.theme-icon-moon{display:none}
+:root[data-theme=light] .theme-icon-sun{display:none}
+:root[data-theme=light] .theme-icon-moon{display:inline-flex}
+.control-label{display:none}
+@media(max-width:1250px){
+ .forecast-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:890px){
+ html,body{overflow-x:clip}
+ .shell,.main{width:100%;max-width:100%}
+ .topbar,.content{min-width:0;max-width:100%}
+ .topbar{width:100%;z-index:140}
+ .top-actions{min-width:0;max-width:100%}
+ .location-picker{min-width:0;flex:1 1 auto}
+ .location-results{max-width:100%;overflow-x:hidden}
+ .mobile-tabs{
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+  position:fixed;inset:auto 0 0 0;width:100%;max-width:100%;
+  padding:5px max(6px,env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));
+  gap:4px;justify-content:stretch;align-items:stretch;
+  background:var(--panel);border-top:1px solid var(--border);
+  box-shadow:0 -8px 30px #01081235;z-index:1200;
+ }
+ .mobile-tabs .mobile-tab{
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  min-width:0;width:100%;min-height:50px;padding:6px 2px 5px;
+  gap:4px;border-radius:11px;color:var(--muted);text-decoration:none;
+  font-size:11px;line-height:1.2;font-weight:700;
+  -webkit-tap-highlight-color:transparent;
+ }
+ .mobile-tabs .mobile-tab svg{height:21px;width:21px;flex:none}
+ .mobile-tabs .mobile-tab span{display:block;font-size:10px;white-space:nowrap}
+ .mobile-tabs .mobile-tab.is-active{
+  background:color-mix(in srgb,var(--accent) 13%,transparent);
+  color:var(--accent);
+ }
+ .mobile-tabs .mobile-tab.is-active:before{
+  content:"";position:absolute;top:0;width:25px;height:2px;
+  border-radius:0 0 4px 4px;background:var(--accent);
+ }
+ .mobile-tabs .mobile-tab:focus-visible,.mobile-action:focus-visible{
+  outline:2px solid var(--accent);outline-offset:2px;
+ }
+ .content{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
+ .section{scroll-margin-top:110px}
+}
+@media(max-width:620px){
+ .forecast-grid,.hero-grid,.enhanced-dashboard,.weather-media-grid,.hazards-grid,
+ .news-grid,.settings-grid,.metric-grid,.resource-grid{min-width:0}
+ .forecast-grid{grid-template-columns:minmax(0,1fr)!important}
+ .temp-chart{width:100%;max-width:100%;overflow:hidden}
+ .hours-card,.chart-card,.seven-day{width:100%;min-width:0;overflow:hidden}
+ .hours-scroll{display:flex;max-width:100%;scroll-snap-type:x proximity}
+ .hours-scroll .hour-cell{scroll-snap-align:start}
+ .days-list{display:flex;max-width:100%;scroll-snap-type:x proximity}
+ .days-list .day{flex:0 0 104px;min-width:104px;scroll-snap-align:start}
+ .card-title-row{flex-wrap:wrap}
+ .topbar{padding:12px 15px}
+ .top-actions{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,43px);gap:7px;width:100%}
+ .top-actions .location-picker{width:100%;max-width:100%;height:44px;padding:0 10px}
+ .top-actions .icon-button{min-width:0;width:43px;height:44px;padding:0;display:flex;justify-content:center;align-items:center}
+ .mobile-tabs .mobile-tab{min-height:52px}
+}
+@media(max-width:400px){
+ .top-actions{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+ .top-actions .location-picker{grid-column:1/-1;height:43px}
+ .top-actions .mobile-action{width:100%;height:42px;display:flex;gap:8px;justify-content:center;align-items:center}
+ .top-actions .mobile-action .control-label{display:block;font-size:11px;white-space:nowrap;font-weight:700}
+ .top-actions .install-button{grid-column:1/-1;min-height:39px}
+ .mobile-tabs{gap:1px;padding-left:4px;padding-right:4px}
+ .mobile-tabs .mobile-tab{gap:3px}
+ .mobile-tabs .mobile-tab span{font-size:9.5px}
+ .mobile-tabs .mobile-tab svg{width:20px;height:20px}
+ .section{scroll-margin-top:165px}
+}

@@ -61,6 +61,12 @@ if release_file.exists():
     check("Release metadata is excluded from caches", 'app-version.json' in sw)
     check("Service worker preserves non-SkyPulse caches", 'name.startsWith(PREFIX)' in sw)
     check("Existing push handler preserved", 'addEventListener("push"' in sw)
+# Mobile width containment and native navigation controls.
+check("Forecast columns can shrink", "grid-template-columns:minmax(0,1fr)!important" in css)
+check("Mobile tabs use five equal width columns", "grid-template-columns:repeat(5,minmax(0,1fr))" in css)
+check("Hourly forecast is locally scrollable", ".hours-scroll{display:flex;max-width:100%;scroll-snap-type:x proximity}" in css)
+check("Bottom tab icons are SVG, not inconsistent glyphs", 'class="mobile-tab' in html and '<svg viewBox="0 0 24 24"' in html)
+check("Navigation active state wired", "function setupNav()" in js and "aria-current" in js)
 check("Emergency safety disclaimer displayed", "For emergencies call" in html)
 check("BOM fallback for unavailable warnings", "Warning feed unavailable" in js)
 if errors:
