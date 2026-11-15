@@ -16,7 +16,7 @@ try{
   const layer=(kind,opts={})=>{const v={kind,opts,features:[],on(){return this;},addTo(target){if(target?.features)target.features.push(this);return this;},bindPopup(s){this.popup=s;return this;},clearLayers(){this.features=[];return this;},setLatLng(){return this;}};window.__fireLayers.push(v);return v;};
   const map={setView(){return this;},fitBounds(){window.__fireZooms++;return this;},on(){return this;},invalidateSize(){return this;},removeLayer(){return this;},
    zoomIn(){return this;},zoomOut(){return this;},getCenter(){return {lat:-32.83,lng:151.35};},getZoom(){return 9;},scrollWheelZoom:{enable(){},disable(){}}};
-  window.L={map(){return map;},tileLayer(){return layer("tiles");},layerGroup(){return layer("group");},
+  window.L={map(){return map;},tileLayer(url,opts){return layer("tiles",opts||{});},layerGroup(){return layer("group");},
    polygon(v,opts){let z=layer("polygon",opts);z.coords=v;return z;},circleMarker(v,opts){let z=layer("point",opts);z.coords=v;return z;},
    circle(v,opts){let z=layer("circle",opts);z.coords=v;return z;},latLngBounds(){return {pad(){return this;}}},
    control:{scale(){return layer("scale");}}};

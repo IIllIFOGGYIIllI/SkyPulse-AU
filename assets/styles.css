@@ -866,3 +866,35 @@ body[data-page=map-section] .radar-quick-actions .skypulse-map-style{margin-righ
  body[data-page=hazards] .fire-map-actions button{flex:1;min-width:0}
  .skypulse-map-style select{max-width:145px;min-width:114px}
 }
+
+/* Leaflet controls and incident popup surfaces track the selected map tone. */
+#weather-map[data-map-tone=dark] .leaflet-bar a,
+#fire-area-map[data-map-tone=dark] .leaflet-bar a{
+ background:#162d44;color:#d9edf9;border-color:#3b5e77;
+}
+#weather-map[data-map-tone=dark] .leaflet-bar a:hover,
+#fire-area-map[data-map-tone=dark] .leaflet-bar a:hover{background:#244966;color:#fff}
+#weather-map[data-map-tone=dark] .leaflet-control-attribution,
+#fire-area-map[data-map-tone=dark] .leaflet-control-attribution{background:#11273de6;color:#cfdfeb;border-color:#345671}
+#weather-map[data-map-tone=light] .leaflet-control-attribution,
+#fire-area-map[data-map-tone=light] .leaflet-control-attribution{background:#ffffffe6;color:#425368;border-color:#cad9e5}
+#weather-map[data-map-tone=light] .leaflet-control-attribution a,
+#fire-area-map[data-map-tone=light] .leaflet-control-attribution a{color:#1574af}
+#weather-map[data-map-tone=dark] .leaflet-popup-content-wrapper,
+#fire-area-map[data-map-tone=dark] .leaflet-popup-content-wrapper{
+ background:#142d43;color:#f0f7ff;border:1px solid #3d5f7c;
+}
+#weather-map[data-map-tone=dark] .leaflet-popup-tip,
+#fire-area-map[data-map-tone=dark] .leaflet-popup-tip{background:#142d43}
+#weather-map[data-map-tone=dark] .leaflet-popup-content-wrapper a,
+#fire-area-map[data-map-tone=dark] .leaflet-popup-content-wrapper a{color:#85d5ff}
+#weather-map[data-map-tone=dark] .incident-popup .incident-detail-row,
+#fire-area-map[data-map-tone=dark] .incident-popup .incident-detail-row{border-color:#36536c}
+#weather-map[data-map-tone=dark] .incident-popup .incident-detail-row dt,
+#fire-area-map[data-map-tone=dark] .incident-popup .incident-detail-row dt{color:#abc2d7}
+#weather-map[data-map-tone=dark] .incident-popup .incident-detail-row dd,
+#fire-area-map[data-map-tone=dark] .incident-popup .incident-detail-row dd{color:#eff7ff}
+#weather-map[data-map-tone=dark] .incident-popup .incident-map-note,
+#fire-area-map[data-map-tone=dark] .incident-popup .incident-map-note{color:#aabfce}
+#weather-map[data-map-tone=dark] .leaflet-popup-close-button,
+#fire-area-map[data-map-tone=dark] .leaflet-popup-close-button{color:#c8e6fa}
