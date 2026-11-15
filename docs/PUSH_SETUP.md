@@ -2,7 +2,7 @@
 
 This is a **one-time deployment step**. The website itself remains on GitHub Pages.
 
-**Status when this repository was updated:** Backend source code is ready, but **no Cloudflare Worker/database/VAPID credentials have been deployed or connected**. The PWA shows **NOT CONFIGURED** until a valid API URL is added. Never claim background push is live until tested on a real device.
+**Deployment status (16 November 2026):** The Cloudflare Worker `skypulse-au-alerts` is deployed at `https://skypulse-au-alerts.foggy-streams248.workers.dev`, and its D1 binding and 15-minute Cron Trigger are confirmed in the Cloudflare deployment logs. The public Worker URL is configured in the PWA. **VAPID secret readiness and actual push delivery have not yet been independently verified.** Check `/health` for `"ready":true`, and test a real-device subscription before calling background push operational.
 
 ## What this service does
 
