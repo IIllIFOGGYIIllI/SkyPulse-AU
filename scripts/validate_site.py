@@ -44,7 +44,10 @@ check("RFS CAP integration", "loadOfficialRfsWarnings()" in js and "showRfsWarni
 check("WMO references labelled as recent", "Recent WMO-Indexed BOM Updates" in html)
 check("Background alerts require explicit opt-in", "push-consent" in (ROOT / "assets/push.js").read_text(encoding="utf-8"))
 check("Worker has VAPID and source-age safeguards", "VAPID_PRIVATE_PKCS8" in (ROOT / "notifications/src/index.js").read_text(encoding="utf-8") and "MAX_FEED_AGE" in (ROOT / "notifications/src/index.js").read_text(encoding="utf-8"))
-check("Client config has no active credentials", 'SKYPULSE_PUSH_API = ""' in (ROOT / "assets/push-config.js").read_text(encoding="utf-8"))
+push_config = (ROOT / "assets/push-config.js").read_text(encoding="utf-8")
+check("Client API config is present", "window.SKYPULSE_PUSH_API" in push_config)
+check("Push API config contains no private VAPID key", "VAPID_PRIVATE_PKCS8" not in push_config)
+check("Push API config does not contain credentials", "Authorization:" not in push_config and "Bearer " not in push_config)
 check("Emergency safety disclaimer displayed", "For emergencies call" in html)
 check("BOM fallback for unavailable warnings", "Warning feed unavailable" in js)
 if errors:
