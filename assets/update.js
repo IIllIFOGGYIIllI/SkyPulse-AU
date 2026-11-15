@@ -1,35 +1,83 @@
-/* SkyPulse AU release detection. Does not reset data, unregister SW, or touch push subscriptions. */
+/* SkyPulse AU — automatic PWA updates, safe around active interaction.
+ * No app data, push subscriptions or browser preferences are cleared.
+ */
 (function(){
 "use strict";
 const $=id=>document.getElementById(id);
 const running=document.documentElement.getAttribute("data-build")||"";
-const valid=version=>/^[0-9a-f]{12}$/.test(String(version||""));
-let serverVersion=null,reg=null,loading=false,reloadAccepted=false,reloadStarted=false;
+const valid=value=>/^[0-9a-f]{12}$/.test(String(value||""));
+const CHECK_INTERVAL=15*60*1000,IDLE_AFTER=60*1000,OPEN_GRACE=6000,RETRY_DELAY=8000;
+let serverVersion=null,reg=null,loading=false,applying=false,reloadStarted=false;
+let lastActivity=0,openedAt=Date.now(),foregroundAt=openedAt,autoTimer=null;
 const wasControlled=!!(navigator.serviceWorker&&navigator.serviceWorker.controller);
 function setStatus(message,type){
   const el=$("app-update-status");
   if(el){el.textContent=message;el.className="update-status"+(type?" "+type:"");}
 }
+function pendingUpdate(){
+  return (valid(serverVersion)&&valid(running)&&serverVersion!==running)||
+    (!!reg?.waiting&&wasControlled);
+}
+function showBanner(show){
+  if($("app-update-banner"))$("app-update-banner").hidden=!show;
+  if($("app-update-apply"))$("app-update-apply").hidden=!show;
+}
+function versionAttemptKey(){return "skypulse-update-attempt:"+serverVersion;}
+function recentAttempts(){
+  if(!valid(serverVersion))return 0;
+  try{
+    const item=JSON.parse(sessionStorage.getItem(versionAttemptKey())||"null");
+    return item&&Date.now()-item.time<10*60*1000?Number(item.count)||0:0;
+  }catch{return 0;}
+}
+function recordAttempt(){
+  if(!valid(serverVersion))return;
+  try{sessionStorage.setItem(versionAttemptKey(),JSON.stringify({count:recentAttempts()+1,time:Date.now()}));}catch{}
+}
+function editableFocused(){
+  const el=document.activeElement;
+  return !!el&&!!el.matches?.('input,textarea,select,[contenteditable="true"],[role="textbox"]');
+}
+function safeToAutoApply(){
+  if(document.visibilityState!=="visible"||editableFocused())return false;
+  const now=Date.now();
+  if(now-openedAt<OPEN_GRACE||now-foregroundAt<OPEN_GRACE)return false;
+  // When the user is actively navigating or changing settings, defer until idle.
+  if(lastActivity&&now-lastActivity<IDLE_AFTER)return false;
+  return true;
+}
+function scheduleAuto(){
+  if(autoTimer||!pendingUpdate()||applying)return;
+  autoTimer=setTimeout(function(){
+    autoTimer=null;
+    if(!pendingUpdate()||applying)return;
+    if(recentAttempts()>=2){
+      setStatus("The automatic update did not complete. Use Update Now or reopen the app.","error");
+      showBanner(true);
+      return;
+    }
+    if(!safeToAutoApply()){
+      scheduleAuto();
+      return;
+    }
+    applyUpdate(false);
+  },RETRY_DELAY);
+}
 function offerUpdate(){
-  if($("app-update-banner"))$("app-update-banner").hidden=false;
-  if($("app-update-apply"))$("app-update-apply").hidden=false;
-  setStatus("A newer release is available. Select Update Now to refresh the app.","available");
+  showBanner(true);
+  setStatus("New version available. SkyPulse AU will update automatically when it is safe to reload.","available");
+  scheduleAuto();
 }
 function upToDate(){
-  if($("app-update-banner"))$("app-update-banner").hidden=true;
-  if($("app-update-apply"))$("app-update-apply").hidden=true;
-  setStatus("Your app is up to date.");
-}
-function changed(){
-  if(!valid(serverVersion)||!valid(running))return !!reg?.waiting&&wasControlled;
-  return serverVersion!==running;
+  showBanner(false);
+  setStatus("Automatic Updates Enabled · Your app is up to date.");
 }
 async function check(manual){
-  if(loading)return;
+  if(loading||applying)return;
   loading=true;
   const btn=$("app-update-check");
   if(btn)btn.disabled=true;
-  if(manual)setStatus("Checking the published release and service worker…");
+  if(manual)setStatus("Checking for the latest release…");
   try{
     if("serviceWorker" in navigator){
       reg=reg||await navigator.serviceWorker.register("./sw.js",{scope:"./",updateViaCache:"none"});
@@ -42,10 +90,10 @@ async function check(manual){
     const data=await response.json();
     if(!valid(data.version))throw Error("Invalid release information");
     serverVersion=data.version;
-    if(changed())offerUpdate();else upToDate();
+    if(pendingUpdate())offerUpdate();else upToDate();
   }catch(e){
-    setStatus(navigator.onLine?"Unable to verify the latest release. Try Check for Updates again.":"Offline — update checks require an internet connection.","error");
-    if(reg?.waiting&&wasControlled)offerUpdate();
+    if(pendingUpdate())offerUpdate();
+    else setStatus(navigator.onLine?"Update server unavailable; SkyPulse will check again automatically.":"Offline · SkyPulse will check for updates when connected.","error");
   }finally{
     loading=false;
     if(btn)btn.disabled=false;
@@ -58,48 +106,52 @@ function reloadWithVersion(){
   url.searchParams.set("app_release",valid(serverVersion)?serverVersion:Date.now().toString(36));
   location.replace(url.href);
 }
-async function applyUpdate(){
-  const button=$("app-update-apply");
-  if(button)button.disabled=true;
-  setStatus("Applying the latest app files…");
-  reloadAccepted=true;
+async function applyUpdate(manual){
+  if(applying||reloadStarted||!pendingUpdate())return;
+  if(!manual&&!safeToAutoApply()){scheduleAuto();return;}
+  if(!manual&&recentAttempts()>=2){showBanner(true);return;}
+  applying=true;
+  recordAttempt();
+  if($("app-update-apply"))$("app-update-apply").disabled=true;
+  if($("app-update-banner-button"))$("app-update-banner-button").disabled=true;
+  setStatus("Updating SkyPulse AU automatically…");
   try{
+    if(!reg?.waiting&&reg)await reg.update().catch(()=>{});
     if(reg?.waiting){
       reg.waiting.postMessage({type:"SKYPULSE_ACTIVATE_UPDATE"});
-      // If a client becomes uncontrolled or the controller is already current,
-      // navigation still revalidates the HTML against GitHub Pages.
-      setTimeout(()=>{if(!reloadStarted)reloadWithVersion();},2600);
-      return;
-    }
-    if(reg)await reg.update().catch(()=>{});
-    if(reg?.waiting){
-      reg.waiting.postMessage({type:"SKYPULSE_ACTIVATE_UPDATE"});
-      setTimeout(()=>{if(!reloadStarted)reloadWithVersion();},2600);
-      return;
-    }
-    reloadWithVersion();
-  }catch(e){
-    if(button)button.disabled=false;
-    reloadWithVersion();
-  }
+      // Fallback for browsers which don't emit controllerchange promptly.
+      setTimeout(()=>{if(!reloadStarted)reloadWithVersion();},2500);
+    }else reloadWithVersion();
+  }catch(e){reloadWithVersion();}
 }
 function init(){
   const label=$("app-version-value");
   if(label)label.textContent=valid(running)?running:"Unverified";
   $("app-update-check")?.addEventListener("click",()=>check(true));
-  $("app-update-apply")?.addEventListener("click",applyUpdate);
-  $("app-update-banner-button")?.addEventListener("click",applyUpdate);
+  $("app-update-apply")?.addEventListener("click",()=>applyUpdate(true));
+  $("app-update-banner-button")?.addEventListener("click",()=>applyUpdate(true));
+  const activity=()=>{lastActivity=Date.now();};
+  document.addEventListener("pointerdown",activity,{passive:true});
+  document.addEventListener("keydown",activity,{passive:true});
+  document.addEventListener("input",activity,{passive:true});
   if("serviceWorker" in navigator){
     navigator.serviceWorker.addEventListener("controllerchange",()=>{
-      if(!wasControlled||!reloadAccepted||reloadStarted)return;
+      if(!applying||reloadStarted)return;
       reloadWithVersion();
     });
   }
   document.addEventListener("visibilitychange",()=>{
-    if(document.visibilityState==="visible")check(false);
+    if(document.visibilityState==="visible"){
+      foregroundAt=Date.now();
+      check(false);
+      scheduleAuto();
+    }
+  });
+  window.addEventListener("pageshow",event=>{
+    if(event.persisted){foregroundAt=Date.now();check(false);}
   });
   window.addEventListener("online",()=>check(false));
-  setInterval(()=>{if(document.visibilityState==="visible")check(false);},15*60*1000);
+  setInterval(()=>{if(document.visibilityState==="visible")check(false);},CHECK_INTERVAL);
   check(false);
 }
 document.addEventListener("DOMContentLoaded",init);
