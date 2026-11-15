@@ -53,6 +53,11 @@
 </nav>
 <section id="overview" class="section overview">
           <div class="section-header"><div><div class="eyebrow">YOUR LOCAL OUTLOOK</div><h1 class="overview-title"><span class="overview-title-label">Weather Overview</span><span id="heading-location" class="overview-title-location">Cessnock</span></h1><p class="muted" id="current-clock">Loading local conditions…</p></div><div class="status-pill" id="weather-status"><span class="pulse-dot"></span> Loading weather</div></div>
+<div class="forecast-integrity" id="forecast-integrity" role="status" aria-live="polite">
+  <div class="forecast-integrity-primary"><span class="forecast-health-pill checking" id="forecast-health-pill">CHECKING DATA</span><div><strong id="forecast-health-title">Retrieving the model forecast…</strong><small id="forecast-health-detail">Open-Meteo · Numerical weather model, not a station observation</small></div></div>
+  <div class="forecast-integrity-times"><span><b>Model valid at</b><span id="forecast-model-time">—</span></span><span><b>Checked at</b><span id="forecast-checked-time">—</span></span></div>
+  <button type="button" id="forecast-retry" class="outline-button forecast-integrity-retry">↻ Refresh Forecast</button>
+</div>
           <div class="hero-grid">
             <article class="card hero-card">
               <div class="hero-aura"></div><div class="hero-top"><span class="mini-tag">CURRENT MODEL ESTIMATE</span><span class="mini-tag subtle" id="current-date">—</span></div>
@@ -66,6 +71,15 @@
               <article class="card metric"><div class="metric-top"><span>FORECAST RAINFALL</span><span class="metric-icon">☂</span></div><div class="metric-value" id="rain-total">—</div><div class="metric-sub">Today · Modelled Total</div></article>
             </div>
           </div>
+<div class="next-six-overview" aria-labelledby="next-six-heading">
+  <div class="next-six-heading"><div><div class="eyebrow">SHORT-TERM OUTLOOK</div><h2 id="next-six-heading">Next 6 Hours</h2><p>Modelled trends from hourly forecast values, not radar nowcasting.</p></div><a href="./forecast.html">Detailed Forecast ↗</a></div>
+  <div class="next-six-grid">
+    <div><span>Highest Hourly Rain Chance</span><strong id="overview-next-rain-chance">—</strong></div>
+    <div><span>Total Forecast Precipitation</span><strong id="overview-next-rain-mm">—</strong></div>
+    <div><span>Maximum Wind Gust</span><strong id="overview-next-gust">—</strong></div>
+    <div><span>Temperature Range</span><strong id="overview-next-temps">—</strong></div>
+  </div>
+</div>
           <div class="weather-insight-note"><span class="model-dot"></span><span><strong>Model-Based Local Conditions.</strong> Current estimates and forecasts are generated from weather models, not the nearest observing station. <a href="#official-observations">View Official Station Readings</a>.</span></div>
           <div class="enhanced-dashboard">
             <article class="card tomorrow-panel">

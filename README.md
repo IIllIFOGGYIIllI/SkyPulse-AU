@@ -102,3 +102,6 @@ Radar Studio now has region shortcuts (selected location, regional view, NSW and
 
 ### Official five-minute radar access
 SkyPulse AU links directly to the [Bureau of Meteorology radar](https://www.bom.gov.au/australia/radar/) and [Weatherzone Layers](https://www.weatherzone.com/au/layers/) for their five-minute imagery, without reproducing their restricted tiles. A dynamic indicator flags when the interactive RainViewer radar is being enlarged beyond its native maximum zoom level 7. See [Radar Provider Review](docs/RADAR_PROVIDER_REVIEW.md) for verified licensing and possible future high-resolution integration options.
+
+### Forecast and overview reliability (16 November 2026)
+The Open-Meteo weather pages now show a model-valid timestamp, last successful retrieval, an explicit recent/delayed/stale/cached/failed status, and a six-hour model summary. The dedicated forecast includes three hourly chart modes, 24 hourly cards and selectable 7-day details. The source is numerical weather modelling, not observed station conditions, and precipitation probabilities refer to the modelled hour. The app validates the response and uses a location-keyed, time-limited cache only with visible labelling. Failed requests never imply that old values are newly verified.

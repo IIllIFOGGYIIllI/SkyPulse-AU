@@ -6,8 +6,13 @@ import re
 
 ROOT = Path(__file__).resolve().parents[1]
 pages = {
-    "index.html": ("overview", ["current-temp", "tomorrow-date", "detail-dewpoint", "radar-peek-map", "snapshot-incidents", "snapshot-fire-danger"]),
-    "forecast.html": ("forecast", ["temp-chart", "hourly-list", "daily-list"]),
+    "index.html": ("overview", ["forecast-integrity", "forecast-health-pill", "forecast-model-time",
+"forecast-checked-time", "forecast-retry", "overview-next-rain-chance", "overview-next-rain-mm",
+"overview-next-gust", "overview-next-temps", "current-temp", "tomorrow-date", "detail-dewpoint", "radar-peek-map", "snapshot-incidents", "snapshot-fire-danger"]),
+    "forecast.html": ("forecast", ["temp-chart", "hourly-list", "daily-list", "forecast-integrity",
+"forecast-health-pill", "forecast-model-time", "forecast-checked-time", "forecast-retry",
+"forecast-next-rain-chance", "forecast-next-rain-mm", "forecast-next-gust", "forecast-next-temps",
+"forecast-brief-period", "forecast-day-details", "forecast-chart-title"]),
     "radar.html": ("map-section", ["weather-map", "map-locate", "map-home", "map-zoom-in", "map-zoom-out",
                                   "map-fit", "map-layers-button", "map-fullscreen", "map-layer-radar",
                                   "map-layer-rfs", "map-layer-warnings", "map-radar-opacity",

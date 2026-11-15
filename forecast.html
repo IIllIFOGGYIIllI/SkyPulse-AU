@@ -52,8 +52,26 @@
 </nav>
 <section id="forecast" class="section">
           <div class="section-header compact"><div><div class="eyebrow">DETAILED FORECAST</div><h2>Weather Forecast</h2></div><span class="source-small">Powered by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo ↗</a></span></div>
-          <div class="forecast-grid"><article class="card chart-card"><div class="card-title-row"><div><h3>Temperature Trend</h3><p class="muted">Next 24 hours · °C</p></div><span class="small-chip">24 HOURS</span></div><div id="temp-chart" class="temp-chart"><p class="muted">Loading chart…</p></div><div class="chart-labels" id="chart-labels"></div></article><article class="card hours-card"><div class="card-title-row"><div><h3>Hourly Outlook</h3><p class="muted">Conditions and rain probability</p></div></div><div class="hours-scroll" id="hourly-list"><span class="muted">Loading hours…</span></div></article></div>
-          <article class="card seven-day"><div class="card-title-row"><div><h3>7-Day Forecast</h3><p class="muted">Daily temperature range and conditions</p></div></div><div class="days-list" id="daily-list"><span class="muted">Loading forecast…</span></div></article>
+<div class="forecast-integrity" id="forecast-integrity" role="status" aria-live="polite">
+  <div class="forecast-integrity-primary"><span class="forecast-health-pill checking" id="forecast-health-pill">CHECKING DATA</span><div><strong id="forecast-health-title">Retrieving the model forecast…</strong><small id="forecast-health-detail">Open-Meteo · Numerical weather model, not a station observation</small></div></div>
+  <div class="forecast-integrity-times"><span><b>Model valid at</b><span id="forecast-model-time">—</span></span><span><b>Checked at</b><span id="forecast-checked-time">—</span></span></div>
+  <button type="button" id="forecast-retry" class="outline-button forecast-integrity-retry">↻ Refresh Forecast</button>
+</div>
+          <div class="forecast-brief" aria-labelledby="forecast-brief-heading">
+            <div class="forecast-brief-title"><div><div class="eyebrow">NEAR-TERM FORECAST</div><h3 id="forecast-brief-heading">Next 6 Hours</h3><small>Hourly model estimates, not radar-based nowcasting</small></div><span id="forecast-brief-period" class="small-chip">Upcoming hours</span></div>
+            <div class="forecast-brief-grid">
+              <div><span>Highest Hourly Rain Chance</span><strong id="forecast-next-rain-chance">—</strong></div>
+              <div><span>Total Forecast Precipitation</span><strong id="forecast-next-rain-mm">—</strong></div>
+              <div><span>Maximum Wind Gust</span><strong id="forecast-next-gust">—</strong></div>
+              <div><span>Temperature Range</span><strong id="forecast-next-temps">—</strong></div>
+            </div>
+          </div>
+          <div class="forecast-grid"><article class="card chart-card"><div class="card-title-row"><div><h3 id="forecast-chart-title">24-Hour Temperature Trend</h3><p class="muted" id="forecast-chart-subtitle">Modelled hourly values · °C</p></div><span class="small-chip">24 HOURS</span></div>
+  <div class="forecast-chart-tabs" role="group" aria-label="Forecast chart variable"><button type="button" data-forecast-chart="temperature" class="active" aria-pressed="true">Temperature</button><button type="button" data-forecast-chart="rain" aria-pressed="false">Rain Chance</button><button type="button" data-forecast-chart="wind" aria-pressed="false">Wind Gusts</button></div>
+  <div id="temp-chart" class="temp-chart"><p class="muted">Loading chart…</p></div><div class="chart-labels" id="chart-labels"></div></article><article class="card hours-card"><div class="card-title-row"><div><h3>Hourly Outlook</h3><p class="muted">Next 24 hours · temperature, rain chance, forecast rain and gusts</p></div></div><div class="hours-scroll" id="hourly-list"><span class="muted">Loading hours…</span></div></article></div>
+          <article class="card seven-day"><div class="card-title-row"><div><h3>7-Day Forecast</h3><p class="muted">Select a day for a detailed breakdown of forecast conditions</p></div></div><div class="days-list" id="daily-list"><span class="muted">Loading forecast…</span></div>
+<div class="forecast-day-details" id="forecast-day-details" aria-live="polite"><p class="muted">Select a forecast day to inspect the available details.</p></div>
+<p class="forecast-interpretation">Rain chance is the <strong>highest hourly probability</strong> for that day, not the probability of rain throughout the entire day. Daily totals and individual hourly values are modelled estimates. <a href="https://www.bom.gov.au/weather-and-climate/warnings-and-alerts" target="_blank" rel="noopener">Verify official BOM warnings ↗</a></p></article>
         </section>
 <footer class="footer"><span>© <span id="year"></span> SkyPulse AU · Independent weather information platform</span><span><a href="./privacy.html">Privacy Policy</a> · <a href="./terms.html">Terms</a> · <a href="./sources.html">Data Sources</a> · <a href="https://github.com/IIllIFOGGYIIllI/SkyPulse-AU" target="_blank" rel="noopener">GitHub ↗</a></span></footer>
       </div>

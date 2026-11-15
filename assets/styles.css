@@ -497,3 +497,79 @@ body[data-page=map-section] .radar-upgraded-card{overflow:hidden}
  .radar-provider-current{grid-column:auto}.radar-provider{padding:13px}.radar-provider-top{justify-content:flex-start}
  .radar-provider-pill{text-align:left}.radar-attribution{display:grid;gap:7px}
 }
+
+/* v14 — trustworthy model-weather presentation and detailed forecast workspace */
+.forecast-integrity{display:flex;gap:14px 22px;align-items:center;justify-content:space-between;padding:15px 17px;margin:0 0 20px;border-radius:13px;border:1px solid var(--border);background:var(--panel);flex-wrap:wrap;min-width:0}
+.forecast-integrity-primary{display:flex;align-items:center;gap:12px;min-width:0;flex:1}
+.forecast-integrity-primary>div{display:grid;gap:4px;min-width:0}
+.forecast-integrity-primary strong{font:800 12px/1.5 Manrope,sans-serif;color:var(--text)}
+.forecast-integrity-primary small{font-size:11px;color:var(--muted);line-height:1.5}
+.forecast-health-pill{padding:8px 10px;font:800 10px Manrope,sans-serif;letter-spacing:.5px;border-radius:8px;background:var(--panel-3);color:var(--muted);white-space:nowrap;flex:none}
+.forecast-health-pill.recent{background:#2d9a7040;color:#43b995}
+.forecast-health-pill.delayed,.forecast-health-pill.cached{background:#a87d2d40;color:var(--amber)}
+.forecast-health-pill.stale,.forecast-health-pill.failed{background:#c84c6e23;color:var(--red)}
+.forecast-integrity-times{display:flex;flex-wrap:wrap;gap:12px 20px;color:var(--muted);font-size:11px}
+.forecast-integrity-times>span{display:grid;gap:3px}
+.forecast-integrity-times b{font-size:10px;color:var(--text)}
+.forecast-integrity-retry{white-space:nowrap;font-weight:800;font-size:11px;min-height:38px}
+.next-six-overview,.forecast-brief{border:1px solid var(--border);border-radius:15px;background:var(--panel);padding:19px;margin:0 0 20px}
+.next-six-heading,.forecast-brief-title{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:14px}
+.next-six-heading .eyebrow,.forecast-brief-title .eyebrow{margin-bottom:4px}
+.next-six-heading h2,.forecast-brief-title h3{font:800 18px Manrope,sans-serif;color:var(--text);margin:0}
+.next-six-heading p,.forecast-brief-title small{font-size:11px;color:var(--muted);line-height:1.5;margin:5px 0 0}
+.next-six-heading a{font-size:11px;font-weight:800;color:var(--accent);white-space:nowrap}
+.next-six-grid,.forecast-brief-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+.next-six-grid>div,.forecast-brief-grid>div{display:grid;gap:7px;padding:14px;border:1px solid var(--border);border-radius:10px;background:var(--panel-2);min-width:0}
+.next-six-grid span,.forecast-brief-grid span{font-size:11px;color:var(--muted);line-height:1.4}
+.next-six-grid strong,.forecast-brief-grid strong{font:800 clamp(15px,1.6vw,20px)/1.3 Manrope,sans-serif;color:var(--text);overflow-wrap:anywhere}
+.forecast-chart-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px}
+.forecast-chart-tabs button{background:var(--panel-2);color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:11px;font-weight:800;min-height:36px}
+.forecast-chart-tabs button.active,.forecast-chart-tabs button[aria-pressed=true]{border-color:var(--accent);color:var(--accent);background:var(--panel-3)}
+body[data-page=forecast] .forecast-grid{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)}
+body[data-page=forecast] .hour-cell{min-width:121px;padding:12px 10px;align-content:start;text-align:left}
+body[data-page=forecast] .hour-icon{text-align:center;font-size:27px}
+body[data-page=forecast] .hour-cell strong{font-size:19px;text-align:center}
+body[data-page=forecast] .hour-cell small{text-align:center}
+body[data-page=forecast] .hour-cell .hour-rain{font-size:11px}
+body[data-page=forecast] .hour-cell .hour-secondary{display:block;font-size:10px;color:var(--muted);border-top:1px solid var(--border);padding-top:5px}
+body[data-page=forecast] .hours-scroll{scroll-snap-type:x proximity;scroll-padding:10px}
+body[data-page=forecast] .hour-cell{scroll-snap-align:start}
+body[data-page=forecast] .days-list{grid-template-columns:repeat(7,minmax(0,1fr))}
+body[data-page=forecast] .day{appearance:none;color:var(--text);font:inherit;cursor:pointer;min-height:154px}
+body[data-page=forecast] .day:hover,body[data-page=forecast] .day[aria-pressed=true]{border-color:var(--accent);background:var(--panel-3)}
+body[data-page=forecast] .day:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+body[data-page=forecast] .day .rain-chance{font-size:10px;font-weight:700;color:var(--muted)}
+.forecast-day-details{margin-top:15px;border:1px solid var(--border);background:var(--panel-2);padding:17px;border-radius:12px}
+.forecast-day-details h4{font:800 15px Manrope,sans-serif;color:var(--text);margin:0 0 6px}
+.forecast-day-details p{font-size:12px;color:var(--muted);margin:0 0 14px;line-height:1.55}
+.forecast-day-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.forecast-day-metrics>div{display:grid;gap:5px;padding:12px;background:var(--panel);border:1px solid var(--border);border-radius:9px}
+.forecast-day-metrics span{font-size:11px;color:var(--muted)}
+.forecast-day-metrics strong{font:800 15px Manrope;color:var(--text)}
+.forecast-interpretation{font-size:11px;color:var(--muted);line-height:1.65;margin:13px 0 0}
+.forecast-interpretation a{font-weight:800;color:var(--accent)}
+@media(max-width:1150px){
+ .forecast-integrity-times{order:3;width:100%}
+ .next-six-grid,.forecast-brief-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ body[data-page=forecast] .forecast-grid{grid-template-columns:minmax(0,1fr)}
+ body[data-page=forecast] .days-list{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(max-width:750px){
+ .forecast-day-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .forecast-integrity{padding:14px;gap:10px}
+ .forecast-integrity-retry{flex:1}
+ body[data-page=forecast] .days-list{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:500px){
+ .forecast-integrity-primary{flex-wrap:wrap}
+ .forecast-integrity-times{gap:8px 14px}
+ .next-six-overview,.forecast-brief{padding:15px}
+ .next-six-grid,.forecast-brief-grid{gap:8px}
+ .next-six-grid>div,.forecast-brief-grid>div{padding:11px}
+ .next-six-grid strong,.forecast-brief-grid strong{font-size:16px}
+ .next-six-heading,.forecast-brief-title{align-items:start}
+ .next-six-heading a{max-width:95px;white-space:normal;text-align:right}
+ body[data-page=forecast] .days-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+ body[data-page=forecast] .day{min-height:125px;padding:11px 8px}
+ body[data-page=forecast] .day .day-icon{font-size:25px}
+}
