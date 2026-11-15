@@ -59,34 +59,67 @@
                 <p>Published NSW RFS warning polygons and available mapped incident extents. These are different layers, with different meaning and update times.</p></div>
               <div class="fire-map-actions"><button type="button" id="fire-map-home" class="outline-button">⌖ Selected Location</button><button type="button" id="fire-map-fit" class="outline-button">Fit Mapped Areas</button></div>
             </div>
+            <div class="fire-command-summary" aria-label="NSW fire monitoring snapshot">
+              <div class="fire-summary-item"><div class="fire-summary-icon incidents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 22c5 0 8-3.8 8-8 0-3.2-2.1-5.8-4-7-.2 3-2 3.7-2 3.7C14.6 5.6 12 2 9.7 1 10 6.4 4 8.8 4 14a8 8 0 0 0 8 8Z"/><path d="M11.5 21a3.8 3.8 0 0 0 4-4c0-1.8-.9-3-2.2-3.8.1 1.3-1 2-1 2-1-1-2-1.7-2.8-2.1.1 2-1.6 2.8-1.6 4.1a3.8 3.8 0 0 0 3.6 3.8Z"/></svg></div><div class="fire-summary-copy"><span>INCIDENTS NEAR YOU</span><strong id="fire-summary-incidents">—</strong><small id="fire-summary-incidents-note">Checking RFS incident data</small></div></div>
+              <div class="fire-summary-item"><div class="fire-summary-icon warnings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m12 3 10 18H2L12 3Z"/><path d="M12 9v5m0 3v.2"/></svg></div><div class="fire-summary-copy"><span>PUBLISHED WARNING AREAS</span><strong id="fire-summary-warnings">—</strong><small>Available CAP map polygons</small></div></div>
+              <div class="fire-summary-item"><div class="fire-summary-icon boundaries"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-dasharray="3 3" d="m3 8 8-5 9 4 1 10-9 4-9-5V8Z"/><path d="m11 3 1 8 9 6"/></svg></div><div class="fire-summary-copy"><span>REPORTED INCIDENT EXTENTS</span><strong id="fire-summary-extents">—</strong><small>Only when geometry is published</small></div></div>
+              <div class="fire-summary-item"><div class="fire-summary-icon location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M19 10c0 5-7 12-7 12S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></div><div class="fire-summary-copy"><span>YOUR SELECTED AREA</span><strong id="fire-summary-location">—</strong><small id="fire-summary-location-note">Monitoring radius</small></div></div>
+            </div>
             <div class="fire-map-statuses" role="status">
               <span id="fire-warning-feed-health">Warning areas: checking official CAP feed…</span>
               <span id="fire-incident-feed-health">Incident geometry: checking RFS feed…</span>
+              <span class="fire-feed-disclaimer">Source snapshots • not live emergency dispatch</span>
             </div>
             <div class="fire-area-layout">
-              <div class="fire-map-body">
-                <div id="fire-area-map" class="fire-area-map" role="region" aria-label="Interactive NSW RFS fire warning polygons and reported incident area map"><p>Loading NSW fire areas…</p></div>
-                <div class="fire-map-legend" aria-label="Official mapped area legend">
-                  <span><i class="fire-key advice"></i>Advice</span>
-                  <span><i class="fire-key watch"></i>Watch and Act</span>
-                  <span><i class="fire-key emergency"></i>Emergency Warning</span>
-                  <span><i class="fire-key other"></i>Unspecified Warning</span>
-                  <span><i class="fire-key footprint"></i>Mapped Incident Extent</span>
+              <aside class="fire-directory" aria-labelledby="fire-directory-heading">
+                <div class="fire-directory-header"><div class="eyebrow">INCIDENT EXPLORER</div>
+                  <div class="fire-directory-title"><h4 id="fire-directory-heading">Fire &amp; Warning Reports</h4><span id="fire-directory-total" class="fire-directory-count">—</span></div>
+                  <p>Select a report to centre the map and view its published details.</p>
                 </div>
-                <div class="fire-map-controls" role="group" aria-label="Fire map visible layers">
-                  <label><input id="fire-map-warnings" type="checkbox" checked> Warning Areas</label>
-                  <label><input id="fire-map-boundaries" type="checkbox" checked> Incident Extents</label>
-                  <label><input id="fire-map-points" type="checkbox" checked> Fire Locations</label>
-                  <label><input id="fire-map-radius" type="checkbox" checked> My Monitoring Radius</label>
+                <div class="fire-directory-tabs" role="tablist" aria-label="Explore official RFS reports">
+                  <button type="button" id="fire-directory-incidents" class="active" role="tab" aria-selected="true" aria-controls="fire-directory-list">Fire Incidents</button>
+                  <button type="button" id="fire-directory-warnings" role="tab" aria-selected="false" aria-controls="fire-directory-list">Warnings</button>
                 </div>
-                <p class="data-footnote">Warning polygons show where an RFS warning is directed; incident extents are published spatial geometry, not confirmed active flame fronts or evacuation boundaries. A missing map area is not an all-clear.</p>
-              </div>
-              <aside class="fire-zone-inspector" aria-label="My location and official mapped warnings">
-                <div class="fire-inspector-intro"><div class="eyebrow">LOCATION AWARENESS</div><h4 id="fire-location-heading">Selected Location</h4><p id="fire-radius-caption">Checking available official geometry…</p></div>
-                <div class="fire-geofence-state unknown" id="fire-geofence-state" role="status">Checking mapped warning areas…</div>
-                <div id="fire-overlaps" class="fire-overlaps"><p>Loading RFS warning geometry…</p></div>
-                <div class="fire-inspector-foot"><a href="https://www.rfs.nsw.gov.au/fire-information/alerts-and-warnings" target="_blank" rel="noopener">Official NSW RFS Warnings ↗</a><a href="https://www.nsw.gov.au/emergency/hazards-near-me-app" target="_blank" rel="noopener">Hazards Near Me NSW ↗</a></div>
+                <div class="fire-directory-filters">
+                  <label class="fire-directory-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg><input id="fire-directory-search" type="search" placeholder="Search fire name or location" aria-label="Search RFS incidents and warnings"></label>
+                  <div class="fire-directory-dropdowns">
+                    <select id="fire-directory-scope" aria-label="Incident monitoring area"><option value="nearby">My Monitoring Area</option><option value="statewide">All NSW Reports</option></select>
+                    <select id="fire-directory-sort" aria-label="Sort reports"><option value="distance">Nearest First</option><option value="severity">Alert Level</option><option value="updated">Recently Updated</option></select>
+                  </div>
+                </div>
+                <div id="fire-directory-list" class="fire-directory-list" role="tabpanel" aria-live="polite"><p class="fire-directory-empty">Loading official RFS reports…</p></div>
+                <div class="fire-directory-footer"><span>Data source: NSW Rural Fire Service</span><a href="https://www.rfs.nsw.gov.au/fire-information/fires-near-me" target="_blank" rel="noopener">Official RFS Incident Map ↗</a></div>
               </aside>
+              <div class="fire-map-body">
+                <div class="fire-map-canvas">
+                  <div id="fire-area-map" class="fire-area-map" role="region" aria-label="Interactive NSW RFS fire warning polygons and reported incident area map"><p>Loading NSW fire areas…</p></div>
+                  <div class="fire-map-floating-label"><span class="fire-map-live-dot"></span><span>NSW RFS • MAPPED INCIDENTS</span></div>
+                  <div id="fire-map-selection" class="fire-map-selection" hidden aria-live="polite">
+                    <div class="fire-map-selection-header"><span>OFFICIAL RFS INCIDENT DETAIL</span><button id="fire-map-selection-close" type="button" aria-label="Close selected map details">×</button></div>
+                    <div id="fire-map-selection-body" class="fire-map-selection-body"></div>
+                  </div>
+                </div>
+                <div class="fire-map-bottom">
+                  <div class="fire-map-legend" aria-label="Official mapped area legend">
+                    <span><i class="fire-key advice"></i>Advice</span><span><i class="fire-key watch"></i>Watch &amp; Act</span>
+                    <span><i class="fire-key emergency"></i>Emergency</span><span><i class="fire-key other"></i>Other warning</span>
+                    <span><i class="fire-key footprint"></i>Incident extent</span>
+                  </div>
+                  <div class="fire-map-controls" role="group" aria-label="Visible fire map layers">
+                    <label><input id="fire-map-warnings" type="checkbox" checked> Warning Areas</label>
+                    <label><input id="fire-map-boundaries" type="checkbox" checked> Fire Extents</label>
+                    <label><input id="fire-map-points" type="checkbox" checked> Incidents</label>
+                    <label><input id="fire-map-radius" type="checkbox" checked> My Radius</label>
+                  </div>
+                  <p class="fire-map-hint">Fire extents and warning zones are different. Locations and boundaries may be delayed or incomplete; absence of a mapped warning is not an all-clear.</p>
+                </div>
+              </div>
+            </div>
+            <div class="fire-zone-inspector" aria-label="My location and official mapped warnings">
+              <div class="fire-location-intro"><div class="fire-inspector-intro"><div class="eyebrow">MY LOCATION • WARNING-AREA CHECK</div><h4 id="fire-location-heading">Selected Location</h4><p id="fire-radius-caption">Checking available official geometry…</p></div>
+                <div class="fire-geofence-state unknown" id="fire-geofence-state" role="status">Checking mapped warning areas…</div></div>
+              <div id="fire-overlaps" class="fire-overlaps"><p>Loading RFS warning geometry…</p></div>
+              <div class="fire-inspector-foot"><a href="https://www.rfs.nsw.gov.au/fire-information/alerts-and-warnings" target="_blank" rel="noopener">NSW RFS Official Warnings ↗</a><a href="https://www.nsw.gov.au/emergency/hazards-near-me-app" target="_blank" rel="noopener">Hazards Near Me NSW ↗</a></div>
             </div>
             <p class="fire-attribution">© State of New South Wales (NSW Rural Fire Service). For current information go to <a href="https://www.rfs.nsw.gov.au/" target="_blank" rel="noopener">www.rfs.nsw.gov.au</a>. Map © OpenStreetMap contributors.</p>
           </article>
