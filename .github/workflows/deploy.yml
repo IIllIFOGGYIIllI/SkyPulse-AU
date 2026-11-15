@@ -30,6 +30,8 @@ jobs:
           python-version: "3.12"
       - name: Fetch official public data
         run: python scripts/sync_feeds.py
+      - name: Retrieve NSW Warning Feeds
+        run: python scripts/sync_warnings.py
       - name: Validate Dashboard and PWA
         run: |
           node --check assets/app.js
