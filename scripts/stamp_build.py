@@ -30,7 +30,8 @@ sw_path=ROOT/"sw.js"
 sw=sw_path.read_text(encoding="utf-8")
 if "__SKYPULSE_BUILD__" not in sw:
     raise SystemExit("Missing source-build marker in sw.js")
-sw_path.write_text(sw.replace("__SKYPULSE_BUILD__",version),encoding="utf-8")
+sw=sw.replace("__SKYPULSE_BUILD__",version)
+sw_path.write_text(sw,encoding="utf-8")
 metadata={"version":version,"commit":sha.lower(),
           "deployed_at":dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds").replace("+00:00","Z")}
 (ROOT/"app-version.json").write_text(json.dumps(metadata,indent=2)+"\n",encoding="utf-8")
