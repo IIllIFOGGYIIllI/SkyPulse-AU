@@ -28,8 +28,18 @@ try{
     setLatLng(){return this;}
    };window.__fireLayers.push(v);return v;
   };
-  const map={setView(){return this;},fitBounds(){window.__fireZooms++;return this;},on(){return this;},invalidateSize(){return this;},removeLayer(){return this;},
-   zoomIn(){return this;},zoomOut(){return this;},getCenter(){return {lat:-32.83,lng:151.35};},getZoom(){return 9;},scrollWheelZoom:{enable(){},disable(){}}};
+  let zoom=9;const mapEvents={};
+  const map={
+   setView(coords,z){if(Number.isFinite(z)&&z!==zoom){zoom=z;mapEvents.zoomend?.();}return this;},
+   fitBounds(){window.__fireZooms++;return this;},
+   on(events,cb){String(events).split(/\s+/).forEach(name=>{mapEvents[name]=cb;});return this;},
+   invalidateSize(){return this;},removeLayer(){return this;},
+   zoomIn(){zoom++;mapEvents.zoomend?.();return this;},
+   zoomOut(){zoom--;mapEvents.zoomend?.();return this;},
+   getCenter(){return {lat:-32.83,lng:151.35};},getZoom(){return zoom;},
+   scrollWheelZoom:{enable(){},disable(){}}
+  };
+  window.__fireTestMap=map;
   window.L={map(){return map;},tileLayer(url,opts){return layer("tiles",opts||{});},layerGroup(){return layer("group");},
    polygon(v,opts){let z=layer("polygon",opts);z.coords=v;return z;},
    marker(v,opts){let z=layer("marker",opts);z.coords=v;return z;},
@@ -38,7 +48,7 @@ try{
    circle(v,opts){let z=layer("circle",opts);z.coords=v;return z;},latLngBounds(){return {pad(){return this;}}},
    control:{scale(){return layer("scale");}}};
  });
- let stale=false;const now=new Date().toISOString(),old=new Date(Date.now()-4*3600000).toISOString();
+ let stale=false,dense=false;const now=new Date().toISOString(),old=new Date(Date.now()-4*3600000).toISOString();
  const poly=[[-32.86,151.31],[-32.86,151.38],[-32.81,151.38],[-32.81,151.31],[-32.86,151.31]];
  const footprint=[[151.32,-32.86],[151.37,-32.86],[151.37,-32.81],[151.32,-32.81],[151.32,-32.86]];
  await page.route("**/*",route=>{
@@ -61,7 +71,13 @@ try{
     ...["Grass Fire","Hazardous Materials Spill","Flood Incident","Severe Storm","Road Crash","Rescue Incident"].map((name,i)=>({
       id:"typed-"+i,properties:{title:name,details:{incident_type:name,location:"Northern NSW"}},
       geometry:{type:"Point",coordinates:[153.1+i*.04,-28.6-i*.03]}
-    }))]};
+    })),
+    ...(dense?[
+      {id:"near-1",properties:{title:"Nearby Grass Fire",details:{incident_type:"Grass Fire",location:"Cessnock district"}},
+       geometry:{type:"Point",coordinates:[151.3455,-32.8301]}},
+      {id:"near-2",properties:{title:"Nearby Bush Fire",details:{incident_type:"Bush Fire",location:"Cessnock district"}},
+       geometry:{type:"Point",coordinates:[151.3448,-32.8303]}}
+    ]:[])]};
    if(file==="fdr.json")payload={retrieved_at:now,districts:[{name:"Greater Hunter",rating_today:"Moderate",rating_tomorrow:"Moderate"}]};
    return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(payload)});
   }
@@ -200,6 +216,71 @@ try{
  if(await page.evaluate(()=>window.__fireZooms)<1)throw Error("Warning focus didn't pan the map");
  await page.locator("#fire-map-warnings").uncheck();
  if(!(await page.locator("#fire-geofence-state").textContent()).includes("contain"))throw Error("Hidden layer incorrectly suppresses risk status");
+ // Re-check with several source-accurate incident locations close together.
+ // At NSW zoom, one number badge should replace the overlapping markers.
+ dense=true;await page.locator("#hazards-refresh").click();
+ await page.waitForFunction(()=>document.querySelector("#fire-summary-incidents")?.textContent==="3");
+ const grouped=await page.evaluate(()=>{
+  const all=window.__fireLayers.filter(x=>x.kind==="marker"&&x.domNode?.isConnected);
+  const cluster=all.find(x=>x.opts.icon?.options?.html?.includes("data-fire-cluster-members")&&
+    x.opts.icon.options.html.includes("0,8,9"));
+  return {
+   zoom:window.__fireTestMap.getZoom(),
+   count:all.filter(x=>x.opts.icon?.options?.html?.includes("data-fire-cluster-members")).length,
+   cluster:!!cluster,
+   html:cluster?.opts.icon?.options?.html,
+   clickable:typeof cluster?.handlers.click==="function",
+   outlined:window.__fireLayers.filter(x=>x.kind==="polygon"&&x.opts.color==="#bc94e7"&&x.features).length>0
+  };
+ });
+ if(!grouped.cluster||!grouped.clickable||grouped.zoom>=13||!grouped.html.includes(">3</span>"))
+  throw Error("Three nearby RFS incidents must appear as a zoomable count cluster: "+JSON.stringify(grouped));
+ if(!(await page.locator("#fire-map-legend").textContent()).includes("Grouped Incidents"))
+  throw Error("Map legend must explain grouped markers and zoom interaction");
+ // Clicking the cluster expands it; no fake 'combined incident' information panel.
+ for(let i=0;i<3;i++){
+  const result=await page.evaluate(()=>{
+   const icon=window.__fireLayers.find(x=>x.kind==="marker"&&x.domNode?.isConnected&&
+     x.opts.icon?.options?.html?.includes('data-fire-cluster-members="0,8,9"'));
+   if(!icon)return null;
+   const before=window.__fireTestMap.getZoom();
+   icon.handlers.click();
+   return {before,after:window.__fireTestMap.getZoom()};
+  });
+  if(!result)break;
+  if(!(result.after>result.before))throw Error("Cluster click didn't zoom into grouped incidents");
+ }
+ const expanded=await page.evaluate(()=>({
+  zoom:window.__fireTestMap.getZoom(),
+  markers:window.__fireLayers.filter(x=>x.kind==="marker"&&x.domNode?.isConnected&&
+   x.opts.icon?.options?.html?.includes('data-fire-marker-kind="incident"')).length,
+  cluster:window.__fireLayers.some(x=>x.kind==="marker"&&x.domNode?.isConnected&&
+   x.opts.icon?.options?.html?.includes('data-fire-cluster-members="0,8,9"'))
+ }));
+ if(expanded.zoom!==13||expanded.cluster||expanded.markers!==10)
+  throw Error("Zooming into clusters didn't reveal all ten source records: "+JSON.stringify(expanded));
+ if(await page.locator("#fire-map-selection").isVisible())
+  throw Error("Zooming a cluster must not open a misleading combined incident detail panel");
+ const details=await page.evaluate(()=>{
+  const icon=window.__fireLayers.find(x=>x.kind==="marker"&&x.domNode?.isConnected&&
+   x.opts.icon?.options?.html?.includes('data-fire-marker-index="8"'));
+  if(!icon)return false;icon.handlers.click();return true;
+ });
+ if(!details||!(await page.locator("#fire-map-selection").isVisible())||
+   !(await page.locator("#fire-map-selection-body").textContent()).includes("Nearby Grass Fire"))
+  throw Error("Expanded incident icon didn't open its individual RFS detail panel");
+ await page.locator("#fire-map-selection-close").click();
+ // Switch incident points off: no clusters or individual pins may remain.
+ await page.locator("#fire-map-points").uncheck();
+ const hidden=await page.evaluate(()=>window.__fireLayers.some(x=>x.kind==="marker"&&x.domNode?.isConnected&&
+  (x.opts.icon?.options?.html?.includes("data-fire-cluster-members")||
+   x.opts.icon?.options?.html?.includes('data-fire-marker-kind="incident"'))));
+ if(hidden)throw Error("Disabling fire locations left cluster or incident markers visible");
+ await page.locator("#fire-map-points").check();
+ // Restore initial fixture, ready for stale-feed safety cases below.
+ dense=false;await page.locator("#hazards-refresh").click();
+ await page.waitForFunction(()=>document.querySelector("#fire-summary-incidents")?.textContent==="1");
+ console.log("Fire marker clustering PASSED: small separate pins, grouped count, zoom-to-expand, single RFS detail and layer toggling.");
  stale=true;await page.locator("#hazards-refresh").click();
  await page.waitForFunction(()=>document.querySelector("#fire-geofence-state")?.textContent.includes("unavailable or stale"));
  const status=await page.locator("#fire-warning-feed-health").textContent();
