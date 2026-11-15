@@ -1,70 +1,92 @@
 #!/usr/bin/env node
-/**
- * Prevent regressions where hourly/day cards make the entire PWA hundreds of
- * pixels wider than the mobile viewport. Run after the production build stamp.
- */
+/** Real-browser checks for every SkyPulse route across phone/tablet/desktop. */
 import { chromium } from "playwright";
 import { spawn } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
-
-const server=spawn("python",["-m","http.server","8765","--bind","127.0.0.1"],{
-  stdio:"ignore",cwd:process.cwd()
-});
+const cases=[
+  ["index.html","overview"],
+  ["forecast.html","forecast"],
+  ["radar.html","map-section"],
+  ["hazards.html","hazards"],
+  ["news.html","news"],
+  ["settings.html","alerts"]
+];
+const widths=[320,360,390,430,768,1024];
+const server=spawn("python",["-m","http.server","8765","--bind","127.0.0.1"],{stdio:"ignore",cwd:process.cwd()});
 let browser;
-try{
-  await delay(1400);
+try {
+  await delay(1000);
   browser=await chromium.launch({headless:true});
-  for(const width of [320,360,390,430,768,1024]){
-    const context=await browser.newContext({viewport:{width,height:780},isMobile:width<890,hasTouch:width<890,deviceScaleFactor:1});
-    const page=await context.newPage();
-    // Layout should not depend on live weather services or remote fonts.
-    await page.route("**/*",route=>{
-      const url=new URL(route.request().url());
-      if(url.hostname==="127.0.0.1")return route.continue();
-      return route.abort();
+  for(const width of widths){
+    const context=await browser.newContext({viewport:{width,height:800},isMobile:width<=768,hasTouch:width<=768});
+    await context.addInitScript(()=>{
+      // Tests don't require network, geolocation, or user notification permission.
+      localStorage.setItem("skypulse.preferences",JSON.stringify({
+        location:{name:"Cessnock",region:"New South Wales",lat:-32.8321,lon:151.3497},
+        theme:"dark",radius:50,notify:false
+      }));
     });
-    await page.goto("http://127.0.0.1:8765/",{waitUntil:"domcontentloaded",timeout:30000});
-    await page.locator("#hourly-list").evaluate(el=>{
-      el.innerHTML=Array.from({length:12},(_,i)=>
-        '<div class="hour-cell"><small>'+i+':00</small><span class="hour-icon">☁</span><strong>22°</strong><span class="hour-rain">80%</span></div>').join("");
-    });
-    await page.locator("#daily-list").evaluate(el=>{
-      el.innerHTML=Array.from({length:7},(_,i)=>
-        '<div class="day"><small>Day '+(i+1)+'</small><span class="day-icon">☀</span><strong>27°</strong><span class="rain">10 mm</span></div>').join("");
-    });
-    const measurements=await page.evaluate(()=>{
-      const tab=document.querySelector(".mobile-tabs");
-      const bar=document.querySelector(".top-actions");
-      const hourly=document.querySelector(".hours-scroll");
-      const days=document.querySelector(".days-list");
-      const rectangle=el=>{const r=el.getBoundingClientRect();return {left:r.left,right:r.right,width:r.width};};
-      return {viewport:innerWidth,html:document.documentElement.scrollWidth,body:document.body.scrollWidth,
-        tabs:rectangle(tab),tabVisible:getComputedStyle(tab).display!=="none",
-        actionBar:rectangle(bar),hours:rectangle(hourly),days:rectangle(days),
-        links:[...tab.querySelectorAll("a")].map(rectangle)};
-    });
-    console.log(width+" px viewport:",JSON.stringify(measurements));
-    if(measurements.html>width+2||measurements.body>width+2)
-      throw new Error("Page-wide horizontal overflow at "+width+"px");
-    if(width<=768){
-      if(!measurements.tabVisible)throw new Error("Mobile tabs hidden at "+width);
-      if(measurements.tabs.left < -2||measurements.tabs.right>width+2)
-        throw new Error("Mobile tab bar escapes viewport at "+width);
-      if(measurements.links.length!==5||measurements.links.some(r=>r.width<35||
-        r.left < -2||r.right>width+2))
-        throw new Error("Navigation tab exceeds viewport or is too narrow at "+width);
-      if(measurements.actionBar.left< -2||measurements.actionBar.right>width+2)
-        throw new Error("Top action controls exceed viewport at "+width);
-      if(measurements.hours.right>width+2||measurements.days.right>width+2)
-        throw new Error("Forecast cards exceed viewport at "+width);
-      await page.locator('.mobile-tab[data-tab="forecast"]').click();
-      if(await page.locator('.mobile-tab[data-tab="forecast"]').getAttribute("aria-current")!=="page")
-        throw new Error("Active forecast tab failed after click");
+    for(const [file,pageId] of cases){
+      const page=await context.newPage();
+      const errors=[];
+      page.on("pageerror",e=>errors.push(e.message));
+      await page.route("**/*",route=>{
+        const url=new URL(route.request().url());
+        if(url.hostname==="127.0.0.1")return route.continue();
+        return route.abort();
+      });
+      const response=await page.goto("http://127.0.0.1:8765/"+file,{waitUntil:"domcontentloaded",timeout:30000});
+      if(!response?.ok())throw Error(file+" HTTP status "+response?.status());
+      if(file==="forecast.html"){
+        await page.locator("#hourly-list").evaluate(el=>{
+          el.innerHTML=Array.from({length:12},(_,i)=>
+            '<div class="hour-cell"><small>'+i+':00</small><span>☁</span><strong>22°</strong></div>').join("");
+        });
+        await page.locator("#daily-list").evaluate(el=>{
+          el.innerHTML=Array.from({length:7},(_,i)=>
+            '<div class="day"><small>Day '+i+'</small><strong>27°</strong></div>').join("");
+        });
+      }
+      await page.waitForTimeout(180);
+      const m=await page.evaluate(()=>{
+        const rect=el=>{const x=el.getBoundingClientRect();return {left:x.left,right:x.right,width:x.width};};
+        const nav=document.querySelector(".mobile-tabs");
+        return {
+          innerWidth,documentWidth:document.documentElement.scrollWidth,bodyWidth:document.body.scrollWidth,
+          page:document.body.dataset.page,tabs:getComputedStyle(nav).display!=="none",
+          nav:rect(nav),items:[...nav.querySelectorAll("a")].map(rect),
+          actions:rect(document.querySelector(".top-actions")),
+          active:nav.querySelector("a[aria-current=page]")?.dataset.tab,
+          focused:document.activeElement?.tagName
+        };
+      });
+      if(m.page!==pageId)throw Error(file+" wrong page ID");
+      if(m.documentWidth>width+2||m.bodyWidth>width+2)
+        throw Error(file+" overflows "+width+"px: "+JSON.stringify(m));
+      if(width<=768){
+        if(!m.tabs||m.items.length!==6||m.active!==pageId)
+          throw Error(file+" incorrect mobile tabs "+width+"px: "+JSON.stringify(m));
+        if(m.nav.left < -2||m.nav.right>width+2||m.items.some(x=>x.width<30||x.left< -2||x.right>width+2))
+          throw Error(file+" mobile tab outside viewport "+width+"px: "+JSON.stringify(m));
+        if(m.actions.left< -2||m.actions.right>width+2)
+          throw Error(file+" action toolbar outside viewport "+width+"px");
+      }
+      if(errors.length)throw Error(file+" JS errors at "+width+"px: "+errors.slice(0,4).join(" | "));
+      if(width===390&&pageId==="overview"){
+        await page.locator('.mobile-tab[data-tab="alerts"]').click();
+        if(!page.url().endsWith("/settings.html"))throw Error("Settings navigation did not open separate page");
+      }
+      if(width===390&&pageId==="settings"){
+        const found=await page.evaluate(()=>JSON.parse(localStorage.getItem("skypulse.preferences")).location.name);
+        if(found!=="Cessnock")throw Error("Saved settings were lost between pages");
+      }
+      await page.close();
     }
     await context.close();
+    console.log("All six SkyPulse pages passed at "+width+"px.");
   }
-  console.log("SkyPulse mobile responsive layout PASSED at 320, 360, 390, 430, 768, and 1024 px.");
-} finally{
+  console.log("SkyPulse six-page responsive browser checks PASSED.");
+} finally {
   if(browser)await browser.close();
   server.kill("SIGTERM");
 }

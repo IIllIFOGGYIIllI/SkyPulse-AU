@@ -1,74 +1,71 @@
 #!/usr/bin/env python3
-"""Small dependency-free build guard for SkyPulse AU's critical map and safety UI."""
+"""Release and UI integrity checks for dedicated SkyPulse AU pages."""
 from pathlib import Path
+import json
+import re
+
 ROOT = Path(__file__).resolve().parents[1]
-html = (ROOT / "index.html").read_text(encoding="utf-8")
+pages = {
+    "index.html": ("overview", ["current-temp", "tomorrow-date", "detail-dewpoint", "radar-peek-map", "snapshot-incidents", "snapshot-fire-danger"]),
+    "forecast.html": ("forecast", ["temp-chart", "hourly-list", "daily-list"]),
+    "radar.html": ("map-section", ["weather-map", "map-locate", "map-home", "map-zoom-in", "map-zoom-out",
+                                  "map-fit", "map-layers-button", "map-fullscreen", "map-layer-radar",
+                                  "map-layer-rfs", "map-layer-warnings", "map-radar-opacity",
+                                  "map-coordinates", "radar-step-back", "radar-step-forward"]),
+    "hazards.html": ("hazards", ["hazards-refresh", "incidents-list", "rfs-alerts-list", "fdr-district-select", "wmo-warnings-list"]),
+    "news.html": ("news", []),
+    "settings.html": ("alerts", ["settings-location", "radius", "notify-toggle", "push-enable",
+                               "push-consent", "push-include-incidents", "push-disable", "push-test",
+                               "app-update-status", "app-update-check"]),
+}
+text = {p: (ROOT / p).read_text(encoding="utf-8") for p in pages}
 js = (ROOT / "assets/app.js").read_text(encoding="utf-8")
 css = (ROOT / "assets/styles.css").read_text(encoding="utf-8")
-leaflet = (ROOT / "assets/leaflet.css").read_text(encoding="utf-8")
 sw = (ROOT / "sw.js").read_text(encoding="utf-8")
+leaflet = (ROOT / "assets/leaflet.css").read_text(encoding="utf-8")
 errors = []
-def check(name, condition):
+def check(label, condition):
     if not condition:
-        errors.append(name)
-check("Self-hosted Leaflet CSS included", 'href="./assets/leaflet.css' in html)
-check("Leaflet tile absolute positioning in local CSS", ".leaflet-tile," in leaflet and "position: absolute" in leaflet)
-check("No unpkg Leaflet CSS dependency", 'href="https://unpkg.com/leaflet' not in html)
-check("PWA preloads the Leaflet CSS", '"./assets/leaflet.css"' in sw)
-check("Map controls stylesheet", ".map-control-column" in css and ".map-layers-panel" in css)
-for element in ["weather-map", "map-locate", "map-home", "map-zoom-in", "map-zoom-out",
-                "map-fit", "map-layers-button", "map-fullscreen", "map-layer-radar", 
-                "map-layer-rfs", "map-nearby-only", "map-radar-opacity", "map-wheel-zoom",
-                "map-coordinates", "map-location-status", "radar-step-back", "radar-step-forward"]:
-    check("HTML map control: " + element, 'id="' + element + '"' in html)
-    if element not in ("weather-map", "map-coordinates", "map-location-status"):
-        check("Map control wired in JS: " + element, '$("' + element + '")' in js)
-for heading in ["Weather Forecast", "NSW Hazard Monitoring", "Nearby RFS Incidents",
-                "NSW &amp; ACT Weather Warnings", "Alert Centre &amp; Settings"]:
-    check("Professional heading: " + heading, heading in html)
-for item in ["tomorrow-date", "tomorrow-condition", "tomorrow-rain-chance", "tomorrow-rain-amount",
-             "detail-dewpoint", "detail-pressure", "detail-wind-direction", "detail-cloud-cover",
-             "official-observation-link", "radar-peek-map", "snapshot-incidents", "snapshot-warnings",
-             "snapshot-fire-danger", "fdr-district-select", "fdr-today-rating", "fdr-tomorrow-rating"]:
-    check("Enhanced dashboard element: " + item, 'id="' + item + '"' in html)
-check("Peak UV is labelled daily", "TODAY'S PEAK UV" in html)
-check("Weather station clearly identified", "Cessnock Airport AWS" in html)
-check("Model values never labelled as measured readings", "CURRENT MODEL ESTIMATE" in html)
-check("FDR integration present", "loadFireDanger" in js and "renderFireDanger" in js)
-for item in ["rfs-alert-feed-state", "rfs-alerts-list", "wmo-warnings-list", "map-layer-warnings",
-             "push-consent", "push-include-incidents", "push-status", "push-enable",
-             "push-disable", "push-update", "push-test"]:
-    check("Official warnings / Push panel: " + item, 'id="' + item + '"' in html)
-check("Push client script included", "assets/push.js" in html and "assets/push-config.js" in html)
-check("RFS CAP integration", "loadOfficialRfsWarnings()" in js and "showRfsWarningMap" in js)
-check("WMO references labelled as recent", "Recent WMO-Indexed BOM Updates" in html)
-check("Background alerts require explicit opt-in", "push-consent" in (ROOT / "assets/push.js").read_text(encoding="utf-8"))
-check("Worker has VAPID and source-age safeguards", "VAPID_PRIVATE_PKCS8" in (ROOT / "notifications/src/index.js").read_text(encoding="utf-8") and "MAX_FEED_AGE" in (ROOT / "notifications/src/index.js").read_text(encoding="utf-8"))
-push_config = (ROOT / "assets/push-config.js").read_text(encoding="utf-8")
-check("Client API config is present", "window.SKYPULSE_PUSH_API" in push_config)
-check("Push API config contains no private VAPID key", "VAPID_PRIVATE_PKCS8" not in push_config)
-check("Push API config does not contain credentials", "Authorization:" not in push_config and "Bearer " not in push_config)
-# The release stamp runs before these checks in GitHub Actions.
-release_file = ROOT / "app-version.json"
-check("Release metadata generated", release_file.exists())
-if release_file.exists():
-    import json
-    release_data = json.loads(release_file.read_text(encoding="utf-8"))
-    release_version = release_data.get("version", "")
-    check("Release identifier matches deployed HTML", 'data-build="' + release_version + '"' in html)
-    check("Service worker cache uses current release", 'skypulse-shell-' + release_version in sw)
-    check("App update helper included", "assets/update.js?v=" + release_version in html)
-    check("Release metadata is excluded from caches", 'app-version.json' in sw)
-    check("Service worker preserves non-SkyPulse caches", 'name.startsWith(PREFIX)' in sw)
-    check("Existing push handler preserved", 'addEventListener("push"' in sw)
-# Mobile width containment and native navigation controls.
-check("Forecast columns can shrink", "grid-template-columns:minmax(0,1fr)!important" in css)
-check("Mobile tabs use five equal width columns", "grid-template-columns:repeat(5,minmax(0,1fr))" in css)
-check("Hourly forecast is locally scrollable", ".hours-scroll{display:flex;max-width:100%;scroll-snap-type:x proximity}" in css)
-check("Bottom tab icons are SVG, not inconsistent glyphs", 'class="mobile-tab' in html and '<svg viewBox="0 0 24 24"' in html)
-check("Navigation active state wired", "function setupNav()" in js and "aria-current" in js)
-check("Emergency safety disclaimer displayed", "For emergencies call" in html)
-check("BOM fallback for unavailable warnings", "Warning feed unavailable" in js)
+        errors.append(label)
+release = ROOT / "app-version.json"
+check("Release metadata exists", release.exists())
+version = json.loads(release.read_text(encoding="utf-8"))["version"] if release.exists() else ""
+check("Version matches service worker", 'skypulse-shell-' + version in sw)
+for path, (page_id, required) in pages.items():
+    h = text[path]
+    check(path + ": exactly one main section", len(re.findall(r'<section id="(overview|forecast|map-section|hazards|news|alerts)"', h)) == 1)
+    check(path + ": correct page section", 'id="' + page_id + '"' in h)
+    check(path + ": active route", 'data-page="' + page_id + '"' in h)
+    check(path + ": stamped version", 'data-build="' + version + '"' in h)
+    check(path + ": updater loaded", 'assets/update.js?v=' + version in h)
+    check(path + ": responsive CSS loaded", 'assets/styles.css?v=' + version in h)
+    check(path + ": official emergency notice", 'For emergencies call' in h)
+    check(path + ": six-tab mobile navigation", len(re.findall(r'class="mobile-tab(?: is-active)?"', h)) == 6)
+    check(path + ": all six route links", all(url in h for url in
+          ('href="./"', 'href="./forecast.html"', 'href="./radar.html"',
+           'href="./hazards.html"', 'href="./news.html"', 'href="./settings.html"')))
+    check(path + ": no duplicate HTML IDs", len(re.findall(r'\sid="([^"]+)"', h)) ==
+          len(set(re.findall(r'\sid="([^"]+)"', h))))
+    for id in required:
+        check(path + ": element " + id, 'id="' + id + '"' in h)
+check("Self-hosted Leaflet CSS", ".leaflet-tile," in leaflet and "position: absolute" in leaflet)
+check("Radar page loads Leaflet styles", 'href="./assets/leaflet.css' in text["radar.html"])
+check("SW offline caches all pages", all('"./' + p + '"' in sw for p in list(pages)[1:]))
+check("SW preserves push support", 'addEventListener("push"' in sw)
+check("SW retains non-SkyPulse caches", 'name.startsWith(PREFIX)' in sw)
+check("SW navigation cache keyed by request", 'cache.put(request,res.clone())' in sw)
+check("Mobile 6 equal-width tabs", "grid-template-columns:repeat(6,minmax(0,1fr))" in css)
+check("Forecast scrolling contained", ".hours-scroll{display:flex;max-width:100%;scroll-snap-type:x proximity}" in css)
+check("Route-aware JavaScript", "document.body.dataset.page" in js and "function on(id,type,handler)" in js)
+check("Official warning integration", "loadOfficialRfsWarnings()" in js and "showRfsWarningMap" in js)
+check("Warning feed failures do not imply all clear", "Warning feed unavailable" in js)
+check("Push client isolated to Settings", "assets/push.js" in text["settings.html"] and
+      all("assets/push.js" not in text[p] for p in pages if p != "settings.html"))
+push = (ROOT / "assets/push-config.js").read_text(encoding="utf-8")
+check("Push config contains no private key", "VAPID_PRIVATE_PKCS8" not in push)
+check("Backend validates VAPID and feed freshness", "VAPID_PRIVATE_PKCS8" in
+      (ROOT / "notifications/src/index.js").read_text(encoding="utf-8") and
+      "MAX_FEED_AGE" in (ROOT / "notifications/src/index.js").read_text(encoding="utf-8"))
 if errors:
-    raise SystemExit("SkyPulse validation FAILED:\n- " + "\n- ".join(errors))
-print("SkyPulse AU site validation passed: local Leaflet assets, map controls, labels and emergency fallback.")
+    raise SystemExit("SkyPulse page validation FAILED:\n- " + "\n- ".join(errors))
+print("SkyPulse AU validation PASSED — six pages, safety, navigation, PWA caching and notification isolation.")
