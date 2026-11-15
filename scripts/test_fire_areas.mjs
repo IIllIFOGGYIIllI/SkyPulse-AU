@@ -13,11 +13,28 @@ try{
   if(!localStorage.getItem("skypulse.preferences"))localStorage.setItem("skypulse.preferences",JSON.stringify({
    location:{name:"Cessnock",region:"New South Wales",lat:-32.8321,lon:151.3497},theme:"dark",radius:50,notify:false}));
   window.__fireLayers=[];window.__fireZooms=0;
-  const layer=(kind,opts={})=>{const v={kind,opts,features:[],on(){return this;},addTo(target){if(target?.features)target.features.push(this);return this;},bindPopup(s){this.popup=s;return this;},clearLayers(){this.features=[];return this;},setLatLng(){return this;}};window.__fireLayers.push(v);return v;};
+  const layer=(kind,opts={})=>{
+   const v={kind,opts,features:[],handlers:{},
+    on(name,fn){this.handlers[name]=fn;return this;},
+    addTo(target){if(target?.features)target.features.push(this);
+     if(kind==="marker"&&opts.icon?.options?.html){
+      const mapEl=document.querySelector("#fire-area-map");
+      if(mapEl){const wrapper=document.createElement("div");wrapper.innerHTML=opts.icon.options.html;this.domNode=wrapper.firstElementChild;mapEl.append(this.domNode);}
+     }
+     return this;
+    },
+    bindPopup(s){this.popup=s;return this;},
+    clearLayers(){this.features.forEach(x=>x.domNode?.remove());this.features=[];return this;},
+    setLatLng(){return this;}
+   };window.__fireLayers.push(v);return v;
+  };
   const map={setView(){return this;},fitBounds(){window.__fireZooms++;return this;},on(){return this;},invalidateSize(){return this;},removeLayer(){return this;},
    zoomIn(){return this;},zoomOut(){return this;},getCenter(){return {lat:-32.83,lng:151.35};},getZoom(){return 9;},scrollWheelZoom:{enable(){},disable(){}}};
   window.L={map(){return map;},tileLayer(url,opts){return layer("tiles",opts||{});},layerGroup(){return layer("group");},
-   polygon(v,opts){let z=layer("polygon",opts);z.coords=v;return z;},circleMarker(v,opts){let z=layer("point",opts);z.coords=v;return z;},
+   polygon(v,opts){let z=layer("polygon",opts);z.coords=v;return z;},
+   marker(v,opts){let z=layer("marker",opts);z.coords=v;return z;},
+   divIcon(opts){return {options:opts}},
+   circleMarker(v,opts){let z=layer("point",opts);z.coords=v;return z;},
    circle(v,opts){let z=layer("circle",opts);z.coords=v;return z;},latLngBounds(){return {pad(){return this;}}},
    control:{scale(){return layer("scale");}}};
  });
@@ -69,17 +86,32 @@ try{
  await page.locator("#theme-button").click();
  console.log("Fire map panels PASSED: original map imagery, dark details in dark UI, light details in light UI.");
  const rows=await page.evaluate(()=>({
-  polygons:window.__fireLayers.filter(x=>x.kind==="polygon").map(x=>({colour:x.opts.color,popup:x.popup})),
+  polygons:window.__fireLayers.filter(x=>x.kind==="polygon").map(x=>({
+   colour:x.opts.color,hasPopup:!!x.popup,clickable:typeof x.handlers.click==="function"})),
+  markers:window.__fireLayers.filter(x=>x.kind==="marker").map(x=>({
+   html:x.opts.icon?.options?.html||"",hasPopup:!!x.popup,clickable:typeof x.handlers.click==="function"})),
   health:document.querySelector("#fire-warning-feed-health").textContent,
   fire:document.querySelector("#fire-incident-feed-health").textContent,
-  cards:document.querySelectorAll("[data-warning-index]").length
+  cards:document.querySelectorAll("[data-warning-index]").length,
+  legend:document.querySelector("#fire-map-legend")?.textContent||""
  }));
- if(!rows.polygons.some(x=>x.colour==="#e9555c"&&x.popup.includes("Official warning area")))throw Error("Warning polygon not correctly labelled");
- if(!rows.polygons.some(x=>x.colour==="#bc94e7"&&x.popup.includes("Not a warning")))throw Error("Incident extent not separate");
- const popup=rows.polygons.find(x=>x.colour==="#bc94e7").popup;
- for(const value of ["Advice","Under control","93 ha","MCFARLANE ST, CESSNOCK 2325","Cessnock","Bush Fire","Rural Fire Service","16 Nov"]){
-   if(!popup.includes(value))throw Error("Official incident popup missing "+value);
+ if(!rows.polygons.some(x=>x.colour==="#e9555c"&&x.clickable))
+  throw Error("Warning boundary not selectable");
+ if(!rows.polygons.some(x=>x.colour==="#bc94e7"&&x.clickable))
+  throw Error("Incident extent not selectable");
+ if(rows.polygons.some(x=>x.hasPopup)||rows.markers.some(x=>x.hasPopup))
+  throw Error("Fire Explorer binds a duplicate Leaflet popup as well as the right details panel");
+ if(!rows.markers.some(x=>x.html.includes('data-fire-marker-kind="incident"')&&x.html.includes("fire-map-pin-fire")&&x.clickable))
+  throw Error("Bush Fire must use a semantic flame map icon with a click handler");
+ if(!rows.markers.some(x=>x.html.includes("fire-map-pin-location")))
+  throw Error("Monitoring location must use a distinct location pin");
+ for(const value of ["Bush Fire","Grass Fire","Hazmat","Flood","Storm","Road","Advice","Watch and Act","Emergency Warning","Incident Extent"]){
+   if(!rows.legend.includes(value))throw Error("Missing "+value+" in icon/area legend");
  }
+ const kinds=await page.evaluate(()=>["Bush Fire","Grass Fire","Hazardous Materials","Flood","Severe Storm","Road Crash","Rescue","Other Incident"].map(t=>
+  fireIncidentKind({properties:{details:{incident_type:t}}})));
+ if(kinds.join(",")!=="fire,grass,hazmat,flood,storm,road,rescue,incident")
+  throw Error("Incident icons are not matched to their published event types: "+kinds);
  const listed=await page.locator("#incidents-list .incident-rich-card").first().textContent();
  for(const value of ["Advice","Under control","93 ha","MCFARLANE ST, CESSNOCK 2325"]){
    if(!listed.includes(value))throw Error("Nearby incident summary missing "+value);
@@ -109,6 +141,34 @@ try{
  }
  await page.locator("#fire-map-selection-close").click();
  if(await page.locator("#fire-map-selection").isVisible())throw Error("Close-map-details action failed");
+ // Click the actual map marker in the Leaflet stub, not just the directory.
+ await page.locator("#fire-map-selection-close").click();
+ const picked=await page.evaluate(()=>{
+  const marker=window.__fireLayers.find(x=>x.kind==="marker"&&x.opts.icon?.options?.html?.includes('data-fire-marker-kind="incident"')&&x.opts.icon?.options?.html?.includes('data-fire-marker-index="0"'));
+  if(!marker||typeof marker.handlers.click!=="function")return false;
+  marker.handlers.click();
+  return true;
+ });
+ if(!picked)throw Error("Fire marker click was not wired to the side-panel selection");
+ if(!(await page.locator("#fire-map-selection").isVisible()))throw Error("Clicking a map marker didn't open the single side-panel");
+ if(!(await page.locator("#fire-map-selection-body").textContent()).includes("Under control"))
+  throw Error("Clicked map marker did not display the published incident detail");
+ const markerSelected=await page.locator('[data-fire-marker-kind="incident"][data-fire-marker-index="0"]').first().getAttribute("class");
+ if(!markerSelected.includes("is-selected"))throw Error("Selected map marker wasn't visually highlighted");
+ const headline=await page.locator("#fire-map-selection-body .fire-map-selection-title").first().textContent();
+ if(!headline.includes("Test Fire"))throw Error("One-panel incident heading is incorrect");
+ await page.locator("#fire-map-selection-close").click();
+ if(await page.locator('[data-fire-marker-kind="incident"][data-fire-marker-index="0"].is-selected').count())
+  throw Error("Selected pin highlight was not cleared on panel close");
+ // Click polygon: should use the SAME panel and no Leaflet popup.
+ const areaClicked=await page.evaluate(()=>{
+  const layer=window.__fireLayers.find(x=>x.kind==="polygon"&&x.opts.color==="#bc94e7"&&typeof x.handlers.click==="function");
+  if(!layer)return false;layer.handlers.click();return true;
+ });
+ if(!areaClicked||!(await page.locator("#fire-map-selection").isVisible()))
+  throw Error("Clicking an incident extent did not open the same details panel");
+ await page.locator("#fire-map-selection-close").click();
+
  await page.locator("#fire-directory-scope").selectOption("statewide");
  if(await page.locator("#fire-directory-list [data-fire-dir-kind]").count()!==2)
   throw Error("All NSW reports filter didn't reveal remote incident");

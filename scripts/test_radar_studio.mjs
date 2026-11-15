@@ -50,6 +50,8 @@ try{
       map(){return map;},tileLayer:makeLayer,
       layerGroup(){return makeLayer();},circleMarker(){return makeLayer();},
       circle(){return makeLayer();},polygon(){return makeLayer();},
+      marker(url,opts){return makeLayer("marker",opts);},
+      divIcon(opts){return {options:opts};},
       control:{scale(){return makeLayer();}},
       latLngBounds(){return {pad(){return this;}}}
     };

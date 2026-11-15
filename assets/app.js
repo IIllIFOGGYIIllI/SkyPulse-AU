@@ -560,6 +560,7 @@ function renderFireDirectory(){
  });
 }
 function fireSelectMapItem(kind,index){
+ if(state.hazardMap&&typeof state.hazardMap.closePopup==="function")state.hazardMap.closePopup();
  state.fireSelected={kind,index};
  var feature=kind==="incident"?state.incidents[index]:state.rfsAlerts[index],
   pane=$("fire-map-selection"),body=$("fire-map-selection-body");
@@ -640,6 +641,7 @@ function initFireAreaMap(){
  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{
   maxZoom:18,updateWhenIdle:true,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
  }).addTo(state.hazardMap);
+ state.hazardMap.on("zoomend moveend",syncFireMapSelection);
  state.hazardLayers={warnings:L.layerGroup().addTo(state.hazardMap),
   extents:L.layerGroup().addTo(state.hazardMap),incidents:L.layerGroup().addTo(state.hazardMap),
   locality:L.layerGroup().addTo(state.hazardMap)};
