@@ -7,11 +7,11 @@ An independent, free, responsive Australian weather website and installable Prog
 
 ## Features implemented
 - Responsive dark/light interface, mobile navigation and local preferences.
-- Live current weather, hourly temperature chart, 12-hour outlook and seven-day forecast from Open-Meteo.
+- Model-based current conditions, an hourly temperature chart, 12-hour outlook, seven-day forecast, detailed pressure/dew-point/wind/cloud estimates and a written, automatically generated tomorrow outlook from Open-Meteo.
 - Australian location search, optional browser geolocation and configurable incident radius.
 - Interactive OpenStreetMap map, historical RainViewer radar frames with time slider/animation and NSW RFS incident markers.
-- NSW RFS nearby incident list (approximate distances) and NSW/ACT BOM statewide warning links; publication timestamp and stale-source indicator.
-- NSW SES, Hazards Near Me, Live Traffic, power information and local news **official source links**.
+- NSW RFS incident locations plus **official NSW RFS Fire Danger Ratings and Total Fire Ban status** by district, today/tomorrow; publication timestamp and stale-feed detection. Statewide BOM warning RSS integration remains temporarily unavailable due to HTTP 403.
+- Local hazard snapshot, compact historical rain radar preview, official satellite viewing link, Cessnock Airport AWS observation link, and NSW SES/Hazards Near Me/Live Traffic/power/local news **official source links**.
 - PWA manifest, service-worker shell and offline safety information.
 - Opt-in **browser-only** notifications for new mapped incidents when the application is open and permission granted.
 
@@ -20,6 +20,8 @@ An independent, free, responsive Australian weather website and installable Prog
 - NSW SES warning API integration; direct access requires permission and warnings must be republished in full.
 - Live news headline aggregation; the News section currently provides curated publisher links.
 - Native app-store installation, verified public notification SLAs, road closures or power outages as live API integrations.
+- Direct republication of BOM weather-station observations. Cessnock Airport readings are provided as a link to BOM; the on-site figures are **model estimates**, not measured station readings. Source access and republishing permissions would need to be arranged before embedding the actual observations.
+- Inline satellite tiles. The satellite panel currently links to the official BOM satellite viewer, with a clearly labelled illustrative graphic.
 - Guaranteed correct warning polygons or emergency notification delivery. Fire markers are *incident coordinates*, not definitive warning areas.
 
 ## Publish free with GitHub Pages
@@ -30,7 +32,7 @@ An independent, free, responsive Australian weather website and installable Prog
    **https://iillifoggyiilli.github.io/SkyPulse-AU/** (GitHub Pages URL paths are case-sensitive; use the link shown by the deployment).
 5. Open the website and use your browser's **Install App** / **Add to Home Screen** function. iOS requires Safari → Share → Add to Home Screen.
 
-Scheduled workflows run about every 30 minutes **on a best-effort basis**, not guaranteed to the minute. Each run retrieves NSW RFS GeoJSON and NSW/ACT BOM RSS warning links and deploys a refreshed static snapshot. GitHub can delay scheduled jobs, and upstream services may be unavailable. On retrieval failure, **data is marked unavailable rather than making up incidents or warnings**.
+Scheduled workflows run about every 30 minutes **on a best-effort basis**, not guaranteed to the minute. Each run retrieves NSW RFS incident GeoJSON, NSW RFS district fire danger and total fire ban XML, and attempts NSW/ACT BOM RSS warning links and deploys a refreshed static snapshot. GitHub can delay scheduled jobs, and upstream services may be unavailable. On retrieval failure, **data is marked unavailable rather than making up incidents or warnings**.
 
 > GitHub Pages serves the frontend. It does **not** run a persistent server or send background push notifications.
 
@@ -49,7 +51,7 @@ Visit http://localhost:8000/ . The `sync_feeds.py` task uses only Python's stand
 - `assets/styles.css` — responsive design system
 - `assets/app.js` — browser data and interface logic
 - `assets/icon.svg`, `manifest.webmanifest`, `sw.js` — installable PWA
-- `scripts/sync_feeds.py` — scheduled NSW RFS/BOM data retrieval
+- `scripts/sync_feeds.py` — scheduled NSW RFS incident and fire danger data retrieval, plus BOM warning feed attempts
 - `.github/workflows/deploy.yml` — GitHub Pages publication
 - `privacy.html`, `terms.html`, `sources.html` — policies, disclaimer and attributions
 
@@ -74,3 +76,12 @@ The BOM RSS endpoint currently returns HTTP 403 to the automated runner. SkyPuls
 The Leaflet 1.9.4 stylesheet is **self-hosted** at `assets/leaflet.css`, resolving the failure mode where map tiles appear as scattered, unpositioned image squares when remote Leaflet CSS is unavailable. Map controls now include zoom, precise device location (with user consent), return to the selected town, fit to nearby mapped incidents, fullscreen, layer visibility, a nearby-only filter, radar opacity, radar frame navigation, optional mouse-wheel zoom, coordinates, metric scale and a clear incident legend. Using **Current Location** on the map does **not** silently replace the saved weather location. Map tiles remain online-only and subject to OSM tile availability and its usage policy.
 
 The GitHub Actions deployment runs a static validation script, in addition to JavaScript syntax checks, before publishing changes. This validation does not replace a real-device rendering check.
+
+## Enhanced Weather Dashboard (November 2026)
+SkyPulse AU distinguishes three types of information:
+
+1. **Model estimates:** Open-Meteo current estimated temperature, humidity, wind, direction, pressure, dew point, cloud cover and the daily peak UV. These are estimates from weather models, *not station observations*.
+2. **Model forecasts:** daily minimum/maximum temperature, the maximum forecast *hourly* precipitation probability for the local calendar day, modelled daily precipitation totals, sunrise/sunset, tomorrow's generated narrative and a seven-day outlook. “Today's Rainfall” must never be confused with “Rain Since 9 am”, an observed measurement.
+3. **Official data or links:** NSW RFS mapped incidents and fire danger district forecasts/total fire bans (sourced from RFS feeds, with retrieval and stale warnings), plus direct links to BOM Cessnock Airport station observations and official satellite imagery. BOM RSS alerts currently return 403 from the GitHub Actions runner and must be treated as unavailable.
+
+The **Greater Hunter** RFS district covers Cessnock. The live RFS district feed has been verified in GitHub Actions with 21 districts, including the Greater Hunter. Other NSW locations can select their district manually to avoid implying an unverified district mapping. The radar dashboard preview uses historical RainViewer data and a static OpenStreetMap base; imagery may be delayed.

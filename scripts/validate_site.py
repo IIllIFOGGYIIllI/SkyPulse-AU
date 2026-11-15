@@ -26,6 +26,15 @@ for element in ["weather-map", "map-locate", "map-home", "map-zoom-in", "map-zoo
 for heading in ["Weather Forecast", "NSW Hazard Monitoring", "Nearby RFS Incidents",
                 "NSW &amp; ACT Weather Warnings", "Alert Centre &amp; Settings"]:
     check("Professional heading: " + heading, heading in html)
+for item in ["tomorrow-date", "tomorrow-condition", "tomorrow-rain-chance", "tomorrow-rain-amount",
+             "detail-dewpoint", "detail-pressure", "detail-wind-direction", "detail-cloud-cover",
+             "official-observation-link", "radar-peek-map", "snapshot-incidents", "snapshot-warnings",
+             "snapshot-fire-danger", "fdr-district-select", "fdr-today-rating", "fdr-tomorrow-rating"]:
+    check("Enhanced dashboard element: " + item, 'id="' + item + '"' in html)
+check("Peak UV is labelled daily", "TODAY'S PEAK UV" in html)
+check("Weather station clearly identified", "Cessnock Airport AWS" in html)
+check("Model values never labelled as measured readings", "CURRENT MODEL ESTIMATE" in html)
+check("FDR integration present", "loadFireDanger" in js and "renderFireDanger" in js)
 check("Emergency safety disclaimer displayed", "For emergencies call" in html)
 check("BOM fallback for unavailable warnings", "Warning feed unavailable" in js)
 if errors:
