@@ -348,3 +348,80 @@ body[data-page=news] .news-grid{margin-top:6px}
  .mobile-tabs .mobile-tab span{font-size:9px}
  .overview-explore-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 }
+
+/* v11 — SkyPulse Radar Studio */
+body[data-page=map-section] .radar-upgraded-card{overflow:hidden}
+.radar-insight-strip{display:grid;grid-template-columns:minmax(225px,1.2fr) minmax(0,2fr);align-items:center;gap:18px;background:linear-gradient(112deg,#0d2944,#153451 52%,#102a42);border:1px solid #35688c;border-radius:15px;padding:15px 18px;margin-bottom:16px;color:#eef8ff;box-shadow:0 7px 23px #04152820}
+.radar-data-indicator{display:flex;align-items:center;gap:13px;min-width:0}
+.radar-freshness{display:inline-flex;align-items:center;gap:7px;border:1px solid #68d7bb66;color:#aaf6dc;background:#1b755e4d;border-radius:8px;padding:8px 10px;font:800 10px/1.25 Manrope,sans-serif;letter-spacing:.6px;white-space:nowrap}
+.radar-freshness.waiting{color:#c8d7e6;background:#4c668b38;border-color:#8297b353}
+.radar-freshness.delayed{color:#ffdd9e;background:#93611d3d;border-color:#eda53780}
+.radar-freshness.stale{color:#ffbaba;background:#a334343c;border-color:#ff76766d}
+.radar-pulse{display:block;width:7px;height:7px;border-radius:50%;background:currentColor}
+.radar-data-heading{display:grid;min-width:0;gap:3px}
+.radar-data-heading strong{font:800 14px/1.35 Manrope,sans-serif;overflow-wrap:anywhere}
+.radar-data-heading small{font-size:11px;color:#b6cadd;line-height:1.45}
+.radar-check-details{display:flex;justify-content:flex-end;align-items:center;gap:14px;flex-wrap:wrap;font-size:11px;color:#bed3e6;line-height:1.45}
+.radar-check-details span{display:grid;white-space:nowrap}
+.radar-check-details strong{font-size:10px;color:#ebf5ff}
+.radar-refresh-action{font-size:11px;flex-shrink:0;color:#f6fbff;background:#2454749e;border-color:#519aca99}
+.radar-upgraded-card .map-viewport{height:540px}
+.radar-map-stamp{position:absolute;top:16px;left:15px;z-index:720;border:1px solid #4879a0;background:#092138e8;color:#e8f8ff;border-radius:10px;padding:10px 12px;box-shadow:0 9px 30px #020f1e8a;display:grid;gap:3px;pointer-events:none}
+.radar-map-stamp[hidden]{display:none}
+.radar-map-stamp span{color:#9bbfda;font:800 9px Manrope;letter-spacing:1.1px}
+.radar-map-stamp strong{font:800 14px/1.2 Manrope}
+.radar-map-stamp.is-delayed{border-color:#e9ad58}
+.radar-map-stamp.is-stale{border-color:#ff6d7d}
+.radar-playback{padding:17px 20px 13px;background:var(--panel);border-top:1px solid var(--border)}
+.radar-playback-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.radar-playback-top>div:first-child{display:grid;gap:4px;min-width:0}
+.radar-playback .eyebrow{margin:0!important}
+.radar-playback-top strong{font:800 14px Manrope;letter-spacing:-.15px}
+.radar-playback-top small{font-size:11px;color:var(--muted)}
+.radar-playback-badges{display:flex;align-items:center;gap:9px;flex:none}
+.radar-view-kind{font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--accent);white-space:nowrap}
+.radar-view-kind.historical{color:var(--amber)}
+.radar-latest-button{background:var(--panel-3);color:var(--accent);border:1px solid var(--border);border-radius:8px;min-height:37px;padding:6px 13px;font-weight:800;font-size:11px;white-space:nowrap}
+.radar-latest-button:hover:not(:disabled){border-color:var(--accent)}
+.radar-latest-button:disabled{opacity:.5;cursor:default}
+.radar-playback .radar-controls{display:flex;align-items:center;gap:10px;max-width:none!important;width:100%;min-width:0}
+.radar-playback .radar-controls button{flex:none;height:38px;min-width:40px;border-radius:9px}
+.radar-playback .radar-controls button:disabled{opacity:.4;cursor:default}
+.radar-playback .radar-controls .radar-play-primary{background:var(--accent-strong);border-color:var(--accent-strong);color:#fff;min-width:83px;font-weight:800;white-space:nowrap}
+.radar-timeline{flex:1;min-width:65px;display:grid;gap:3px;padding:0 5px}
+.radar-timeline input{width:100%;margin:0;min-width:0;height:22px;accent-color:var(--accent);cursor:pointer}
+.radar-timeline input:disabled{cursor:default}
+.radar-range-labels{display:flex;justify-content:space-between;gap:10px;font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}
+.radar-speed{display:grid;align-items:center;gap:2px;color:var(--muted);font:700 10px Manrope;white-space:nowrap}
+.radar-speed select{border:1px solid var(--border);background:var(--panel-3);color:var(--text);border-radius:8px;padding:7px 9px;min-height:31px;font-weight:800;max-width:80px}
+.radar-explainer{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px;color:var(--muted);line-height:1.5;border-top:1px solid var(--border);padding-top:13px;margin-top:12px}
+.radar-explainer a{font-weight:800;color:var(--accent);white-space:nowrap}
+.map-footer.radar-attribution{padding:9px 20px;font-size:10px;background:var(--panel-2)}
+@media(max-width:1200px){
+ .radar-insight-strip{grid-template-columns:minmax(0,1fr);gap:12px}
+ .radar-check-details{justify-content:space-between;gap:9px}
+}
+@media(max-width:620px){
+ .radar-insight-strip{padding:13px;gap:12px}
+ .radar-data-indicator{align-items:flex-start;flex-wrap:wrap;gap:9px}
+ .radar-data-heading strong{font-size:13px}
+ .radar-check-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .radar-check-details span{white-space:normal}
+ .radar-refresh-action{grid-column:1/-1;width:100%}
+ .radar-upgraded-card .map-viewport{height:420px;min-height:420px}
+ .radar-map-stamp{left:9px;top:10px;padding:8px;font-size:12px;max-width:calc(100% - 70px)}
+ .radar-playback{padding:14px 12px}
+ .radar-playback-top{align-items:flex-start}
+ .radar-playback-badges{display:grid;justify-items:end;gap:5px}
+ .radar-playback .radar-controls{gap:5px;flex-wrap:wrap}
+ .radar-timeline{flex-basis:100%;order:5;padding:6px 2px 0}
+ .radar-speed{margin-left:auto}
+ .radar-playback .radar-controls .radar-play-primary{min-width:68px}
+ .radar-explainer{display:grid;gap:7px}
+}
+@media(max-width:360px){
+ .radar-data-heading strong{font-size:12px}
+ .radar-playback .radar-controls .radar-play-primary{min-width:60px;padding:5px 8px}
+ .radar-view-kind{font-size:9px}
+ .radar-latest-button{padding:6px 7px;font-size:10px}
+}
