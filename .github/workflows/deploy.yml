@@ -32,11 +32,14 @@ jobs:
         run: python scripts/sync_feeds.py
       - name: Retrieve NSW Warning Feeds
         run: python scripts/sync_warnings.py
+      - name: Stamp Release and Cache Version
+        run: python scripts/stamp_build.py
       - name: Validate Dashboard and PWA
         run: |
           node --check assets/app.js
           node --check sw.js
           node --check assets/push.js
+          node --check assets/update.js
           node --check notifications/src/index.js
           node --check notifications/generate-vapid.mjs
           node notifications/test/smoke.mjs

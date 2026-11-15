@@ -1,15 +1,57 @@
-/* Network-first navigation, offline shell only. Hazard and warning data are NEVER cached. */
-const CACHE="skypulse-shell-v7";
-const SHELL=["./","./index.html","./offline.html","./assets/styles.css","./assets/leaflet.css","./assets/app.js","./assets/push.js","./assets/push-config.js","./assets/icon.svg","./manifest.webmanifest","./privacy.html","./terms.html","./sources.html"];
-self.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting()));});
-self.addEventListener("activate",event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
+/* SkyPulse AU — release-specific offline shell and explicit update lifecycle.
+ * Feed snapshots and version metadata are NETWORK ONLY: never return stale hazard information.
+ */
+const CACHE="skypulse-shell-__SKYPULSE_BUILD__";
+const PREFIX="skypulse-shell-";
+const SHELL=["./","./index.html","./offline.html","./assets/styles.css",
+"./assets/leaflet.css","./assets/app.js","./assets/push.js","./assets/push-config.js",
+"./assets/update.js","./assets/icon.svg","./manifest.webmanifest","./privacy.html",
+"./terms.html","./sources.html"];
+self.addEventListener("install",event=>{
+  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)));
+});
+self.addEventListener("message",event=>{
+  if(event.data&&event.data.type==="SKYPULSE_ACTIVATE_UPDATE")self.skipWaiting();
+});
+self.addEventListener("activate",event=>{
+  event.waitUntil((async()=>{
+    const cacheNames=(await caches.keys()).filter(name=>name.startsWith(PREFIX));
+    const preserved=new Set([CACHE,...cacheNames.filter(name=>name!==CACHE).slice(-1)]);
+    await Promise.all(cacheNames.filter(name=>!preserved.has(name)).map(name=>caches.delete(name)));
+    await self.clients.claim();
+  })());
+});
 self.addEventListener("fetch",event=>{
- if(event.request.method!=="GET")return;
- const u=new URL(event.request.url);
- if(u.origin!==self.location.origin)return;
- if(u.pathname.includes("/data/"))return;
- if(event.request.mode==="navigate"){event.respondWith(fetch(event.request).catch(async()=>await caches.match(event.request)||await caches.match("./offline.html")));return;}
- event.respondWith(fetch(event.request).then(response=>{if(response.ok&&u.pathname.startsWith(new URL(self.registration.scope).pathname)){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy));}return response;}).catch(()=>caches.match(event.request)));
+  const request=event.request;
+  if(request.method!=="GET")return;
+  const url=new URL(request.url);
+  if(url.origin!==self.location.origin)return;
+  const scope=new URL(self.registration.scope).pathname;
+  if(!url.pathname.startsWith(scope))return;
+  if(url.pathname.includes("/data/")||url.pathname.endsWith("/app-version.json")||
+     url.pathname.endsWith("/sw.js"))return;
+  if(request.mode==="navigate"){
+    event.respondWith(fetch(request,{cache:"no-store"}).then(async res=>{
+      if(res.ok){
+        const cache=await caches.open(CACHE);
+        await cache.put("./index.html",res.clone());
+      }
+      return res;
+    }).catch(async()=>await caches.match("./index.html")||await caches.match("./offline.html")));
+    return;
+  }
+  event.respondWith(fetch(request).then(async res=>{
+    if(res.ok){
+      const cache=await caches.open(CACHE);
+      await cache.put(request,res.clone());
+    }
+    return res;
+  }).catch(async()=>{
+    const cached=await caches.match(request);
+    if(cached)return cached;
+    const bare=new URL(request.url);bare.search="";
+    return caches.match(bare.href);
+  }));
 });
 /* Push payloads intentionally contain no private data; cloud gateway sends empty pushes. */
 self.addEventListener("push",event=>{

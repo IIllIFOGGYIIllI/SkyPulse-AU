@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en-AU">
+<html lang="en-AU" data-build="__SKYPULSE_BUILD__">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -157,7 +157,10 @@
         </section>
         <section id="alerts" class="section">
           <div class="section-header compact"><div><div class="eyebrow">PREFERENCES</div><h2>Alert Centre &amp; Settings</h2><p class="muted">Configure local information monitoring. Settings stay on this device.</p></div></div>
-          <div class="settings-grid"><article class="card settings-card"><div class="card-title-row"><div><h3>Nearby Incidents</h3><p class="muted">Filter fire incident markers by distance</p></div></div><label for="radius" class="field-label">Incident Search Radius <strong id="radius-label">50 km</strong></label><input id="radius" type="range" min="10" max="150" step="10" value="50"><div class="range-labels"><span>10 km</span><span>150 km</span></div><label class="switch-row"><span><b>In-App New-Incident Notifications</b><small>Only while SkyPulse is open; may be delayed</small></span><input type="checkbox" id="notify-toggle" role="switch"></label><button id="notify-permission" class="outline-button">Enable Browser Notifications</button><div id="notification-state" class="tiny-note">Background push is not yet available. Official emergency alerts remain essential.</div></article><article class="card settings-card"><div class="card-title-row"><div><h3>Location &amp; App Settings</h3><p class="muted">Location search, appearance and installation</p></div></div><div class="setting-fact"><span>Active Location</span><strong id="settings-location">Cessnock, NSW</strong></div><div class="setting-fact"><span>Theme</span><strong id="theme-name">Dark</strong></div><div class="setting-fact"><span>Weather Units</span><strong>Metric · °C · km/h</strong></div><button id="settings-install" class="outline-button">Install App / Instructions</button><div class="tiny-note">This first release has browser-only alert monitoring. Background push requires a dedicated notification service and additional verification.</div></article></div>
+          <div class="settings-grid"><article class="card settings-card"><div class="card-title-row"><div><h3>Nearby Incidents</h3><p class="muted">Filter fire incident markers by distance</p></div></div><label for="radius" class="field-label">Incident Search Radius <strong id="radius-label">50 km</strong></label><input id="radius" type="range" min="10" max="150" step="10" value="50"><div class="range-labels"><span>10 km</span><span>150 km</span></div><label class="switch-row"><span><b>In-App New-Incident Notifications</b><small>Only while SkyPulse is open; may be delayed</small></span><input type="checkbox" id="notify-toggle" role="switch"></label><button id="notify-permission" class="outline-button">Enable Browser Notifications</button><div id="notification-state" class="tiny-note">Background push is not yet available. Official emergency alerts remain essential.</div></article><article class="card settings-card"><div class="card-title-row"><div><h3>Location &amp; App Settings</h3><p class="muted">Location search, appearance and installation</p></div></div><div class="setting-fact"><span>Active Location</span><strong id="settings-location">Cessnock, NSW</strong></div><div class="setting-fact"><span>Theme</span><strong id="theme-name">Dark</strong></div><div class="setting-fact"><span>Weather Units</span><strong>Metric · °C · km/h</strong></div>
+<div class="setting-fact"><span>Installed App Version</span><strong id="app-version-value">Checking…</strong></div>
+<div id="app-update-status" class="update-status" role="status">Checking for the latest release…</div>
+<div class="app-update-actions"><button id="app-update-check" class="outline-button" type="button">Check for Updates</button><button id="app-update-apply" class="outline-button" type="button" hidden>Update Now</button></div><button id="settings-install" class="outline-button">Install App / Instructions</button><div class="tiny-note">This first release has browser-only alert monitoring. Background push requires a dedicated notification service and additional verification.</div></article></div>
           <article class="card background-alert-card" id="background-alert-card">
   <div class="card-title-row"><div><div class="eyebrow">OPTIONAL BACKGROUND MONITORING</div><h3>Background Push Notifications</h3><p class="muted">NSW RFS warning areas near your saved watch location, plus optional incident updates.</p></div><span id="push-status-badge" class="source-badge">NOT CONFIGURED</span></div>
   <p id="push-status" class="push-status" role="status">Checking notification service configuration…</p>
@@ -173,10 +176,15 @@
     </main>
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<div id="app-update-banner" class="app-update-banner" role="status" hidden>
+<div><b>A New SkyPulse AU Update Is Available</b><small>Reload the app to use the latest features. Your saved settings will be retained.</small></div>
+<button id="app-update-banner-button" type="button">Update Now</button>
+</div>
   <nav class="mobile-tabs" aria-label="Mobile navigation"><a href="#overview">⌂<small>Home</small></a><a href="#forecast">☀<small>Forecast</small></a><a href="#map-section">◎<small>Map</small></a><a href="#hazards">⚠<small>Hazards</small></a><a href="#alerts">⚙<small>Settings</small></a></nav>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
   <script src="./assets/push-config.js?v=1" defer></script>
   <script src="./assets/app.js?v=7" defer></script>
   <script src="./assets/push.js?v=1" defer></script>
+  <script src="./assets/update.js?v=1" defer></script>
 </body>
 </html>

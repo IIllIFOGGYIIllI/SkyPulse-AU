@@ -184,3 +184,19 @@ body.map-lock-scroll{overflow:hidden}
 .background-alert-card .card-title-row{flex-wrap:wrap}
 }
 @media(max-width:380px){.push-buttons{grid-template-columns:1fr}}
+
+/* PWA release update controls — v8 */
+.update-status{padding:10px 12px;margin-top:10px;border:1px solid var(--border);border-radius:9px;background:var(--panel-2);color:var(--muted);font-size:11px;line-height:1.6}
+.update-status.available{color:var(--accent);border-color:var(--accent-strong)}
+.update-status.error{color:var(--amber)}
+.app-update-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:11px}
+.app-update-actions .outline-button{margin-top:0;min-height:37px;height:auto;padding:8px 12px}
+.app-update-actions button:disabled,.app-update-banner button:disabled{opacity:.6;cursor:progress}
+.app-update-banner{position:fixed;z-index:10000;right:18px;bottom:25px;max-width:430px;width:calc(100vw - 36px);border-radius:13px;background:var(--panel);border:1px solid var(--accent-strong);box-shadow:var(--shadow);padding:16px;display:flex;align-items:center;gap:14px;color:var(--text)}
+.app-update-banner[hidden]{display:none}
+.app-update-banner div{min-width:0;flex:1;display:grid;gap:5px}
+.app-update-banner b{font-size:13px;line-height:1.45}
+.app-update-banner small{font-size:11px;color:var(--muted);line-height:1.5}
+.app-update-banner button{border:0;border-radius:9px;padding:10px 13px;background:var(--accent-strong);color:#fff;font-size:12px;font-weight:800;white-space:nowrap}
+@media(max-width:890px){.app-update-banner{bottom:calc(83px + env(safe-area-inset-bottom));right:10px;width:calc(100vw - 20px)}}
+@media(max-width:450px){.app-update-banner{align-items:stretch;flex-direction:column}.app-update-banner button{width:100%}}
