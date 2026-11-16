@@ -47,6 +47,12 @@ try {
             '<div class="day"><small>Day '+i+'</small><strong>27°</strong></div>').join("");
         });
       }
+      if(file==="index.html"&&width<=430){
+        await page.waitForFunction(()=>{
+          const pill=document.querySelector("#forecast-health-pill")?.textContent;
+          return pill&&pill!=="CHECKING";
+        },null,{timeout:6000}).catch(()=>{});
+      }
       await page.waitForTimeout(180);
       const m=await page.evaluate(()=>{
         const rect=el=>{const x=el.getBoundingClientRect();return {left:x.left,right:x.right,width:x.width};};

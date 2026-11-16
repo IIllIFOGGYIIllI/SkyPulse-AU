@@ -319,7 +319,7 @@ async function loadWeather(){
     state.weather=published.data;state.weatherFetchedAt=published.checkedAt;
     state.weatherPublished=true;state.weatherCached=false;
     forecastRender(published.data);
-    updateWeatherStatus("Published Cessnock Forecast Snapshot — Direct Update Unavailable",true);
+    updateWeatherStatus("Cessnock Snapshot · Direct Update Failed",true);
    }catch(backupError){
     if(seq!==state.weatherSeq||key!==forecastLocationKey(state.location))return;
     forecastClear();forecastHealth();

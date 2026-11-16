@@ -1209,3 +1209,8 @@ body[data-page=hazards] #fire-map-body.fire-map-expanded .fire-map-bottom{flex:n
  .compare-spread{grid-template-columns:repeat(2,minmax(0,1fr))}
  .radar-reading-guide{display:grid;gap:8px;padding:12px}}
 @media(max-width:420px){.compare-spread{grid-template-columns:1fr}}
+
+/* Keep live data-health status messages within mobile viewports, even on fallback. */
+#weather-status{max-width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.4}
+.overview .section-header{min-width:0}
+@media(max-width:620px){.overview .section-header .status-pill{max-width:100%}}
