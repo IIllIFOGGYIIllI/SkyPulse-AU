@@ -10,14 +10,14 @@ function radarSettingSpeed(value){return [5000,3500,2200].includes(Number(value)
 function radarSettingOpacity(value){var x=Number(value);return Number.isFinite(x)&&x>=.2&&x<=1?Math.round(x*20)/20:.6;}
 var state={location:stored.location||DEFAULT,radius:Number(stored.radius)||50,theme:stored.theme||"dark",notify:!!stored.notify,weather:null,weatherLocationKey:"",weatherFetchedAt:0,weatherCached:false,weatherFetchFailed:false,weatherSeq:0,forecastChartMode:"temperature",forecastDayIndex:0,map:null,markers:null,radarLayer:null,peekMap:null,peekLayer:null,radarFrames:[],radarHost:"",radarEnabled:radarSettingBool("rain",true),incidentsEnabled:radarSettingBool("incidents",true),radarTimer:null,radarIndex:-1,radarFollowLatest:radarSettingBool("follow",true),
 radarAutocheck:radarSettingBool("auto",true),radarLoop:radarSettingBool("loop",true),
-radarShowTimestamp:radarSettingBool("timestamp",true),radarSpeed:radarSettingSpeed(radarStored.speed),radarTileSize:radarSettingBool("hires",true)?512:256,radarSmooth:radarSettingBool("smooth",true),
+radarShowTimestamp:radarSettingBool("timestamp",true),radarSpeed:radarSettingSpeed(radarStored.speed),radarTileSize:radarSettingBool("hires",true)?512:256,radarSmooth:radarSettingBool("smooth",true),radarSitesShown:radarSettingBool("sites",false),radarSiteOverlay:null,
 radarShareView:null,radarSharedAt:null,radarCurrentRegion:"local",radarFetchedAt:0,radarAttemptAt:0,radarLoadingPromise:null,radarRenderedKey:"",radarOutgoing:null,radarSwapTimer:null,radarLastError:"",radarTileErrors:0,baseLayer:null,locationMarker:null,mapTileFailures:0,mapNearbyOnly:radarSettingBool("nearby",true),mapWheelZoom:radarSettingBool("wheel",false),radarOpacity:radarSettingOpacity(radarStored.opacity),gpsMarker:null,gpsAccuracy:null,mapStatusTimer:null,fireDanger:null,hazardMap:null,hazardLayers:null,hazardRadiusLayer:null,fireDirectoryMode:"incidents",fireDirectoryScope:"nearby",fireDirectorySort:"distance",fireDirectoryQuery:"",fireDirectoryType:"all",fireDirectoryLevel:"all",fireSelected:null,fireMapExpanded:false,fireMapLegendCollapsed:false,fireMapLayers:{warnings:stored.fireMapLayers?.warnings!==false,boundaries:stored.fireMapLayers?.boundaries!==false,points:stored.fireMapLayers?.points!==false,radius:stored.fireMapLayers?.radius!==false},
  incidentsFresh:false,warningsFresh:false,fireAreasEnabled:radarSettingBool("fireareas",true),fireAreaLayer:null,fireDistrict:stored.fireDistrict||"",rfsAlerts:[],warningLayer:null,warningsEnabled:radarSettingBool("warnings",true),incidents:[],lastIncidentFetch:null,seen:stored.seen||null,weatherError:false};
 var DATA_MAX_AGE=90*60*1000;
 function save(){try{localStorage.setItem("skypulse.preferences",JSON.stringify({location:state.location,radius:state.radius,theme:state.theme,notify:state.notify,seen:state.seen,fireDistrict:state.fireDistrict,fireMapLayers:state.fireMapLayers,
  radar:{auto:state.radarAutocheck,follow:state.radarFollowLatest,
  loop:state.radarLoop,timestamp:state.radarShowTimestamp,speed:state.radarSpeed,hires:state.radarTileSize===512,smooth:state.radarSmooth,
- opacity:state.radarOpacity,rain:state.radarEnabled,incidents:state.incidentsEnabled,
+ opacity:state.radarOpacity,rain:state.radarEnabled,incidents:state.incidentsEnabled,sites:state.radarSitesShown,
  warnings:state.warningsEnabled,nearby:state.mapNearbyOnly,wheel:state.mapWheelZoom,fireareas:state.fireAreasEnabled}}));}catch(e){}}
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];});}
 function num(n,d){return typeof n==="number"&&Number.isFinite(n)?n.toFixed(d||0):"—";}
@@ -1264,11 +1264,41 @@ function mapRefresh(){if(state.map){mapResize();state.baseLayer.redraw();}}
 function centreSelected(){if(!state.map)return;state.map.flyTo([state.location.lat,state.location.lon],11,{duration:.5});mapInfo("Map Centred on "+state.location.name+".");}
 function locateMap(){if(!state.map)return;if(!navigator.geolocation){mapInfo("Browser Location Services Are Unavailable.");return;}var btn=$("map-locate");btn.disabled=true;mapInfo("Requesting Current Location…");navigator.geolocation.getCurrentPosition(function(pos){btn.disabled=false;var ll=[pos.coords.latitude,pos.coords.longitude],accuracy=Math.max(0,Number(pos.coords.accuracy)||0);if(state.gpsMarker)state.map.removeLayer(state.gpsMarker);if(state.gpsAccuracy)state.map.removeLayer(state.gpsAccuracy);state.gpsAccuracy=L.circle(ll,{radius:accuracy,color:"#2b93e5",weight:1,fillColor:"#58b7fd",fillOpacity:.13,interactive:false}).addTo(state.map);state.gpsMarker=L.circleMarker(ll,{radius:8,color:"white",weight:3,fillColor:"#1688e1",fillOpacity:1}).addTo(state.map).bindPopup("Your Current Location (Approximate)");state.map.flyTo(ll,Math.max(11,state.map.getZoom()),{duration:.6});mapInfo("Current Location Found"+(accuracy?" · Accuracy ±"+Math.round(accuracy)+" m":"")+". Your Forecast Location Is Unchanged.");},function(error){btn.disabled=false;mapInfo(error.code===1?"Location Permission Denied — Check Your Browser Settings.":"Unable to Determine Current Location.");},{timeout:15000,maximumAge:60000,enableHighAccuracy:true});}
 function fitNearby(){if(!state.map)return;var near=state.incidents.map(function(f){var p=coordinatesOf(f);return p&&Number.isFinite(p[0])&&Number.isFinite(p[1])&&km(state.location.lat,state.location.lon,p[0],p[1])<=state.radius?p:null;}).filter(Boolean);if(!near.length){mapInfo("No Mapped Incidents Found Within the Selected Radius — This Does Not Confirm Safety.");return;}near.push([state.location.lat,state.location.lon]);state.map.fitBounds(L.latLngBounds(near).pad(.22),{maxZoom:12});mapInfo("Showing "+(near.length-1)+" Nearby Mapped RFS Incidents.");}
-function syncMapLayerUI(){$("map-layer-warnings").checked=state.warningsEnabled;[["radar",state.radarEnabled],["incidents",state.incidentsEnabled]].forEach(function(v){var b=$(v[0]==="radar"?"radar-toggle":"incidents-toggle");b.classList.toggle("selected",v[1]);b.setAttribute("aria-pressed",String(v[1]));});$("map-layer-radar").checked=state.radarEnabled;$("map-layer-rfs").checked=state.incidentsEnabled;
+function syncMapLayerUI(){$("map-layer-warnings").checked=state.warningsEnabled;
+ if($("map-layer-radar-sites"))$("map-layer-radar-sites").checked=state.radarSitesShown;[["radar",state.radarEnabled],["incidents",state.incidentsEnabled]].forEach(function(v){var b=$(v[0]==="radar"?"radar-toggle":"incidents-toggle");b.classList.toggle("selected",v[1]);b.setAttribute("aria-pressed",String(v[1]));});$("map-layer-radar").checked=state.radarEnabled;$("map-layer-rfs").checked=state.incidentsEnabled;
  if($("map-layer-fire-areas"))$("map-layer-fire-areas").checked=state.fireAreasEnabled;$("map-nearby-only").checked=state.mapNearbyOnly;$("map-wheel-zoom").checked=state.mapWheelZoom;$("map-radar-opacity").value=Math.round(state.radarOpacity*100);setText("map-opacity-label",Math.round(state.radarOpacity*100)+"%");
  radarSyncPreferences();}
 function setMapLayer(kind,value){if(kind==="radar"){state.radarEnabled=value;if(!value)stopRadarPlayback();if(state.radarFrames.length)showRadarFrame(state.radarIndex);}else{state.incidentsEnabled=value;updateMarkers();}save();syncMapLayerUI();}
 function toggleMapFullscreen(){var el=$("map-viewport");if(document.fullscreenElement===el){document.exitFullscreen().catch(function(){});return;}if(el.classList.contains("map-pseudo-fullscreen")){el.classList.remove("map-pseudo-fullscreen");document.body.classList.remove("map-lock-scroll");setTimeout(mapResize,80);return;}if(el.requestFullscreen){el.requestFullscreen().then(function(){setTimeout(mapResize,80);}).catch(function(){el.classList.add("map-pseudo-fullscreen");document.body.classList.add("map-lock-scroll");setTimeout(mapResize,80);});}else{el.classList.add("map-pseudo-fullscreen");document.body.classList.add("map-lock-scroll");setTimeout(mapResize,80);}}
+// BOM Newcastle (Lemon Tree Passage): independently verified fixed station position.
+const NEWCASTLE_RADAR={lat:-32.7317,lon:152.0250,url:"https://www.bom.gov.au/weather-and-climate/rain-radar-and-weather-maps?radar=4-newcastle"};
+function radarSiteDistance(){
+ var l=state.location;
+ if(!l||!Number.isFinite(l.lat)||!Number.isFinite(l.lon))return;
+ setText("radar-local-distance","Approx. "+Math.round(km(l.lat,l.lon,NEWCASTLE_RADAR.lat,NEWCASTLE_RADAR.lon))+" km from "+l.name+" to Newcastle radar station");
+}
+function showNewcastleRadarSite(){
+ if(!state.map)return;
+ state.radarSitesShown=true;save();renderRadarSiteRings();
+ state.map.setView([NEWCASTLE_RADAR.lat,NEWCASTLE_RADAR.lon],9);
+ mapInfo("Newcastle radar at Lemon Tree Passage. Range rings indicate distance only.");
+ syncMapLayerUI();
+}
+function renderRadarSiteRings(){
+ if(!state.map||!state.radarSiteOverlay||typeof L==="undefined")return;
+ state.radarSiteOverlay.clearLayers();
+ if(!state.radarSitesShown)return;
+ var centre=[NEWCASTLE_RADAR.lat,NEWCASTLE_RADAR.lon];
+ [50,100,200].forEach(function(radius){
+  L.circle(centre,{radius:radius*1000,color:"#57b7d6",weight:1.4,dashArray:"6 7",opacity:.8,fill:false,interactive:false})
+   .addTo(state.radarSiteOverlay);
+ });
+ L.circleMarker(centre,{radius:6,weight:2,color:"#ffffff",fillColor:"#2998c9",fillOpacity:1})
+  .bindPopup('<strong>Newcastle BOM Radar</strong><br>Lemon Tree Passage · Weather radar station<br>'+
+    '<small>50, 100 and 200 km rings show approximate distance, not verified coverage.</small><br>'+
+    '<a href="'+NEWCASTLE_RADAR.url+'" target="_blank" rel="noopener noreferrer">View official BOM radar ↗</a>')
+  .addTo(state.radarSiteOverlay);
+}
 function initMap(){initRadarPreview();if(!$("weather-map")){if(state.peekMap)loadRadar();return;}if(typeof L==="undefined"){$("weather-map").innerHTML='<p class="map-fallback">Map Unavailable. <a href="https://www.bom.gov.au/australia/radar/" target="_blank" rel="noopener">Open Official BOM Radar ↗</a></p>';return;}
 $("weather-map").replaceChildren();
 state.map=L.map("weather-map",{zoomControl:false,scrollWheelZoom:false,preferCanvas:true}).setView(state.radarShareView?[state.radarShareView.lat,state.radarShareView.lon]:[state.location.lat,state.location.lon],state.radarShareView?state.radarShareView.zoom:9);
@@ -1276,6 +1306,7 @@ state.baseLayer=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{ma
 state.baseLayer.on("tileerror",function(){state.mapTileFailures++;if(state.mapTileFailures>=3){setText("map-tile-status","Base Map Tiles Unavailable — Check Your Connection or Use the Official Radar.");$("map-tile-status").hidden=false;}});
 state.baseLayer.addTo(state.map);state.markers=L.layerGroup().addTo(state.map);state.warningLayer=L.layerGroup().addTo(state.map);
  state.fireAreaLayer=L.layerGroup().addTo(state.map);
+ state.radarSiteOverlay=L.layerGroup().addTo(state.map);
 state.locationMarker=L.circleMarker([state.location.lat,state.location.lon],{radius:7,color:"white",weight:3,fillColor:"#278ce6",fillOpacity:1}).addTo(state.map).bindPopup("Selected Location: "+esc(state.location.name));
 L.control.scale({metric:true,imperial:false,position:"bottomleft",maxWidth:110}).addTo(state.map);
 state.map.on("moveend zoomend",updateMapCoords);updateMapCoords();
@@ -1290,12 +1321,17 @@ $("map-zoom-in").addEventListener("click",function(){state.map.zoomIn();});$("ma
 $("map-layers-button").addEventListener("click",function(){var panel=$("map-layers-panel");panel.hidden=!panel.hidden;this.setAttribute("aria-expanded",String(!panel.hidden));});
 $("map-layer-radar").addEventListener("change",function(e){setMapLayer("radar",e.target.checked);});$("map-layer-rfs").addEventListener("change",function(e){setMapLayer("incidents",e.target.checked);});
  on("map-layer-fire-areas","change",function(e){state.fireAreasEnabled=e.target.checked;save();showMapFireExtents();});$("map-layer-warnings").addEventListener("change",function(e){state.warningsEnabled=e.target.checked;save();showRfsWarningMap();syncMapLayerUI();});
-$("map-nearby-only").addEventListener("change",function(e){state.mapNearbyOnly=e.target.checked;save();updateMarkers();syncMapLayerUI();});$("map-wheel-zoom").addEventListener("change",function(e){state.mapWheelZoom=e.target.checked;if(state.mapWheelZoom)state.map.scrollWheelZoom.enable();else state.map.scrollWheelZoom.disable();save();syncMapLayerUI();});
+on("map-layer-radar-sites","change",function(e){
+  state.radarSitesShown=e.target.checked;save();renderRadarSiteRings();syncMapLayerUI();
+ });
+ on("radar-local-centre","click",showNewcastleRadarSite);
+ $("map-nearby-only").addEventListener("change",function(e){state.mapNearbyOnly=e.target.checked;save();updateMarkers();syncMapLayerUI();});$("map-wheel-zoom").addEventListener("change",function(e){state.mapWheelZoom=e.target.checked;if(state.mapWheelZoom)state.map.scrollWheelZoom.enable();else state.map.scrollWheelZoom.disable();save();syncMapLayerUI();});
 $("map-radar-opacity").addEventListener("input",function(e){radarSetOpacity(Number(e.target.value)/100);});
 state.map.on("click",function(){$("map-layers-panel").hidden=true;$("map-layers-button").setAttribute("aria-expanded","false");});
 document.addEventListener("fullscreenchange",function(){setTimeout(function(){if(state.map)state.map.invalidateSize({pan:false});},100);});
 document.addEventListener("keydown",function(e){if(e.key==="Escape"){$("map-layers-panel").hidden=true;$("map-layers-button").setAttribute("aria-expanded","false");if($("map-viewport").classList.contains("map-pseudo-fullscreen"))toggleMapFullscreen();}});
-syncMapLayerUI();setTimeout(function(){state.map.invalidateSize({pan:false});},350);updateMarkers();showRfsWarningMap();loadRadar();}
+syncMapLayerUI();radarSiteDistance();renderRadarSiteRings();
+ setTimeout(function(){state.map.invalidateSize({pan:false});},350);updateMarkers();showRfsWarningMap();loadRadar();}
 function updateMarkers(){if(!state.map||!state.markers)return;showMapFireExtents();renderRadarIncidentMarkers();}
 function showMapFireExtents(){
  if(!state.map||!state.fireAreaLayer)return;
@@ -1599,7 +1635,7 @@ function initRadarRefresh(){
  window.addEventListener("pageshow",function(){if(state.radarAutocheck&&document.visibilityState==="visible")loadRadar(false);});
  window.addEventListener("online",function(){if(state.radarAutocheck&&document.visibilityState==="visible")loadRadar(false);});
 }
-function changeLocation(l){state.location=l;save();updateLocationUI();
+function changeLocation(l){state.location=l;save();updateLocationUI();radarSiteDistance();
  if(state.hazardMap){state.hazardMap.setView([l.lat,l.lon],8);renderFireAreaMap();}if(state.peekMap)state.peekMap.setView([l.lat,l.lon],8);if(state.map){state.map.setView([l.lat,l.lon],9);if(state.locationMarker)state.locationMarker.setLatLng([l.lat,l.lon]).bindPopup("Selected Location: "+esc(l.name));updateMarkers();}state.seen=null;if($("current-temp")||$("temp-chart"))loadWeather();if($("incidents-list")||$("snapshot-incidents"))renderIncidents();window.dispatchEvent(new Event("skypulse:watch-changed"));message("Location changed to "+l.name);}
 var searchTimer=null;function searchLocation(text){clearTimeout(searchTimer);if(text.trim().length<2){$("location-results").hidden=true;return;}searchTimer=setTimeout(async function(){try{var q=new URLSearchParams({name:text.trim(),count:"7",language:"en",countryCode:"AU"});var data=await getJSON("https://geocoding-api.open-meteo.com/v1/search?"+q,9000),results=data.results||[];if($("location-input").value.trim()!==text.trim())return;var box=$("location-results");box.innerHTML="";if(!results.length){box.innerHTML='<div class="muted" style="padding:10px">No Australian matches</div>';}results.forEach(function(r){var b=document.createElement("button");b.type="button";b.setAttribute("role","option");b.innerHTML=esc(r.name)+'<small>'+esc([r.admin1,r.country].filter(Boolean).join(", "))+'</small>';b.addEventListener("click",function(){changeLocation({name:r.name,region:r.admin1||"",lat:r.latitude,lon:r.longitude});box.hidden=true;});box.appendChild(b);});box.hidden=false;}catch(e){$("location-results").hidden=true;}},350);}
 function setupInstall(){var deferred=null;window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();deferred=e;$("install-button").hidden=false;});function install(){if(deferred){deferred.prompt();deferred.userChoice.finally(function(){deferred=null;$("install-button").hidden=true;});}else message("Install via your browser menu: Add to Home Screen / Install App. On iPhone use Safari → Share → Add to Home Screen.");}$("install-button").addEventListener("click",install);if($("settings-install"))$("settings-install").addEventListener("click",install);}

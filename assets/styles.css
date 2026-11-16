@@ -1142,3 +1142,18 @@ body[data-page=hazards] #fire-map-body.fire-map-expanded .fire-map-bottom{flex:n
 .cloud-lightning-note a{flex:none;text-decoration:none;color:var(--accent);font:850 10px Manrope,sans-serif;background:var(--panel);padding:9px 12px;border:1px solid var(--border);border-radius:8px}
 .cloud-lightning-note a:hover,.cloud-lightning-note a:focus-visible{border-color:var(--accent)}
 @media(max-width:760px){.cloud-lightning-note{align-items:stretch;flex-direction:column}.cloud-lightning-note a{align-self:start}.radar-lightning-link{white-space:normal;text-align:center}}
+
+/* Distinct official Newcastle radar viewer and optional station-range context. */
+.radar-local-source{border:1px solid var(--border);border-radius:13px;background:var(--panel-2);margin-top:13px;padding:16px 17px}
+.radar-local-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.radar-local-heading h4{font:850 15px/1.35 Manrope,sans-serif;color:var(--text);margin:4px 0 6px}
+.radar-local-heading p{font:600 11px/1.6 Manrope,sans-serif;max-width:760px;color:var(--muted);margin:0}
+.radar-local-indicator{flex:none;display:inline-flex;align-items:center;padding:7px 9px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--muted);font:800 9px Manrope,sans-serif;white-space:nowrap}
+.radar-local-actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin:15px 0 8px}
+.radar-local-actions a,.radar-local-actions button{display:inline-flex;align-items:center;justify-content:center;min-height:39px;padding:8px 12px;border:1px solid var(--border);border-radius:9px;font:850 10px Manrope,sans-serif;cursor:pointer;text-decoration:none}
+.radar-local-actions a{color:#fff;background:#2179ab;border-color:#298abf}
+.radar-local-actions button{color:var(--accent);background:var(--panel)}
+.radar-local-actions a:hover,.radar-local-actions button:hover,.radar-local-actions a:focus-visible,.radar-local-actions button:focus-visible{border-color:var(--accent);outline-offset:2px}
+.radar-local-actions>span{font:700 10px/1.5 Manrope,sans-serif;color:var(--muted)}
+.radar-local-footnote{font:600 10px/1.65 Manrope,sans-serif;color:var(--muted);margin:4px 0 0}
+@media(max-width:700px){.radar-local-heading{flex-direction:column;gap:10px}.radar-local-actions a,.radar-local-actions button{flex:1 1 175px}.radar-local-actions>span{width:100%}.radar-local-source{padding:13px}}

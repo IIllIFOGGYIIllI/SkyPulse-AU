@@ -91,6 +91,22 @@
       <span class="radar-provider-action">Open Weatherzone ↗</span>
     </a>
   </div>
+
+  <div class="radar-local-source" aria-labelledby="radar-local-title">
+    <div class="radar-local-heading">
+      <div><span class="eyebrow">DETAILED AUSTRALIAN RADAR · NEWCASTLE / HUNTER</span>
+        <h4 id="radar-local-title">Official Newcastle Rain Radar</h4>
+        <p>The Bureau's station-specific five-minute radar and reflectivity views offer greater local information than enlarging RainViewer's limited composite. This viewer remains hosted by BOM, not SkyPulse.</p>
+      </div>
+      <span class="radar-local-indicator">OFFICIAL EXTERNAL VIEWER</span>
+    </div>
+    <div class="radar-local-actions">
+      <a id="radar-local-bom-link" href="https://www.bom.gov.au/weather-and-climate/rain-radar-and-weather-maps?radar=4-newcastle" target="_blank" rel="noopener noreferrer">Open Newcastle Radar on BOM ↗</a>
+      <button id="radar-local-centre" type="button">Show Newcastle Radar Site</button>
+      <span id="radar-local-distance">Checking distance from selected location…</span>
+    </div>
+    <p class="radar-local-footnote">Station at Lemon Tree Passage. Optional 50, 100 and 200 km range rings are geographic guides only—not an official radar-coverage mask or a guarantee of rainfall detection. No BOM images or tiles are redistributed in SkyPulse.</p>
+  </div>
   <p class="radar-provider-disclosure">Why isn't five-minute imagery embedded here? BOM radar redistribution needs the appropriate licence or permission. External viewers open on the original provider's website. <a href="./sources.html">Data sources &amp; licensing ↗</a></p>
 </div>
 
@@ -139,7 +155,8 @@
   <label class="map-layer-check"><input type="checkbox" id="map-layer-rfs" checked><span>NSW RFS Incidents<small>Mapped incident locations</small></span></label>
   <label class="map-layer-check"><input type="checkbox" id="map-layer-fire-areas" checked><span>Published Incident Extents<small>Fire-area geometry if provided; not an evacuation or warning boundary</small></span></label>
    <div class="map-layer-external"><strong>⚡ Lightning Strikes</strong><small>Observed strikes require an authorised data feed. For now open Weatherzone's live Lightning layer, covering detected strikes over the previous 60 minutes.</small><a href="https://www.weatherzone.com/au/layers/" target="_blank" rel="noopener noreferrer">View Lightning On Weatherzone ↗</a></div>
-  <label class="map-layer-check"><input type="checkbox" id="map-nearby-only" checked><span>Nearby Incidents Only<small>Uses your selected alert radius</small></span></label>
+  <label class="map-layer-check"><input type="checkbox" id="map-layer-radar-sites"><span>Newcastle Radar Site &amp; Range Rings<small>Optional geographic guides at 50, 100 and 200 km. Not official coverage boundaries.</small></span></label>
+   <label class="map-layer-check"><input type="checkbox" id="map-nearby-only" checked><span>Nearby Incidents Only<small>Uses your selected alert radius</small></span></label>
   <label class="map-layer-check"><input type="checkbox" id="map-wheel-zoom"><span>Mouse Wheel Zoom<small>Scroll to zoom when enabled</small></span></label><div class="map-layer-slider"><label for="map-radar-opacity">Radar Opacity <strong id="map-opacity-label">60%</strong></label><input id="map-radar-opacity" type="range" min="20" max="100" value="60" step="5"></div>
   <div class="map-panel-title minor">Map Data</div><p>Street map: OpenStreetMap<br>Rain radar: RainViewer<br>Incidents: NSW Rural Fire Service</p>
 </div>

@@ -159,6 +159,19 @@ try{
   await page.locator("#theme-button").click();
   console.log("Radar map panels PASSED: original map tiles and website-theme-aware information surfaces.");
   const sourceLinks=await page.evaluate(()=>[...document.querySelectorAll("#radar-source-bom,#radar-source-weatherzone")].map(a=>({url:a.href,blank:a.target,rel:a.rel})));
+  const localLink=await page.locator("#radar-local-bom-link").getAttribute("href");
+  if(localLink!=="https://www.bom.gov.au/weather-and-climate/rain-radar-and-weather-maps?radar=4-newcastle")
+    throw Error("Local higher-detail radar must link directly to the official Newcastle radar viewer");
+  const distLabel=await page.locator("#radar-local-distance").textContent();
+  if(!/Approx\\. [0-9]+ km from Cessnock/.test(distLabel))throw Error("Newcastle station distance incorrect: "+distLabel);
+  await page.locator("#map-layers-button").click();
+  if(await page.locator("#map-layer-radar-sites").isChecked())throw Error("Range rings should be opt-in");
+  await page.locator("#map-layer-radar-sites").check();
+  if(!(await page.locator("#map-layer-radar-sites").isChecked()))throw Error("Station range rings could not be enabled");
+  const savedSites=await page.evaluate(()=>JSON.parse(localStorage.getItem("skypulse.preferences")).radar.sites);
+  if(savedSites!==true)throw Error("Radar site overlay preference not saved");
+  await page.locator("#map-layer-radar-sites").uncheck();
+  await page.locator("#map-layers-button").click();
   if(sourceLinks.length!==2||sourceLinks.some(a=>a.blank!=="_blank"||!a.rel.includes("noopener")))
     throw Error("Official radar sources must open on their own sites: "+JSON.stringify(sourceLinks));
   const quality=await page.locator("#radar-quality-status").textContent();
