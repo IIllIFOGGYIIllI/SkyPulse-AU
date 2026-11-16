@@ -32,6 +32,8 @@ jobs:
         run: python scripts/sync_feeds.py
       - name: Retrieve NSW Warning Feeds
         run: python scripts/sync_warnings.py
+      - name: Publish Free Cessnock Forecast Backup
+        run: python scripts/sync_forecast.py
       - name: Stamp Release and Cache Version
         run: python scripts/stamp_build.py
       - name: Validate Dashboard and PWA

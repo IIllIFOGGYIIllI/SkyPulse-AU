@@ -56,7 +56,8 @@ try{
    if(invalid)delete data.current.temperature_2m;
    return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(data)});
   }
-  if(url.hostname==="127.0.0.1")return route.continue();
+  if(url.pathname.endsWith("/weather-cessnock.json"))return route.fulfill({status:503,body:"No backup in legacy test"});
+   if(url.hostname==="127.0.0.1")return route.continue();
   return route.abort();
  });
  await page.goto("http://127.0.0.1:8767/forecast.html",{waitUntil:"domcontentloaded"});

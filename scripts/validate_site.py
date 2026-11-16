@@ -75,6 +75,9 @@ check("Radar adaptive transfer fallback and image loading status",
     and "if(state.radarTilesLoading)return;" in js and '.radar-image-state' in css)
 check("Radar detail disclosure", "function radarUpdateQuality()" in js and "native zoom 7" in js)
 check("Radar provider research retained", (ROOT / "docs/RADAR_PROVIDER_REVIEW.md").exists())
+check("Time-bounded Cessnock source-labelled forecast backup", (ROOT / "scripts/sync_forecast.py").exists()
+      and "forecastPublishedCessnock(key)" in js
+      and "Publish Free Cessnock Forecast Backup" in (ROOT / ".github/workflows/deploy.yml").read_text())
 check("Forecast test suite present", (ROOT / "scripts/test_forecast_reliability.mjs").exists())
 check("Model-forecast stale and cached states", 'FORECAST_CACHE_MS=2*60*60*1000' in js and 'function forecastHealth()' in js)
 check("Forecast missing-value safety", 'return ["Conditions unavailable","☁️"]' in js)

@@ -8,7 +8,7 @@ var radarStored=stored.radar&&typeof stored.radar==="object"&&!Array.isArray(sto
 function radarSettingBool(key,fallback){return typeof radarStored[key]==="boolean"?radarStored[key]:fallback;}
 function radarSettingSpeed(value){return [5000,3500,2200].includes(Number(value))?Number(value):3500;}
 function radarSettingOpacity(value){var x=Number(value);return Number.isFinite(x)&&x>=.2&&x<=1?Math.round(x*20)/20:.6;}
-var state={location:stored.location||DEFAULT,radius:Number(stored.radius)||50,theme:stored.theme||"dark",notify:!!stored.notify,weather:null,weatherLocationKey:"",weatherFetchedAt:0,weatherCached:false,weatherFetchFailed:false,weatherSeq:0,forecastChartMode:"temperature",forecastDayIndex:0,map:null,markers:null,radarLayer:null,peekMap:null,peekLayer:null,radarFrames:[],radarHost:"",radarEnabled:radarSettingBool("rain",true),incidentsEnabled:radarSettingBool("incidents",true),radarTimer:null,radarIndex:-1,radarFollowLatest:radarSettingBool("follow",true),
+var state={location:stored.location||DEFAULT,radius:Number(stored.radius)||50,theme:stored.theme||"dark",notify:!!stored.notify,weather:null,weatherLocationKey:"",weatherFetchedAt:0,weatherCached:false,weatherPublished:false,weatherFetchFailed:false,weatherSeq:0,forecastChartMode:"temperature",forecastDayIndex:0,map:null,markers:null,radarLayer:null,peekMap:null,peekLayer:null,radarFrames:[],radarHost:"",radarEnabled:radarSettingBool("rain",true),incidentsEnabled:radarSettingBool("incidents",true),radarTimer:null,radarIndex:-1,radarFollowLatest:radarSettingBool("follow",true),
 radarAutocheck:radarSettingBool("auto",true),radarLoop:radarSettingBool("loop",true),
 radarShowTimestamp:radarSettingBool("timestamp",true),radarSpeed:radarSettingSpeed(radarStored.speed),radarTileSize:radarSettingBool("hires",true)?512:256,radarSmooth:radarSettingBool("smooth",true),
  radarTemporary256:false,radarTileLoadTimer:null,radarTilesLoading:false,radarSitesShown:radarSettingBool("sites",false),radarSiteOverlay:null,
@@ -97,6 +97,15 @@ function forecastCacheRead(key){
   return {data:forecastValidate(item.data),checkedAt:item.checkedAt};
  }catch(e){return null;}
 }
+async function forecastPublishedCessnock(key){
+ if(key!==forecastLocationKey(DEFAULT))throw Error("No published backup for this location");
+ var snapshot=await getJSON("./data/weather-cessnock.json?fresh="+Date.now(),10000);
+ var checkedAt=Date.parse(snapshot&&snapshot.retrieved_at||"");
+ var age=Date.now()-checkedAt;
+ if(snapshot.location!=="Cessnock"||!Number.isFinite(age)||age<0||age>4*60*60*1000)
+  throw Error("Published Cessnock forecast is missing or older than four hours");
+ return {data:forecastValidate(snapshot.primary),checkedAt:checkedAt};
+}
 function forecastCacheWrite(key,data){
  try{localStorage.setItem(FORECAST_CACHE_KEY,JSON.stringify({key:key,data:data,checkedAt:Date.now()}));}catch(e){}
 }
@@ -109,17 +118,17 @@ function forecastHealth(){
   detail=state.weatherFetchFailed?"No verified weather data available for this location. Try again or check BOM.":"Open-Meteo · Numerical forecast data";
  }else{
   var old=age>90*60000,delayed=age>55*60000;
-  kind=state.weatherCached?"cached":state.weatherFetchFailed?"failed":old?"stale":delayed?"delayed":"recent";
-  title=state.weatherCached?"CACHED FORECAST — not newly verified":
+  kind=state.weatherPublished?"cached":state.weatherCached?"cached":state.weatherFetchFailed?"failed":old?"stale":delayed?"delayed":"recent";
+  title=state.weatherPublished?"PUBLISHED CESSNOCK SNAPSHOT — direct update failed":state.weatherCached?"CACHED FORECAST — not newly verified":
    state.weatherFetchFailed?"UPDATE FAILED — previous forecast shown":
    old?"OLD MODEL TIME — check official sources":
    delayed?"DELAYED MODEL TIME":"FORECAST DATA AVAILABLE";
   detail="Open-Meteo model estimate · "+(Number.isFinite(age)?Math.max(0,Math.round(age/60000))+" min since model valid time":"model time unavailable")+
    (state.weatherFetchFailed?" · Latest refresh unsuccessful":"")+
-   (state.weatherCached?" · Stored locally on this device":"")+
+   (state.weatherPublished?" · Last successful GitHub Pages snapshot for Cessnock":state.weatherCached?" · Stored locally on this device":"")+
    " · Not a weather-station observation";
  }
- if(pill){pill.className="forecast-health-pill "+kind;pill.textContent=kind==="recent"?"MODEL DATA":kind==="delayed"?"DELAYED":kind==="stale"?"STALE":kind==="cached"?"CACHED":kind==="failed"?"CHECK FAILED":"CHECKING";}
+ if(pill){pill.className="forecast-health-pill "+kind;pill.textContent=state.weatherPublished?"SNAPSHOT":kind==="recent"?"MODEL DATA":kind==="delayed"?"DELAYED":kind==="stale"?"STALE":kind==="cached"?"CACHED":kind==="failed"?"CHECK FAILED":"CHECKING";}
  setText("forecast-health-title",title);
  setText("forecast-health-detail",detail);
  setText("forecast-model-time",data&&modelEpoch!==null?localClock(data.current.time)+" "+forecastLocalZone(data):"—");
@@ -279,7 +288,7 @@ async function loadWeather(){
  var loc=state.location,key=forecastLocationKey(loc),seq=++state.weatherSeq;
  var changed=state.weatherLocationKey!==key;
  if(changed){
-  state.weather=null;state.weatherFetchedAt=0;state.weatherCached=false;state.weatherFetchFailed=false;
+  state.weather=null;state.weatherFetchedAt=0;state.weatherCached=false;state.weatherPublished=false;state.weatherFetchFailed=false;
   state.weatherLocationKey=key;state.forecastDayIndex=0;forecastClear();
   var prior=forecastCacheRead(key);
   if(prior){state.weather=prior.data;state.weatherFetchedAt=prior.checkedAt;state.weatherCached=true;forecastRender(prior.data);}
@@ -297,16 +306,26 @@ async function loadWeather(){
  try{
   var data=forecastValidate(await getJSON("https://api.open-meteo.com/v1/forecast?"+q.toString(),15000));
   if(seq!==state.weatherSeq||key!==forecastLocationKey(state.location))return;
-  state.weather=data;state.weatherCached=false;state.weatherFetchFailed=false;state.weatherFetchedAt=Date.now();
+  state.weather=data;state.weatherCached=false;state.weatherPublished=false;state.weatherFetchFailed=false;state.weatherFetchedAt=Date.now();
   forecastCacheWrite(key,data);forecastRender(data);
   updateWeatherStatus("Model Forecast Available",false);
  }catch(e){
   if(seq!==state.weatherSeq||key!==forecastLocationKey(state.location))return;
   state.weatherFetchFailed=true;updateWeatherStatus("Forecast Update Failed",true);
   if(!state.weather){
-   forecastClear();forecastHealth();
-   setText("current-description","Current model estimate unavailable");
-   setText("tomorrow-narrative","Forecast could not be verified. Check the official Bureau of Meteorology forecast and warnings.");
+   try{
+    var published=await forecastPublishedCessnock(key);
+    if(seq!==state.weatherSeq||key!==forecastLocationKey(state.location))return;
+    state.weather=published.data;state.weatherFetchedAt=published.checkedAt;
+    state.weatherPublished=true;state.weatherCached=false;
+    forecastRender(published.data);
+    updateWeatherStatus("Published Cessnock Forecast Snapshot — Direct Update Unavailable",true);
+   }catch(backupError){
+    if(seq!==state.weatherSeq||key!==forecastLocationKey(state.location))return;
+    forecastClear();forecastHealth();
+    setText("current-description","Current model estimate unavailable");
+    setText("tomorrow-narrative","Forecast could not be verified. Check the official Bureau of Meteorology forecast and warnings.");
+   }
   }else forecastHealth();
   message("Weather update failed. Any previous model values are labelled as unverified.");
   console.warn("SkyPulse forecast",e);
