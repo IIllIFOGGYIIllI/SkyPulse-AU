@@ -794,7 +794,7 @@ body[data-page=hazards] .fire-attribution{border-top:1px solid var(--border);mar
 @media(max-width:1080px){
  body[data-page=hazards] .fire-area-layout{grid-template-columns:minmax(0,1fr)}
  body[data-page=hazards] .fire-map-body{order:1}
- body[data-page=hazards] .fire-directory{order:2;height:420px}
+ body[data-page=hazards] .fire-directory{order:2;height:680px}
  body[data-page=hazards] .fire-area-map{min-height:480px}
  body[data-page=hazards] .fire-zone-inspector{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 }
@@ -822,14 +822,14 @@ body[data-page=hazards] .fire-attribution{border-top:1px solid var(--border);mar
  body[data-page=hazards] .fire-zone-inspector{grid-template-columns:minmax(0,1fr);padding:13px}
  body[data-page=hazards] .fire-inspector-foot{grid-column:auto;flex-wrap:wrap}
  .fire-map-bottom{padding:0 10px 9px}
- .fire-directory{height:440px}
+ .fire-directory{height:680px}
  .fire-directory-dropdowns{grid-template-columns:minmax(0,1fr) minmax(0,.75fr)}
 }
 @media(max-width:370px){
  .fire-summary-item{gap:7px}
  .fire-summary-icon{display:none}
  .fire-directory-dropdowns{grid-template-columns:minmax(0,1fr)}
- .fire-directory{height:510px}
+ .fire-directory{height:810px}
 }
 
 
@@ -1041,4 +1041,10 @@ body[data-page=hazards] .fire-attribution{border-top:1px solid var(--border);mar
 @media(max-width:620px){
  .fire-map-cluster{width:36px;height:36px;border-radius:12px}
  .fire-legend-cluster{width:21px;height:21px}
+}
+
+/* Allow multiple tappable report rows beneath expanded filter controls on phones. */
+@media(max-width:1080px){
+ .fire-directory-list{min-height:190px;scroll-padding-block:12px}
+ .fire-directory-entry{scroll-margin-block:10px}
 }
