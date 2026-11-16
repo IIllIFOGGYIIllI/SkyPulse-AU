@@ -88,7 +88,20 @@ try{
   });
   await page.goto("http://127.0.0.1:8766/radar.html",{waitUntil:"domcontentloaded",timeout:30000});
   await page.waitForFunction(()=>document.querySelector("#radar-frame-label")?.textContent.includes("Frame issued"),{timeout:10000});
-  await page.waitForFunction(()=>document.querySelector("#cloud-value-total")?.textContent==="68%",{timeout:10000});
+  try{
+    await page.waitForFunction(()=>document.querySelector("#cloud-value-total")?.textContent==="68%",null,{timeout:6000});
+  }catch(error){
+    const debug=await page.evaluate(()=>({
+      hasPanel:!!document.querySelector("#cloud-panel"),
+      current:document.querySelector("#cloud-value-total")?.textContent,
+      status:document.querySelector("#cloud-model-status")?.textContent,
+      meta:document.querySelector("#cloud-model-meta")?.textContent,
+      contextType:typeof window.SkyPulseWatchContext,
+      cloudScript:[...document.scripts].filter(x=>x.src.includes("clouds.js")).map(x=>x.src),
+      cloudResources:performance.getEntriesByType("resource").filter(x=>x.name.includes("clouds.js")).map(x=>({name:x.name,duration:x.duration}))
+    }));
+    throw Error("Cloud data did not render: "+JSON.stringify({debug,requests:cloudRequests,errors}));
+  }
   const clouds=await page.evaluate(()=>({
     total:document.querySelector("#cloud-value-total").textContent,
     low:document.querySelector("#cloud-value-low").textContent,
