@@ -57,7 +57,7 @@ try{
     };
   });
   const now=Math.floor(Date.now()/600000)*600;
-  let latest=now-600,stale=false,failed=false,requests=0;
+  let latest=now-600,stale=false,failed=false,requests=0,cloudRequests=0,cloudFailed=false;
   const manifest=()=>({
     version:"2.0",generated:latest+300,host:"https://tilecache.rainviewer.com",
     radar:{past:Array.from({length:13},(_,i)=>{
@@ -67,6 +67,17 @@ try{
   });
   await page.route("**/*",async route=>{
     const url=new URL(route.request().url());
+    if(url.hostname==="api.open-meteo.com"){
+      cloudRequests++;
+      if(cloudFailed)return route.fulfill({status:502,contentType:"application/json",body:'{"error":"cloud feed unavailable"}'});
+      const time=new Date(Date.now()-10*60000).toISOString().slice(0,16);
+      const hours=Array.from({length:24},(_,i)=>new Date(Date.now()+(i-1)*3600000).toISOString().slice(0,16));
+      return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({
+        current:{time,cloud_cover:68,cloud_cover_low:30,cloud_cover_mid:42,cloud_cover_high:18},
+        hourly:{time:hours,cloud_cover:hours.map(()=>68),cloud_cover_low:hours.map(()=>30),
+          cloud_cover_mid:hours.map(()=>42),cloud_cover_high:hours.map(()=>18)}
+      })});
+    }
     if(url.hostname==="api.rainviewer.com"){
       requests++;
       if(failed)return route.fulfill({status:503,contentType:"application/json",body:'{"error":"offline"}'});
@@ -77,6 +88,34 @@ try{
   });
   await page.goto("http://127.0.0.1:8766/radar.html",{waitUntil:"domcontentloaded",timeout:30000});
   await page.waitForFunction(()=>document.querySelector("#radar-frame-label")?.textContent.includes("Frame issued"),{timeout:10000});
+  await page.waitForFunction(()=>document.querySelector("#cloud-value-total")?.textContent==="68%",{timeout:10000});
+  const clouds=await page.evaluate(()=>({
+    total:document.querySelector("#cloud-value-total").textContent,
+    low:document.querySelector("#cloud-value-low").textContent,
+    mid:document.querySelector("#cloud-value-mid").textContent,
+    high:document.querySelector("#cloud-value-high").textContent,
+    meta:document.querySelector("#cloud-model-meta").textContent,
+    count:document.querySelectorAll(".cloud-hour").length
+  }));
+  if(clouds.total!=="68%"||clouds.low!=="30%"||clouds.mid!=="42%"||clouds.high!=="18%"||
+     clouds.count<12||!/AEST|AEDT/.test(clouds.meta))
+    throw Error("Cloud model panel incorrect or missing Sydney timestamp: "+JSON.stringify(clouds));
+  await page.locator('[data-cloud-layer="high"]').click();
+  if((await page.locator("#cloud-trend-title").textContent())!=="High-Level Clouds"||
+    (await page.locator('[data-cloud-layer="high"]').getAttribute("aria-pressed"))!=="true")
+    throw Error("Cloud forecast layer switch failed");
+  if(!(await page.locator(".cloud-hour span").first().textContent()).includes("18%"))
+    throw Error("High-level cloud trend did not use the selected model data");
+  const satelliteLinks=await page.evaluate(()=>[...document.querySelectorAll("#cloud-source-bom,#cloud-source-jma,#radar-lightning-open")].map(x=>({href:x.href,target:x.target})));
+  if(satelliteLinks.length!==3||satelliteLinks.some(x=>x.target!=="_blank"||!x.href.startsWith("https://")))
+    throw Error("Cloud and lightning viewers must open on their source websites");
+  cloudFailed=true;
+  await page.locator("#cloud-refresh").click();
+  await page.waitForFunction(()=>document.querySelector("#cloud-model-status")?.textContent==="PREVIOUS MODEL SNAPSHOT");
+  if((await page.locator("#cloud-value-total").textContent())!=="68%")
+    throw Error("Failed refresh erased labelled historical cloud model snapshot");
+  cloudFailed=false;
+  console.log("Cloud Intelligence PASSED: independent model estimates, hourly levels, source links and failed-check state.");
   let m=await page.evaluate(()=>({
     kind:document.querySelector("#radar-frame-kind").textContent,
     clock:document.querySelector("#radar-latest-issued").textContent,
@@ -87,7 +126,7 @@ try{
   }));
   if(m.kind!=="LATEST AVAILABLE"||Number(m.count)!==12)throw Error("Initial radar timeline incorrect: "+JSON.stringify(m));
   if(!/AEST|AEDT/.test(m.clock))throw Error("No Australian timezone on issued time: "+m.clock);
-  if(!m.radarTile||!m.radarTile.url.endsWith("/2/1_1.png")||m.radarTile.opts.maxNativeZoom!==7)
+  if(!m.radarTile||!m.radarTile.url.includes("/512/")||!m.radarTile.url.endsWith("/2/1_1.png")||m.radarTile.opts.maxNativeZoom!==7||m.radarTile.opts.tileSize!==256)
     throw Error("Unsupported free API raster format: "+JSON.stringify(m.radarTile));
   if(requests!==1)throw Error("Unexpected first metadata request count: "+requests);
   // Basemap colours stay original. Map information popups follow the website theme.
@@ -154,6 +193,12 @@ try{
   stale=false;
   await page.locator("#radar-preferences-toggle").click();
   if(!(await page.locator("#radar-preferences").isVisible()))throw Error("Radar preferences did not open");
+  // 512px high-density tile mode and unsmoothed mode must persist independently.
+  await page.locator("#radar-setting-hires").uncheck();
+  await page.locator("#radar-setting-smooth").uncheck();
+  const rawTile=await page.evaluate(()=>window.__radarTiles.filter(t=>t.url.includes("/v2/radar/")).at(-1)?.url);
+  if(!rawTile?.includes("/256/")||!rawTile.endsWith("/2/0_1.png"))
+    throw Error("Data-saving unsmoothed radar image URL incorrect: "+rawTile);
   await page.locator("#radar-setting-auto").uncheck();
   await page.locator("#radar-setting-loop").uncheck();
   await page.locator("#radar-setting-timestamp").uncheck();
@@ -163,13 +208,15 @@ try{
   });
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem("skypulse.preferences")).radar);
   if(saved.auto!==false||saved.loop!==false||saved.timestamp!==false||
-    saved.speed!==2200||Math.abs(saved.opacity-.8)>.001)
+    saved.speed!==2200||saved.hires!==false||saved.smooth!==false||Math.abs(saved.opacity-.8)>.001)
     throw Error("Radar preferences were not persisted: "+JSON.stringify(saved));
   if(await page.locator("#radar-map-stamp").isVisible())throw Error("Timestamp was not hidden");
   await page.reload({waitUntil:"domcontentloaded"});
   await page.waitForFunction(()=>document.querySelector("#radar-frame-label")?.textContent.includes("Frame issued"));
   await page.locator("#radar-preferences-toggle").click();
   if(await page.locator("#radar-setting-auto").isChecked())throw Error("Auto-check preference lost on reload");
+  if(await page.locator("#radar-setting-hires").isChecked()||await page.locator("#radar-setting-smooth").isChecked())
+    throw Error("Radar image quality choices were not restored on reload");
   if(await page.locator("#radar-setting-loop").isChecked())throw Error("Loop preference lost on reload");
   if(await page.locator("#radar-setting-timestamp").isChecked())throw Error("Timestamp preference lost on reload");
   if(await page.locator("#radar-setting-speed").inputValue()!=="2200")throw Error("Playback speed preference lost");
@@ -200,7 +247,7 @@ try{
   await page.locator("#radar-preferences-toggle").click();
   await page.locator("#radar-reset-preferences").click();
   const reset=await page.evaluate(()=>JSON.parse(localStorage.getItem("skypulse.preferences")).radar);
-  if(!reset.auto||!reset.loop||!reset.timestamp||reset.speed!==3500||Math.abs(reset.opacity-.6)>.001)
+  if(!reset.auto||!reset.loop||!reset.timestamp||!reset.hires||!reset.smooth||reset.speed!==3500||Math.abs(reset.opacity-.6)>.001)
     throw Error("Restore Defaults failed: "+JSON.stringify(reset));
   console.log("Radar preferences PASSED: local persistence, four controls, region preset, copy map URL, shared historical frame and defaults restore.");
   if(errors.length)throw Error("Radar browser JavaScript errors: "+errors.join(" | "));
