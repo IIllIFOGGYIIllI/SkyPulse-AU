@@ -65,6 +65,43 @@
   </div>
 </div>
 
+
+<div id="cloud-panel" class="cloud-intelligence card" aria-labelledby="cloud-panel-title">
+  <div class="cloud-head">
+    <div><span class="eyebrow">CLOUD INTELLIGENCE · MODEL + SATELLITE</span><h3 id="cloud-panel-title">Cloud Cover &amp; Satellite Monitoring</h3>
+      <p>Rain radar detects precipitation, not clouds. Explore modelled cloud layers below, or inspect actual observed cloud structures with official high-definition satellite imagery.</p>
+    </div>
+    <button type="button" id="cloud-refresh" class="outline-button">↻ Refresh Cloud Model</button>
+  </div>
+  <div class="cloud-source-status" role="status">
+    <span id="cloud-model-status" class="cloud-health waiting">Checking Cloud Model…</span>
+    <span id="cloud-model-meta">Open-Meteo model · not a live satellite reading</span>
+  </div>
+  <div class="cloud-summary-grid" aria-label="Modelled cloud cover at selected location">
+    <div class="cloud-summary-item"><span>Total Cloud Cover</span><strong id="cloud-value-total">—</strong><small>Modelled sky fraction</small></div>
+    <div class="cloud-summary-item"><span>Low-Level Clouds</span><strong id="cloud-value-low">—</strong><small>Below approximately 3 km</small></div>
+    <div class="cloud-summary-item"><span>Mid-Level Clouds</span><strong id="cloud-value-mid">—</strong><small>Approximately 3–8 km</small></div>
+    <div class="cloud-summary-item"><span>High-Level Clouds</span><strong id="cloud-value-high">—</strong><small>Above approximately 8 km</small></div>
+  </div>
+  <div class="cloud-trend-header"><div><strong>Next 18 Hours · Model Forecast</strong><span id="cloud-trend-title">Total Cloud Cover</span></div>
+    <div class="cloud-layer-switch" role="group" aria-label="Cloud forecast layer">
+      <button type="button" class="is-active" data-cloud-layer="total" aria-pressed="true">Total</button>
+      <button type="button" data-cloud-layer="low" aria-pressed="false">Low</button>
+      <button type="button" data-cloud-layer="mid" aria-pressed="false">Mid</button>
+      <button type="button" data-cloud-layer="high" aria-pressed="false">High</button>
+    </div>
+  </div>
+  <div class="cloud-hours-scroll" id="cloud-hours" role="region" aria-label="Hourly modelled cloud cover trend" tabindex="0"><p>Checking hourly cloud forecast…</p></div>
+  <div class="cloud-satellite-links">
+    <div><strong>Actual Satellite Cloud Imagery</strong><p>Use the official Himawari satellite viewers for observed cloud patterns. These are separate from the SkyPulse model forecast and rain radar.</p></div>
+    <div class="cloud-satellite-actions">
+      <a id="cloud-source-bom" href="https://www.bom.gov.au/australia/satellite/" target="_blank" rel="noopener noreferrer">BOM HD Satellite ↗</a>
+      <a id="cloud-source-jma" href="https://www.data.jma.go.jp/mscweb/data/himawari/sat_img.php?area=aus" target="_blank" rel="noopener noreferrer">JMA Himawari Australia ↗</a>
+    </div>
+  </div>
+  <p class="cloud-source-note">Source: Open-Meteo numerical forecast for your selected location. Low, mid and high layers can overlap, so they do not add up to the total. These values are forecasts, not measured local cloud coverage or a live satellite overlay.</p>
+</div>
+
 <div class="radar-provider-panel" role="region" aria-labelledby="radar-provider-title">
   <div class="radar-provider-heading"><div><div class="eyebrow">RADAR DATA SOURCES</div><h3 id="radar-provider-title">Choose Your Radar Experience</h3></div><span class="radar-provider-hint">Image frequency depends on each publisher</span></div>
   <div class="radar-provider-grid">
@@ -116,6 +153,8 @@
     <label class="radar-preference-option"><span><strong>Follow newest frame</strong><small>Move to newly issued frames unless you are browsing history</small></span><input type="checkbox" id="radar-setting-follow" checked></label>
     <label class="radar-preference-option"><span><strong>Loop animation</strong><small>Repeat the history instead of stopping at its end</small></span><input type="checkbox" id="radar-setting-loop" checked></label>
     <label class="radar-preference-option"><span><strong>Show time on map</strong><small>Keep the selected frame timestamp visible over radar</small></span><input type="checkbox" id="radar-setting-timestamp" checked></label>
+    <label class="radar-preference-option"><span><strong>High-Detail Radar Tiles</strong><small>512px images for sharper screens; uses more data. Native zoom remains 7.</small></span><input type="checkbox" id="radar-setting-hires" checked></label>
+    <label class="radar-preference-option"><span><strong>Smooth Rain Echoes</strong><small>Choose smoother or more pixel-defined rain imagery; does not create extra observations.</small></span><input type="checkbox" id="radar-setting-smooth" checked></label>
   </div>
   <div class="radar-preferences-foot">
     <div class="radar-preference-inline"><label for="radar-setting-opacity">Rain overlay opacity <strong id="radar-setting-opacity-label">60%</strong></label><input id="radar-setting-opacity" type="range" min="20" max="100" step="5" value="60"></div>
