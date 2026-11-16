@@ -10,7 +10,8 @@ function radarSettingSpeed(value){return [5000,3500,2200].includes(Number(value)
 function radarSettingOpacity(value){var x=Number(value);return Number.isFinite(x)&&x>=.2&&x<=1?Math.round(x*20)/20:.6;}
 var state={location:stored.location||DEFAULT,radius:Number(stored.radius)||50,theme:stored.theme||"dark",notify:!!stored.notify,weather:null,weatherLocationKey:"",weatherFetchedAt:0,weatherCached:false,weatherFetchFailed:false,weatherSeq:0,forecastChartMode:"temperature",forecastDayIndex:0,map:null,markers:null,radarLayer:null,peekMap:null,peekLayer:null,radarFrames:[],radarHost:"",radarEnabled:radarSettingBool("rain",true),incidentsEnabled:radarSettingBool("incidents",true),radarTimer:null,radarIndex:-1,radarFollowLatest:radarSettingBool("follow",true),
 radarAutocheck:radarSettingBool("auto",true),radarLoop:radarSettingBool("loop",true),
-radarShowTimestamp:radarSettingBool("timestamp",true),radarSpeed:radarSettingSpeed(radarStored.speed),radarTileSize:radarSettingBool("hires",true)?512:256,radarSmooth:radarSettingBool("smooth",true),radarSitesShown:radarSettingBool("sites",false),radarSiteOverlay:null,
+radarShowTimestamp:radarSettingBool("timestamp",true),radarSpeed:radarSettingSpeed(radarStored.speed),radarTileSize:radarSettingBool("hires",true)?512:256,radarSmooth:radarSettingBool("smooth",true),
+ radarTemporary256:false,radarTileLoadTimer:null,radarTilesLoading:false,radarSitesShown:radarSettingBool("sites",false),radarSiteOverlay:null,
 radarShareView:null,radarSharedAt:null,radarCurrentRegion:"local",radarFetchedAt:0,radarAttemptAt:0,radarLoadingPromise:null,radarRenderedKey:"",radarOutgoing:null,radarSwapTimer:null,radarLastError:"",radarTileErrors:0,baseLayer:null,locationMarker:null,mapTileFailures:0,mapNearbyOnly:radarSettingBool("nearby",true),mapWheelZoom:radarSettingBool("wheel",false),radarOpacity:radarSettingOpacity(radarStored.opacity),gpsMarker:null,gpsAccuracy:null,mapStatusTimer:null,fireDanger:null,hazardMap:null,hazardLayers:null,hazardRadiusLayer:null,fireDirectoryMode:"incidents",fireDirectoryScope:"nearby",fireDirectorySort:"distance",fireDirectoryQuery:"",fireDirectoryType:"all",fireDirectoryLevel:"all",fireSelected:null,fireMapExpanded:false,fireMapLegendCollapsed:false,fireMapLayers:{warnings:stored.fireMapLayers?.warnings!==false,boundaries:stored.fireMapLayers?.boundaries!==false,points:stored.fireMapLayers?.points!==false,radius:stored.fireMapLayers?.radius!==false},
  incidentsFresh:false,warningsFresh:false,fireAreasEnabled:radarSettingBool("fireareas",true),fireAreaLayer:null,fireDistrict:stored.fireDistrict||"",rfsAlerts:[],warningLayer:null,warningsEnabled:radarSettingBool("warnings",true),incidents:[],lastIncidentFetch:null,seen:stored.seen||null,weatherError:false};
 var DATA_MAX_AGE=90*60*1000;
@@ -1316,7 +1317,10 @@ if("ResizeObserver" in window)new ResizeObserver(function(){if(state.map)state.m
  state.map.on("zoomend",renderRadarIncidentMarkers);
  radarUpdateQuality();
 document.querySelectorAll('a[href="#map-section"]').forEach(function(a){a.addEventListener("click",function(){setTimeout(function(){state.map.invalidateSize({pan:false});},160);});});
-$("map-retry").addEventListener("click",function(){state.mapTileFailures=0;state.radarTileErrors=0;$("map-tile-status").hidden=true;mapRefresh();loadRadar(true);});
+$("map-retry").addEventListener("click",function(){
+  state.mapTileFailures=0;state.radarTileErrors=0;$("map-tile-status").hidden=true;
+  radarRetryHighDetail();mapRefresh();loadRadar(true);
+ });
 $("map-zoom-in").addEventListener("click",function(){state.map.zoomIn();});$("map-zoom-out").addEventListener("click",function(){state.map.zoomOut();});$("map-locate").addEventListener("click",locateMap);$("map-home").addEventListener("click",centreSelected);$("map-fit").addEventListener("click",fitNearby);$("map-fullscreen").addEventListener("click",toggleMapFullscreen);
 $("map-layers-button").addEventListener("click",function(){var panel=$("map-layers-panel");panel.hidden=!panel.hidden;this.setAttribute("aria-expanded",String(!panel.hidden));});
 $("map-layer-radar").addEventListener("change",function(e){setMapLayer("radar",e.target.checked);});$("map-layer-rfs").addEventListener("change",function(e){setMapLayer("incidents",e.target.checked);});
@@ -1359,6 +1363,41 @@ function radarFrame(){return state.radarIndex<0?null:state.radarFrames[state.rad
 function radarCleanLayer(){
  if(state.radarSwapTimer){clearTimeout(state.radarSwapTimer);state.radarSwapTimer=null;}
  if(state.radarOutgoing&&state.map){state.map.removeLayer(state.radarOutgoing);state.radarOutgoing=null;}
+}
+function radarEffectiveTileSize(){return state.radarTemporary256?256:state.radarTileSize;}
+function radarImageFeedback(kind,caption){
+ var status=$("radar-image-state");
+ if(status){status.dataset.state=kind;status.textContent=caption;}
+ var retry=$("radar-retry-hd");
+ if(retry)retry.hidden=!state.radarTemporary256;
+}
+function radarStopFrameWait(){
+ if(state.radarTileLoadTimer){clearTimeout(state.radarTileLoadTimer);state.radarTileLoadTimer=null;}
+ state.radarTilesLoading=false;
+}
+function radarFallbackTo256(failedLayer){
+ if(state.radarLayer!==failedLayer||state.radarTemporary256||state.radarTileSize!==512)return;
+ state.radarTemporary256=true;
+ radarStopFrameWait();
+ // Preserve the previous successfully displayed image underneath the replacement.
+ state.map.removeLayer(failedLayer);
+ state.radarLayer=state.radarOutgoing||null;
+ state.radarOutgoing=null;
+ state.radarRenderedKey="";
+ if($("map-tile-status")){
+  setText("map-tile-status","512px radar tiles failed or timed out. Temporarily using 256px tiles. Retry HD when the connection improves.");
+  $("map-tile-status").hidden=false;
+ }
+ radarImageFeedback("fallback","Switching to 256px radar");
+ showRadarFrame(state.radarIndex);
+}
+function radarRetryHighDetail(){
+ if(!state.radarTemporary256)return;
+ state.radarTemporary256=false;
+ state.radarTileErrors=0;
+ radarUpdateQuality();
+ if(state.radarFrames.length){state.radarRenderedKey="";showRadarFrame(state.radarIndex);}
+ radarImageFeedback("loading","Retrying high-detail imagery");
 }
 function radarControls(){
  var count=state.radarFrames.length,has=count>0;
@@ -1403,25 +1442,62 @@ function radarFrameUI(){
 function showRadarFrame(i){
  if((!state.map&&!state.peekMap)||!state.radarFrames.length)return;
  state.radarIndex=Math.max(0,Math.min(state.radarFrames.length-1,Number(i)||0));
- var f=radarFrame(),base=state.radarHost+f.path,key=base+"|"+state.radarTileSize+"|"+(state.radarSmooth?"smooth":"raw");
+ var frame=radarFrame(),base=state.radarHost+frame.path,size=radarEffectiveTileSize();
+ var key=base+"|"+size+"|"+(state.radarSmooth?"smooth":"raw");
  radarFrameUI();
  if(state.map){
   if(!state.radarEnabled){
-   radarCleanLayer();if(state.radarLayer)state.map.removeLayer(state.radarLayer);
+   radarStopFrameWait();radarCleanLayer();
+   if(state.radarLayer)state.map.removeLayer(state.radarLayer);
    state.radarLayer=null;state.radarRenderedKey="";
+   radarImageFeedback("off","Rain radar layer hidden");
   }else if(key!==state.radarRenderedKey||!state.radarLayer){
-   radarCleanLayer();var old=state.radarLayer;
+   radarStopFrameWait();
+   radarCleanLayer();
+   var old=state.radarLayer;
    if(old)state.radarOutgoing=old;
-   var layer=L.tileLayer(base+"/"+state.radarTileSize+"/{z}/{x}/{y}/2/"+(state.radarSmooth?"1":"0")+"_1.png",{
-    opacity:state.radarOpacity,zIndex:350,tileSize:256,maxNativeZoom:7,maxZoom:18,updateWhenIdle:true,keepBuffer:1,
+   var errors=0;
+   var layer=L.tileLayer(base+"/"+size+"/{z}/{x}/{y}/2/"+(state.radarSmooth?"1":"0")+"_1.png",{
+    opacity:state.radarOpacity,zIndex:350,tileSize:256,maxNativeZoom:7,maxZoom:18,
+    updateWhenIdle:true,keepBuffer:1,
     attribution:'Radar imagery <a href="https://www.rainviewer.com/">RainViewer</a>'
    });
-   layer.on("load",function(){if(state.radarLayer===layer)radarCleanLayer();});
-   layer.on("tileerror",function(){state.radarTileErrors++;if(state.radarTileErrors===5&&$("map-tile-status")){
-    setText("map-tile-status","Some radar tiles could not load. Check official BOM radar if imagery appears incomplete.");
-    $("map-tile-status").hidden=false;}});
-   state.radarLayer=layer;state.radarRenderedKey=key;layer.addTo(state.map);
-   if(old)state.radarSwapTimer=setTimeout(radarCleanLayer,2600);
+   state.radarTilesLoading=true;
+   radarImageFeedback("loading","Loading "+size+"px radar");
+   layer.on("load",function(){
+    if(state.radarLayer!==layer)return;
+    radarStopFrameWait();
+    radarCleanLayer();
+    radarImageFeedback(errors?"partial":"ready",
+     errors?"Some radar tiles missing · check BOM":"Radar frame ready · "+size+"px");
+   });
+   layer.on("tileerror",function(){
+    if(state.radarLayer!==layer)return;
+    errors++;
+    state.radarTileErrors++;
+    if(errors>=3&&size===512&&!state.radarTemporary256){
+     radarFallbackTo256(layer);
+     return;
+    }
+    if(errors>=3&&$("map-tile-status")){
+     setText("map-tile-status","Radar imagery is incomplete. Check your connection or view official BOM radar.");
+     $("map-tile-status").hidden=false;
+     radarImageFeedback("partial","Radar tiles missing");
+    }
+   });
+   state.radarLayer=layer;state.radarRenderedKey=key;
+   layer.addTo(state.map);
+   state.radarTileLoadTimer=setTimeout(function(){
+    if(state.radarLayer!==layer)return;
+    if(size===512&&!state.radarTemporary256){radarFallbackTo256(layer);return;}
+    radarStopFrameWait();
+    stopRadarPlayback();
+    radarImageFeedback("delayed","Radar image delayed · retry available");
+    if($("map-tile-status")){
+     setText("map-tile-status","The selected radar frame did not finish loading. Previous imagery may remain visible. Reload the map or use official BOM radar.");
+     $("map-tile-status").hidden=false;
+    }
+   },9000);
   }
  }
  updateRadarPreview(state.radarIndex);
@@ -1460,7 +1536,7 @@ function radarUpdatePreference(key,value){
 }
 function radarResetPreferences(){
  state.radarAutocheck=true;state.radarFollowLatest=true;state.radarLoop=true;
- state.radarShowTimestamp=true;state.radarSpeed=3500;state.radarOpacity=.6;state.radarTileSize=512;state.radarSmooth=true;
+ state.radarShowTimestamp=true;state.radarSpeed=3500;state.radarOpacity=.6;state.radarTileSize=512;state.radarSmooth=true;state.radarTemporary256=false;
  state.radarEnabled=true;state.incidentsEnabled=true;state.warningsEnabled=true;
  state.mapNearbyOnly=true;state.mapWheelZoom=false;
  stopRadarPlayback();save();
@@ -1482,7 +1558,9 @@ function radarUpdateQuality(){
  label.textContent=(isScaled?
   "Radar zoom "+zoom+": source images enlarged beyond native zoom 7 (no extra radar detail).":
   "Radar source supports native detail through zoom 7.")+
-  " · "+state.radarTileSize+"px "+(state.radarSmooth?"smoothed":"pixel-defined")+" display tiles. Tile quality does not increase measured radar resolution.";
+  " · "+radarEffectiveTileSize()+"px "+(state.radarSmooth?"smoothed":"pixel-defined")+" display tiles."+
+  (state.radarTemporary256?" High-detail request failed; temporary 256px fallback active.":"")+
+  " Display sharpness does not increase measured radar resolution.";
 }
 
 function radarSyncRegionSelection(){
@@ -1535,6 +1613,7 @@ async function radarCopyLink(){
  }
 }
 function radarSetImageQuality(){
+ state.radarTemporary256=false;
  save();radarSyncPreferences();
  if(state.radarFrames.length)showRadarFrame(state.radarIndex);
  radarUpdateQuality();
@@ -1552,6 +1631,7 @@ function initRadarPreferences(){
  on("radar-setting-speed","change",function(e){radarSetSpeed(e.target.value);});
  on("radar-setting-hires","change",function(e){state.radarTileSize=e.target.checked?512:256;radarSetImageQuality();});
  on("radar-setting-smooth","change",function(e){state.radarSmooth=e.target.checked;radarSetImageQuality();});
+ on("radar-retry-hd","click",function(){radarRetryHighDetail();});
  on("radar-reset-preferences","click",radarResetPreferences);
  on("radar-copy-link","click",radarCopyLink);
  document.querySelectorAll("[data-radar-region]").forEach(function(btn){
@@ -1612,6 +1692,7 @@ function startRadarPlayback(resume){
  var speed=state.radarSpeed;
  state.radarTimer=setInterval(function(){
   if(document.visibilityState!=="visible"){stopRadarPlayback();return;}
+  if(state.radarTilesLoading)return; // Preserve legible playback; do not outrun image tiles.
   if(state.radarIndex+1>=state.radarFrames.length&&!state.radarLoop){stopRadarPlayback();return;}
   showRadarFrame((state.radarIndex+1)%state.radarFrames.length);
  },speed);

@@ -140,7 +140,7 @@
   <div class="radar-preferences-foot">
     <div class="radar-preference-inline"><label for="radar-setting-opacity">Rain overlay opacity <strong id="radar-setting-opacity-label">60%</strong></label><input id="radar-setting-opacity" type="range" min="20" max="100" step="5" value="60"></div>
     <div class="radar-preference-inline"><label for="radar-setting-speed">Animation speed</label><select id="radar-setting-speed"><option value="5000">Relaxed · 0.5×</option><option value="3500" selected>Normal · 1×</option><option value="2200">Fast · 2×</option></select></div>
-    <span class="radar-preferences-note" id="radar-preferences-status" role="status">Preferences saved locally.</span>
+    <span class="radar-preferences-note" id="radar-preferences-status" role="status">Preferences saved locally. If 512px tiles fail, SkyPulse temporarily uses 256px until you retry HD.</span>
   </div>
 </div>
           <div class="card map-card radar-upgraded-card"><div class="map-toolbar"><div class="segmented"><button type="button" id="radar-toggle" class="selected" aria-pressed="true">Rain Radar</button><button type="button" id="incidents-toggle" class="selected" aria-pressed="true">⚠ NSW RFS Incidents</button></div><div class="map-side-actions"><span id="radar-time" class="small-chip">Frame time pending</span><button id="map-retry" class="outline-button" type="button">↻ Reload Map</button></div></div><div class="map-viewport" id="map-viewport"><div id="weather-map" role="region" aria-label="Interactive weather radar and NSW RFS incident map"><p class="map-fallback">Loading Interactive Map… <a href="https://www.bom.gov.au/australia/radar/" target="_blank" rel="noopener">Open Official BOM Radar ↗</a></p></div><div class="map-control-column" role="toolbar" aria-label="Map Navigation">
@@ -165,7 +165,7 @@
 <div class="radar-map-stamp" id="radar-map-stamp" aria-live="off" hidden><span>RADAR FRAME ISSUED</span><strong id="radar-map-clock">—</strong></div></div><div id="map-tile-status" class="map-tile-status" role="status" hidden></div><div class="radar-playback">
   <div class="radar-playback-top">
     <div><span class="eyebrow">RADAR HISTORY</span><strong id="radar-frame-label">Waiting for historical radar imagery…</strong><small id="radar-history-label">Up to 2 hours · actual frame timestamps</small></div>
-    <div class="radar-playback-badges"><span id="radar-frame-kind" class="radar-view-kind">LATEST FRAME</span><button id="radar-latest" type="button" class="radar-latest-button" disabled>Go to Latest</button></div>
+    <div class="radar-playback-badges"><span id="radar-frame-kind" class="radar-view-kind">LATEST FRAME</span><span id="radar-image-state" class="radar-image-state" data-state="waiting" role="status" aria-live="polite">Waiting for imagery</span><button type="button" id="radar-retry-hd" class="radar-retry-hd" hidden>Retry HD</button><button id="radar-latest" type="button" class="radar-latest-button" disabled>Go to Latest</button></div>
   </div>
   <div class="radar-controls" role="group" aria-label="Historical Radar Playback">
     <button id="radar-step-back" type="button" aria-label="Previous Radar Frame" title="Previous Radar Frame" disabled><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg></button>

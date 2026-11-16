@@ -23,14 +23,22 @@ try{
       radius:50,notify:false,theme:"dark"
     }));
     window.__radarTiles=[];
+    window.__holdRadarLoads=false;
+    window.__radarLayers=[];
     Object.defineProperty(navigator,"clipboard",{configurable:true,value:{
       writeText:async function(value){window.__copiedRadarLink=value;}
     }});
     const makeLayer=(url="",opts={})=>{
       const handlers={};
       const layer={
+        handlers,
         on(event,fn){handlers[event]=fn;return this;},
-        addTo(){if(url)window.__radarTiles.push({url,opts});queueMicrotask(()=>handlers.load?.());return this;},
+        addTo(){
+          if(url)window.__radarTiles.push({url,opts});
+          if(url.includes("/v2/radar/"))window.__radarLayers.push(this);
+          if(!(url.includes("/v2/radar/")&&window.__holdRadarLoads))queueMicrotask(()=>handlers.load?.());
+          return this;
+        },
         bindPopup(){return this;},setOpacity(){return this;},
         clearLayers(){return this;},redraw(){return this;},setLatLng(){return this;}
       };
@@ -142,6 +150,32 @@ try{
   if(!m.radarTile||!m.radarTile.url.includes("/512/")||!m.radarTile.url.endsWith("/2/1_1.png")||m.radarTile.opts.maxNativeZoom!==7||m.radarTile.opts.tileSize!==256)
     throw Error("Unsupported free API raster format: "+JSON.stringify(m.radarTile));
   if(requests!==1)throw Error("Unexpected first metadata request count: "+requests);
+  if((await page.locator("#radar-image-state").getAttribute("data-state"))!=="ready")
+    throw Error("Loaded radar frame did not report image readiness");
+  // Simulate consecutive HD tile errors while a new frame loads: the app must
+  // replace only the failed HD layer with a temporary 256px source.
+  await page.evaluate(()=>{window.__holdRadarLoads=true;});
+  await page.locator("#radar-step-back").click();
+  const beforeFallback=await page.evaluate(()=>window.__radarLayers.at(-1));
+  const fallback=await page.evaluate(()=>{
+    const layer=window.__radarLayers.at(-1);
+    if(!layer||typeof layer.handlers.tileerror!=="function")return false;
+    layer.handlers.tileerror();layer.handlers.tileerror();layer.handlers.tileerror();
+    return true;
+  });
+  if(!fallback)throw Error("Could not simulate radar HD tile errors");
+  const fallbackUrl=await page.evaluate(()=>window.__radarTiles.at(-1)?.url);
+  if(!fallbackUrl?.includes("/256/")||!(await page.locator("#radar-retry-hd").isVisible()))
+    throw Error("Automatic 512px-to-256px fallback did not engage: "+fallbackUrl);
+  const qualityFeedback=await page.locator("#radar-quality-status").textContent();
+  if(!qualityFeedback.includes("fallback active"))throw Error("Source quality downgrade was not disclosed");
+  await page.evaluate(()=>{window.__holdRadarLoads=false;});
+  await page.locator("#radar-retry-hd").click();
+  const restoredUrl=await page.evaluate(()=>window.__radarTiles.at(-1)?.url);
+  if(!restoredUrl?.includes("/512/")||await page.locator("#radar-retry-hd").isVisible())
+    throw Error("Manual HD retry did not restore 512px tiles: "+restoredUrl);
+  await page.locator("#radar-latest").click();
+  console.log("Radar display reliability PASSED: per-frame image state, HD fallback and manual recovery.");
   // Basemap colours stay original. Map information popups follow the website theme.
   const appearance=await page.evaluate(()=>{
     const map=document.querySelector("#weather-map");

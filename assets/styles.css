@@ -1157,3 +1157,15 @@ body[data-page=hazards] #fire-map-body.fire-map-expanded .fire-map-bottom{flex:n
 .radar-local-actions>span{font:700 10px/1.5 Manrope,sans-serif;color:var(--muted)}
 .radar-local-footnote{font:600 10px/1.65 Manrope,sans-serif;color:var(--muted);margin:4px 0 0}
 @media(max-width:700px){.radar-local-heading{flex-direction:column;gap:10px}.radar-local-actions a,.radar-local-actions button{flex:1 1 175px}.radar-local-actions>span{width:100%}.radar-local-source{padding:13px}}
+
+/* Rain-radar image transfer health: separate from meteorological freshness. */
+.radar-image-state{display:inline-flex;align-items:center;min-height:28px;border-radius:7px;padding:5px 8px;background:var(--panel-2);border:1px solid var(--border);font:850 9px/1.45 Manrope,sans-serif;color:var(--muted);white-space:normal}
+.radar-image-state[data-state=ready]{color:#55c7ae;border-color:#55c7ae70}
+.radar-image-state[data-state=loading]{color:var(--accent);border-color:var(--accent);animation:radar-image-pulse 1.5s ease-in-out infinite}
+.radar-image-state[data-state=partial],.radar-image-state[data-state=delayed],.radar-image-state[data-state=fallback]{color:var(--amber);border-color:#d9aa5980}
+.radar-retry-hd{min-height:30px;padding:5px 9px;border:1px solid var(--accent);border-radius:8px;background:var(--panel-2);color:var(--accent);font:850 10px Manrope,sans-serif;cursor:pointer}
+.radar-retry-hd[hidden]{display:none}
+.radar-retry-hd:hover,.radar-retry-hd:focus-visible{background:var(--panel-3)}
+@keyframes radar-image-pulse{0%,100%{opacity:1}50%{opacity:.55}}
+@media(prefers-reduced-motion:reduce){.radar-image-state[data-state=loading]{animation:none}}
+@media(max-width:660px){.radar-playback-badges{flex-wrap:wrap;justify-content:flex-end}.radar-image-state{font-size:9px;max-width:170px;text-align:center}}
