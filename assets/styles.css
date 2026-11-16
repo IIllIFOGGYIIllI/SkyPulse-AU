@@ -1169,3 +1169,43 @@ body[data-page=hazards] #fire-map-body.fire-map-expanded .fire-map-bottom{flex:n
 @keyframes radar-image-pulse{0%,100%{opacity:1}50%{opacity:.55}}
 @media(prefers-reduced-motion:reduce){.radar-image-state[data-state=loading]{animation:none}}
 @media(max-width:660px){.radar-playback-badges{flex-wrap:wrap;justify-content:flex-end}.radar-image-state{font-size:9px;max-width:170px;text-align:center}}
+
+/* Forecast-model intelligence and transparent source status */
+.forecast-compare,.source-health-centre{padding:20px;margin:16px 0}
+.forecast-compare-head,.source-health-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.forecast-compare-head h3,.source-health-head h3{margin:5px 0;font:850 19px Manrope,sans-serif}
+.forecast-compare-head p,.source-health-head p{max-width:720px;margin:4px 0;color:var(--muted);font-size:12px;line-height:1.65}
+.forecast-compare-head button,.source-health-head button{flex:none;min-height:36px}
+.forecast-compare-meta{display:flex;gap:7px 17px;flex-wrap:wrap;color:var(--muted);font-size:11px;margin:16px 0}
+.forecast-compare-meta b{color:var(--text)}
+.forecast-compare-models{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.compare-model-card{display:grid;gap:11px;padding:16px;border:1px solid var(--border);border-radius:12px;background:var(--panel-2)}
+.compare-model-head,.compare-model-card>div:not(.compare-model-head){display:flex;justify-content:space-between;align-items:center;gap:12px}
+.compare-model-head{border-bottom:1px solid var(--border);padding-bottom:10px}
+.compare-model-head strong{font-size:14px}.compare-model-head span{font-size:10px;color:var(--muted);font-weight:800}
+.compare-model-card>div:not(.compare-model-head)>span{color:var(--muted);font-size:11px}
+.compare-model-card>div:not(.compare-model-head)>strong{text-align:right;font-size:14px}
+.compare-spread{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0}
+.compare-spread>div{display:grid;gap:6px;padding:12px;border:1px solid var(--border);border-radius:9px;background:var(--panel)}
+.compare-spread span{font-size:10px;color:var(--muted)}.compare-spread strong{font-size:19px}
+.compare-summary{margin:0;padding:11px;border:1px solid var(--border);border-radius:9px;background:var(--panel-2);font-size:11px;line-height:1.65}
+.source-health-banner{display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap;padding:12px;margin:16px 0;background:var(--panel-2);border:1px solid var(--border);border-radius:10px}
+.source-health-banner strong{font-size:12px}.source-health-banner span{font-size:11px;color:var(--muted)}
+.source-health-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.source-health-item{display:grid;align-content:start;gap:8px;padding:13px;background:var(--panel-2);border:1px solid var(--border);border-radius:10px}
+.source-health-row{display:flex;gap:8px;justify-content:space-between;align-items:center}
+.source-health-row strong{font-size:12px}.source-health-row span{font-weight:800;font-size:10px;color:var(--muted);text-align:right}
+.source-health-item[data-health=recent] .source-health-row span{color:#2db595}
+.source-health-item[data-health=delayed] .source-health-row span,.source-health-item[data-health=stale] .source-health-row span{color:var(--amber)}
+.source-health-item[data-health=unavailable] .source-health-row span{color:var(--red)}
+.source-health-item p{color:var(--muted);font-size:11px;line-height:1.6;margin:0}
+.source-health-item a{color:var(--accent);font-size:10px;font-weight:850;text-decoration:none}
+.radar-reading-guide{display:flex;gap:14px;align-items:start;padding:13px 19px;background:var(--panel-2);border-top:1px solid var(--border)}
+.radar-reading-guide strong{flex:none;font-size:12px}.radar-reading-guide span{color:var(--muted);font-size:11px;line-height:1.6}.radar-reading-guide a{color:var(--accent);font-weight:800}
+@media(max-width:760px){.forecast-compare,.source-health-centre{padding:15px;margin:12px 0}
+ .forecast-compare-head,.source-health-head{flex-direction:column;gap:10px}
+ .forecast-compare-head button,.source-health-head button{width:100%}
+ .forecast-compare-models,.source-health-grid{grid-template-columns:1fr}
+ .compare-spread{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .radar-reading-guide{display:grid;gap:8px;padding:12px}}
+@media(max-width:420px){.compare-spread{grid-template-columns:1fr}}

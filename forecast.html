@@ -66,6 +66,17 @@
               <div><span>Temperature Range</span><strong id="forecast-next-temps">—</strong></div>
             </div>
           </div>
+          <article id="forecast-model-comparison" class="card forecast-compare" aria-labelledby="forecast-comparison-title">
+            <div class="forecast-compare-head"><div><span class="eyebrow">FORECAST INTELLIGENCE · INDEPENDENT GLOBAL MODELS</span><h3 id="forecast-comparison-title">ECMWF vs NOAA GFS</h3><p>Compare two numerical weather forecasts. Differences show model disagreement, not which model is correct.</p></div><button type="button" id="compare-refresh" class="outline-button">↻ Compare Models</button></div>
+            <div class="forecast-compare-meta"><span>Location: <b id="compare-location">Selected Location</b></span><span>Checked: <b id="compare-checked-at">—</b></span><span>Upcoming 24 matching hours where available</span></div>
+            <div class="forecast-compare-models">
+              <div class="compare-model-card"><div class="compare-model-head"><strong>ECMWF IFS</strong><span id="compare-ecmwf-status">Checking</span></div><div><span>Temperature Range</span><strong id="compare-ecmwf-temp">—</strong></div><div><span>Forecast Rainfall</span><strong id="compare-ecmwf-rain">—</strong></div><div><span>Maximum Gust</span><strong id="compare-ecmwf-gust">—</strong></div></div>
+              <div class="compare-model-card"><div class="compare-model-head"><strong>NOAA GFS</strong><span id="compare-gfs-status">Checking</span></div><div><span>Temperature Range</span><strong id="compare-gfs-temp">—</strong></div><div><span>Forecast Rainfall</span><strong id="compare-gfs-rain">—</strong></div><div><span>Maximum Gust</span><strong id="compare-gfs-gust">—</strong></div></div>
+            </div>
+            <div class="compare-spread"><div><span>6-Hour Temperature Difference</span><strong id="compare-temp-spread">—</strong></div><div><span>Rainfall Difference</span><strong id="compare-rain-spread">—</strong></div><div><span>Peak Gust Difference</span><strong id="compare-gust-spread">—</strong></div></div>
+            <p id="compare-summary" class="compare-summary" role="status" aria-live="polite">Checking independent model data…</p>
+            <p class="data-footnote">Model spread is not an accuracy score, confidence percentage or official warning. The primary Best Match forecast may use some of the same models. <a href="https://open-meteo.com/en/docs/ecmwf-api" target="_blank" rel="noopener">ECMWF data ↗</a> · <a href="https://open-meteo.com/en/docs/gfs-api" target="_blank" rel="noopener">GFS data ↗</a></p>
+          </article>
           <div class="forecast-grid"><article class="card chart-card"><div class="card-title-row"><div><h3 id="forecast-chart-title">24-Hour Temperature Trend</h3><p class="muted" id="forecast-chart-subtitle">Modelled hourly values · °C</p></div><span class="small-chip">24 HOURS</span></div>
   <div class="forecast-chart-tabs" role="group" aria-label="Forecast chart variable"><button type="button" data-forecast-chart="temperature" class="active" aria-pressed="true">Temperature</button><button type="button" data-forecast-chart="rain" aria-pressed="false">Rain Chance</button><button type="button" data-forecast-chart="wind" aria-pressed="false">Wind Gusts</button></div>
   <div id="temp-chart" class="temp-chart"><p class="muted">Loading chart…</p></div><div class="chart-labels" id="chart-labels"></div></article><article class="card hours-card"><div class="card-title-row"><div><h3>Hourly Outlook</h3><p class="muted">Next 24 hours · temperature, rain chance, forecast rain and gusts</p></div></div><div class="hours-scroll" id="hourly-list"><span class="muted">Loading hours…</span></div></article></div>
@@ -93,6 +104,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
   <script src="./assets/push-config.js?v=1" defer></script>
   <script src="./assets/app.js?v=7" defer></script>
+  <script src="./assets/forecast-compare.js?v=1" defer></script>
   <script src="./assets/update.js?v=1" defer></script>
 </body>
 </html>

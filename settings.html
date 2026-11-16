@@ -56,6 +56,12 @@
 <div class="setting-fact"><span>Installed App Version</span><strong id="app-version-value">Checking…</strong></div>
 <div id="app-update-status" class="update-status" role="status">Checking for the latest release…</div>
 <div class="app-update-actions"><button id="app-update-check" class="outline-button" type="button">Check for Updates</button><button id="app-update-apply" class="outline-button" type="button" hidden>Update Now</button></div><button id="settings-install" class="outline-button">Install App / Instructions</button><div class="tiny-note">In-app incident notifications work while SkyPulse AU is open. Background push is independently controlled below and depends on your browser permissions.</div></article></div>
+          <article id="source-health-centre" class="card source-health-centre" aria-labelledby="source-health-heading">
+            <div class="source-health-head"><div><span class="eyebrow">DATA TRANSPARENCY · SOURCE RELIABILITY</span><h3 id="source-health-heading">Official NSW Data Health</h3><p>Check publication freshness for each public source. Recent downloads do not guarantee coverage or safety.</p></div><button id="source-health-refresh" type="button" class="outline-button">↻ Check Sources</button></div>
+            <div class="source-health-banner" role="status"><strong id="source-health-summary">Checking official feed snapshots…</strong><span id="source-health-checked">—</span></div>
+            <div id="source-health-grid" class="source-health-grid"></div>
+            <p class="data-footnote">RFS incidents, district fire danger, RFS warning areas, BOM RSS and supplementary WMO publications are assessed separately. WMO-listed items are not verified active warnings. Feed failures never imply an all-clear; official warnings are authoritative.</p>
+          </article>
           <article class="card background-alert-card" id="background-alert-card">
   <div class="card-title-row"><div><div class="eyebrow">OPTIONAL BACKGROUND MONITORING</div><h3>Background Push Notifications</h3><p class="muted">NSW RFS warning areas near your saved watch location, plus optional incident updates.</p></div><span id="push-status-badge" class="source-badge">NOT CONFIGURED</span></div>
   <p id="push-status" class="push-status" role="status">Checking notification service configuration…</p>
@@ -87,6 +93,7 @@
   <script src="./assets/push-config.js?v=1" defer></script>
   <script src="./assets/app.js?v=7" defer></script>
   <script src="./assets/push.js?v=1" defer></script>
+  <script src="./assets/source-health.js?v=1" defer></script>
   <script src="./assets/update.js?v=1" defer></script>
 </body>
 </html>

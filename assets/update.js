@@ -39,7 +39,10 @@ function editableFocused(){
   return !!el&&!!el.matches?.('input,textarea,select,[contenteditable="true"],[role="textbox"]');
 }
 function safeToAutoApply(){
-  if(document.visibilityState!=="visible"||editableFocused())return false;
+  if(document.visibilityState!=="visible"||editableFocused()||!navigator.onLine)return false;
+   if(document.fullscreenElement||document.querySelector(".map-pseudo-fullscreen")||
+      document.querySelector('dialog[open], [role="dialog"][aria-modal="true"]'))return false;
+   if(document.querySelector("#radar-play")?.textContent.includes("Pause"))return false;
   const now=Date.now();
   if(now-openedAt<OPEN_GRACE||now-foregroundAt<OPEN_GRACE)return false;
   // When the user is actively navigating or changing settings, defer until idle.
