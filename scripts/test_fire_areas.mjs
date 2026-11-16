@@ -193,16 +193,42 @@ try{
  await page.locator("#fire-directory-scope").selectOption("statewide");
  if(await page.locator("#fire-directory-list [data-fire-dir-kind]").count()!==8)
   throw Error("All NSW reports filter didn't reveal published incident types");
+ await page.locator("#fire-directory-type").selectOption("grass");
+ if(await page.locator('#fire-directory-list [data-fire-dir-kind="incident"]').count()!==1)throw Error("Incident type filter failed");
+ await page.locator("#fire-directory-level").selectOption("Advice");
+ if(await page.locator("#fire-directory-list [data-fire-dir-kind]").count()!==0)throw Error("Severity filter incorrectly matched unclassified report");
+ await page.locator("#fire-directory-level").selectOption("all");
+ if(!(await page.locator("#fire-directory-filter-status").textContent()).includes("1 matching"))throw Error("Report count incorrect");
+ await page.locator("#fire-directory-clear").click();
+ if(await page.locator("#fire-directory-scope").inputValue()!=="nearby"||
+    await page.locator("#fire-directory-type").inputValue()!=="all"||
+    await page.locator("#fire-directory-level").inputValue()!=="all"||
+    await page.locator('#fire-directory-list [data-fire-dir-kind="incident"]').count()!==1)throw Error("Reset Filters failed");
+ await page.locator("#fire-directory-scope").selectOption("statewide");
  await page.locator("#fire-directory-search").fill("remote northern");
  if(await page.locator("#fire-directory-list [data-fire-dir-kind]").count()!==1)
   throw Error("Report search didn't filter by incident name");
  await page.locator("#fire-directory-search").fill("");
+ await page.locator("#fire-directory-type").selectOption("grass");
+ const markerSelection=await page.evaluate(()=>{
+  const marker=window.__fireLayers.find(x=>x.kind==="marker"&&x.domNode?.isConnected&&
+   x.opts.icon?.options?.html?.includes("fire-map-pin-fire")&&typeof x.handlers.click==="function");
+  if(!marker)return false;marker.handlers.click();return true;
+ });
+ if(!markerSelection||await page.locator("#fire-directory-type").inputValue()!=="all"||
+  !(await page.locator("#fire-map-selection-body").textContent()).includes("Test Fire"))
+  throw Error("Map selection didn't reveal filtered-out incident");
+ await page.locator("#fire-map-selection-close").click();
  await page.locator("#fire-directory-sort").selectOption("severity");
  await page.locator("#fire-directory-warnings").click();
  if((await page.locator("#fire-directory-warnings").getAttribute("aria-selected"))!=="true")
   throw Error("Warnings tab not selected");
  if(await page.locator('#fire-directory-list [data-fire-dir-kind="warning"]').count()!==2)
   throw Error("Official CAP warning directory missing entries");
+ if(!(await page.locator("#fire-directory-type").isDisabled()))throw Error("Incident categories enabled for warnings");
+ await page.locator("#fire-directory-level").selectOption("Emergency Warning");
+ if(await page.locator('#fire-directory-list [data-fire-dir-kind="warning"]').count()!==1)throw Error("CAP level filter failed");
+ await page.locator("#fire-directory-level").selectOption("all");
  await page.locator('#fire-directory-list [data-fire-dir-kind="warning"][data-fire-dir-index="1"]').click();
  if(!(await page.locator("#fire-map-selection-body").textContent()).includes("Bushfire information"))
   throw Error("CAP warning with no polygon did not display its details");

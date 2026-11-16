@@ -11,7 +11,7 @@ function radarSettingOpacity(value){var x=Number(value);return Number.isFinite(x
 var state={location:stored.location||DEFAULT,radius:Number(stored.radius)||50,theme:stored.theme||"dark",notify:!!stored.notify,weather:null,weatherLocationKey:"",weatherFetchedAt:0,weatherCached:false,weatherFetchFailed:false,weatherSeq:0,forecastChartMode:"temperature",forecastDayIndex:0,map:null,markers:null,radarLayer:null,peekMap:null,peekLayer:null,radarFrames:[],radarHost:"",radarEnabled:radarSettingBool("rain",true),incidentsEnabled:radarSettingBool("incidents",true),radarTimer:null,radarIndex:-1,radarFollowLatest:radarSettingBool("follow",true),
 radarAutocheck:radarSettingBool("auto",true),radarLoop:radarSettingBool("loop",true),
 radarShowTimestamp:radarSettingBool("timestamp",true),radarSpeed:radarSettingSpeed(radarStored.speed),
-radarShareView:null,radarSharedAt:null,radarCurrentRegion:"local",radarFetchedAt:0,radarAttemptAt:0,radarLoadingPromise:null,radarRenderedKey:"",radarOutgoing:null,radarSwapTimer:null,radarLastError:"",radarTileErrors:0,baseLayer:null,locationMarker:null,mapTileFailures:0,mapNearbyOnly:radarSettingBool("nearby",true),mapWheelZoom:radarSettingBool("wheel",false),radarOpacity:radarSettingOpacity(radarStored.opacity),gpsMarker:null,gpsAccuracy:null,mapStatusTimer:null,fireDanger:null,hazardMap:null,hazardLayers:null,hazardRadiusLayer:null,fireDirectoryMode:"incidents",fireDirectoryScope:"nearby",fireDirectorySort:"distance",fireDirectoryQuery:"",fireSelected:null,
+radarShareView:null,radarSharedAt:null,radarCurrentRegion:"local",radarFetchedAt:0,radarAttemptAt:0,radarLoadingPromise:null,radarRenderedKey:"",radarOutgoing:null,radarSwapTimer:null,radarLastError:"",radarTileErrors:0,baseLayer:null,locationMarker:null,mapTileFailures:0,mapNearbyOnly:radarSettingBool("nearby",true),mapWheelZoom:radarSettingBool("wheel",false),radarOpacity:radarSettingOpacity(radarStored.opacity),gpsMarker:null,gpsAccuracy:null,mapStatusTimer:null,fireDanger:null,hazardMap:null,hazardLayers:null,hazardRadiusLayer:null,fireDirectoryMode:"incidents",fireDirectoryScope:"nearby",fireDirectorySort:"distance",fireDirectoryQuery:"",fireDirectoryType:"all",fireDirectoryLevel:"all",fireSelected:null,
  incidentsFresh:false,warningsFresh:false,fireAreasEnabled:radarSettingBool("fireareas",true),fireAreaLayer:null,fireDistrict:stored.fireDistrict||"",rfsAlerts:[],warningLayer:null,warningsEnabled:radarSettingBool("warnings",true),incidents:[],lastIncidentFetch:null,seen:stored.seen||null,weatherError:false};
 var DATA_MAX_AGE=90*60*1000;
 function save(){try{localStorage.setItem("skypulse.preferences",JSON.stringify({location:state.location,radius:state.radius,theme:state.theme,notify:state.notify,seen:state.seen,fireDistrict:state.fireDistrict,
@@ -407,7 +407,8 @@ function fireDirectoryEntryTime(feature){
 }
 function fireDirectoryItems(){
  var search=state.fireDirectoryQuery.toLowerCase().trim(),scope=state.fireDirectoryScope,
-     sort=state.fireDirectorySort,loc=state.location;
+     sort=state.fireDirectorySort,loc=state.location,
+     typeFilter=state.fireDirectoryType,levelFilter=state.fireDirectoryLevel;
  if(state.fireDirectoryMode==="warnings"){
   if(!state.warningsFresh)return [];
   var warnings=state.rfsAlerts.map(function(a,i){
@@ -415,7 +416,9 @@ function fireDirectoryItems(){
     level:hazardLevel(a),area:Array.isArray(a.area_names)?a.area_names.join(", "):"",
     distance:Infinity,updated:Date.parse(a.sent||"")||0,
     searchable:([a.headline,a.event,(a.area_names||[]).join(" "),a.instruction,hazardLevel(a)].join(" ")).toLowerCase()};
-  }).filter(function(a){return !search||a.searchable.includes(search);});
+  }).filter(function(a){
+   return (!search||a.searchable.includes(search))&&(levelFilter==="all"||a.level===levelFilter);
+  });
   return warnings.sort(function(a,b){
    return sort==="severity"?fireDirectorySeverity(b.level)-fireDirectorySeverity(a.level)||b.updated-a.updated:
     b.updated-a.updated;
@@ -429,7 +432,10 @@ function fireDirectoryItems(){
   return {kind:"incident",index:i,feature:f,title:name,level,distance,updated,
    searchable:([name,level,location,area,incidentDetailValue(f,"status","status"),incidentDetailValue(f,"incident_type","type")].join(" ")).toLowerCase()};
  }).filter(function(a){
-  return (scope==="statewide"||hazardNearbyIncident(a.feature))&&(!search||a.searchable.includes(search));
+  return (scope==="statewide"||hazardNearbyIncident(a.feature))&&
+    (!search||a.searchable.includes(search))&&
+    (typeFilter==="all"||fireIncidentKind(a.feature)===typeFilter)&&
+    (levelFilter==="all"||a.level===levelFilter);
  });
  incidents.sort(function(a,b){
   if(sort==="severity")return fireDirectorySeverity(b.level)-fireDirectorySeverity(a.level)||a.distance-b.distance;
@@ -669,12 +675,25 @@ function renderFireDirectory(){
  var count=$("fire-directory-total");
  if(count)count.textContent=ready?String(items.length):"—";
  if($("fire-directory-scope"))$("fire-directory-scope").disabled=warnings;
+ var typeSelect=$("fire-directory-type"),levelSelect=$("fire-directory-level"),sortSelect=$("fire-directory-sort");
+ if(typeSelect){typeSelect.value=state.fireDirectoryType;typeSelect.disabled=warnings;
+  typeSelect.title=warnings?"Incident type filtering applies only to Incidents.":"Filter incident reports by type.";}
+ if(levelSelect)levelSelect.value=state.fireDirectoryLevel;
+ if(sortSelect){var nearest=sortSelect.querySelector('option[value="distance"]');
+  if(nearest)nearest.textContent=warnings?"Latest Issued":"Nearest First";}
+ var resetActive=!!state.fireDirectoryQuery||state.fireDirectoryScope!=="nearby"||
+  state.fireDirectorySort!=="distance"||state.fireDirectoryType!=="all"||state.fireDirectoryLevel!=="all";
+ var resetButton=$("fire-directory-clear");if(resetButton)resetButton.disabled=!resetActive;
+ var filterStatus=$("fire-directory-filter-status");
+ if(filterStatus)filterStatus.textContent=!ready?"Official reports unavailable — verify with NSW RFS":
+  (items.length>250?"Showing first 250 of "+items.length:items.length+" matching")+
+  (warnings?" warnings":" incident reports")+" · Map stays unfiltered";
  panel.innerHTML=!ready?
   '<div class="fire-directory-empty"><strong>Data unavailable or delayed</strong><p>The official feed cannot currently verify reports. Check NSW RFS directly.</p>'+
   '<a href="https://www.rfs.nsw.gov.au/fire-information/fires-near-me" target="_blank" rel="noopener">Open NSW RFS ↗</a></div>':
   items.length?items.slice(0,250).map(fireDirectoryHTML).join(""):
   '<div class="fire-directory-empty"><strong>No matching reports in this snapshot</strong><p>'+
-   (state.fireDirectoryQuery?"Try a different search or area selection.":"No mapped reports matched these filters. This is not an all-clear.")+
+   (resetActive?"Try resetting filters or changing your monitoring area.":"No mapped reports matched these filters. This is not an all-clear.")+
    '</p></div>';
  panel.querySelectorAll("[data-fire-dir-kind]").forEach(function(button){
   button.addEventListener("click",function(){
@@ -695,7 +714,7 @@ function fireSelectMapItem(kind,index){
   if($("fire-directory-scope"))$("fire-directory-scope").value="statewide";
  }
  if(!fireDirectoryItems().some(function(item){return item.kind===kind&&item.index===index;})){
-  state.fireDirectoryQuery="";
+  state.fireDirectoryQuery="";state.fireDirectoryType="all";state.fireDirectoryLevel="all";
   if($("fire-directory-search"))$("fire-directory-search").value="";
  }
  var pane=$("fire-map-selection"),body=$("fire-map-selection-body");
@@ -737,6 +756,16 @@ function initFireDirectory(){
  on("fire-directory-search","input",function(e){state.fireDirectoryQuery=String(e.target.value||"").slice(0,90);renderFireDirectory();});
  on("fire-directory-scope","change",function(e){state.fireDirectoryScope=e.target.value;renderFireDirectory();});
  on("fire-directory-sort","change",function(e){state.fireDirectorySort=e.target.value;renderFireDirectory();});
+ on("fire-directory-type","change",function(e){state.fireDirectoryType=e.target.value;renderFireDirectory();});
+ on("fire-directory-level","change",function(e){state.fireDirectoryLevel=e.target.value;renderFireDirectory();});
+ on("fire-directory-clear","click",function(){
+  state.fireDirectoryScope="nearby";state.fireDirectorySort="distance";state.fireDirectoryQuery="";
+  state.fireDirectoryType="all";state.fireDirectoryLevel="all";
+  if($("fire-directory-search"))$("fire-directory-search").value="";
+  if($("fire-directory-scope"))$("fire-directory-scope").value="nearby";
+  if($("fire-directory-sort"))$("fire-directory-sort").value="distance";
+  fireCloseSelection();
+ });
  on("fire-map-selection-close","click",fireCloseSelection);
  renderFireDirectory();
 }

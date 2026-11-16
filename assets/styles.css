@@ -713,6 +713,13 @@ body[data-page=hazards] .fire-area-layout{grid-template-columns:minmax(275px,330
 .fire-directory-dropdowns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.8fr);gap:7px}
 .fire-directory-dropdowns select{min-width:0;width:100%;height:35px;border:1px solid var(--border);border-radius:8px;padding:0 6px;background:var(--panel);color:var(--text);font:750 10px Manrope,sans-serif}
 .fire-directory-dropdowns select:disabled{opacity:.45;cursor:not-allowed}
+.fire-directory-secondary{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:7px}
+.fire-directory-filter-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.fire-directory-filter-footer>span{flex:1;min-width:0;font-size:9.5px;line-height:1.45;color:var(--muted)}
+.fire-directory-clear{flex:none;min-height:29px;padding:4px 8px;border:1px solid var(--border);border-radius:7px;background:var(--panel);font:750 9.5px Manrope,sans-serif;color:var(--accent);cursor:pointer}
+.fire-directory-clear:hover:not(:disabled),.fire-directory-clear:focus-visible{border-color:var(--accent);background:var(--panel-3)}
+.fire-directory-clear:disabled{opacity:.46;cursor:not-allowed}
+.fire-directory-secondary select:focus-visible,.fire-directory-clear:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .fire-directory-list{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-color:var(--border) transparent;scrollbar-width:thin}
 .fire-directory-entry{display:grid;gap:7px;width:100%;padding:15px 15px 14px;text-align:left;border:0;border-bottom:1px solid var(--border);border-left:3px solid transparent;background:transparent;color:var(--text);cursor:pointer;transition:background .15s,border-left-color .15s}
 .fire-directory-entry:hover{background:var(--panel-3)}
