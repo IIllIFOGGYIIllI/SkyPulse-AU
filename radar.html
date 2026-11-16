@@ -92,6 +92,7 @@
     </div>
   </div>
   <div class="cloud-hours-scroll" id="cloud-hours" role="region" aria-label="Hourly modelled cloud cover trend" tabindex="0"><p>Checking hourly cloud forecast…</p></div>
+  <div class="cloud-lightning-note"><div><strong>⚡ Live Lightning Strike Map</strong><p>Actual lightning strikes can be viewed on Weatherzone's official layer, with detected activity from the past 60 minutes. Select its Lightning layer after opening. Strike data is not yet licensed for display inside SkyPulse.</p></div><a href="https://www.weatherzone.com/au/layers/" target="_blank" rel="noopener noreferrer">Open Lightning Map ↗</a></div>
   <div class="cloud-satellite-links">
     <div><strong>Actual Satellite Cloud Imagery</strong><p>Use the official Himawari satellite viewers for observed cloud patterns. These are separate from the SkyPulse model forecast and rain radar.</p></div>
     <div class="cloud-satellite-actions">
@@ -139,7 +140,8 @@
     <button type="button" class="radar-region-button" data-radar-region="australia">Australia</button>
   </div>
   <div class="radar-quick-actions">
-    <button id="radar-copy-link" type="button" class="outline-button radar-secondary-button" title="Copy a link to this map location and radar time">Copy Map Link</button>
+    <a id="radar-lightning-open" class="outline-button radar-secondary-button radar-lightning-link" href="https://www.weatherzone.com/au/layers/" target="_blank" rel="noopener noreferrer" title="Open observed lightning strikes on Weatherzone, where you can enable the Lightning layer">⚡ View Lightning Strikes ↗</a>
+     <button id="radar-copy-link" type="button" class="outline-button radar-secondary-button" title="Copy a link to this map location and radar time">Copy Map Link</button>
     <button id="radar-preferences-toggle" type="button" class="outline-button radar-secondary-button" aria-expanded="false" aria-controls="radar-preferences">⚙ Radar Settings</button>
   </div>
 </div>
@@ -173,6 +175,7 @@
   <label class="map-layer-check"><input type="checkbox" id="map-layer-warnings" checked><span>Official RFS Warning Areas<small>Only polygons published by NSW RFS</small></span></label>
   <label class="map-layer-check"><input type="checkbox" id="map-layer-rfs" checked><span>NSW RFS Incidents<small>Mapped incident locations</small></span></label>
   <label class="map-layer-check"><input type="checkbox" id="map-layer-fire-areas" checked><span>Published Incident Extents<small>Fire-area geometry if provided; not an evacuation or warning boundary</small></span></label>
+   <div class="map-layer-external"><strong>⚡ Lightning Strikes</strong><small>Observed strikes require an authorised data feed. For now open Weatherzone's live Lightning layer, covering detected strikes over the previous 60 minutes.</small><a href="https://www.weatherzone.com/au/layers/" target="_blank" rel="noopener noreferrer">View Lightning On Weatherzone ↗</a></div>
   <label class="map-layer-check"><input type="checkbox" id="map-nearby-only" checked><span>Nearby Incidents Only<small>Uses your selected alert radius</small></span></label>
   <label class="map-layer-check"><input type="checkbox" id="map-wheel-zoom"><span>Mouse Wheel Zoom<small>Scroll to zoom when enabled</small></span></label><div class="map-layer-slider"><label for="map-radar-opacity">Radar Opacity <strong id="map-opacity-label">60%</strong></label><input id="map-radar-opacity" type="range" min="20" max="100" value="60" step="5"></div>
   <div class="map-panel-title minor">Map Data</div><p>Street map: OpenStreetMap<br>Rain radar: RainViewer<br>Incidents: NSW Rural Fire Service</p>
