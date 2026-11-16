@@ -40,6 +40,8 @@ jobs:
           node --check sw.js
           node --check assets/push.js
           node --check assets/update.js
+          node --check assets/forecast-compare.js
+          node --check assets/source-health.js
           node --check notifications/src/index.js
           node --check notifications/generate-vapid.mjs
           node notifications/test/smoke.mjs
@@ -59,6 +61,7 @@ jobs:
           node scripts/check_mobile_layout.mjs
           node scripts/test_radar_studio.mjs
           node scripts/test_forecast_reliability.mjs
+          node scripts/test_systems_overhaul.mjs
           node scripts/test_fire_areas.mjs
           rm -rf node_modules package-lock.json
       - name: Configure Pages

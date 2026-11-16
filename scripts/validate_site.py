@@ -12,7 +12,8 @@ pages = {
     "forecast.html": ("forecast", ["temp-chart", "hourly-list", "daily-list", "forecast-integrity",
 "forecast-health-pill", "forecast-model-time", "forecast-checked-time", "forecast-retry",
 "forecast-next-rain-chance", "forecast-next-rain-mm", "forecast-next-gust", "forecast-next-temps",
-"forecast-brief-period", "forecast-day-details", "forecast-chart-title"]),
+"forecast-brief-period", "forecast-day-details", "forecast-chart-title",
+"forecast-model-comparison", "compare-temp-spread", "compare-rain-spread", "compare-refresh"]),
     "radar.html": ("map-section", ["weather-map", "map-locate", "map-home", "map-zoom-in", "map-zoom-out",
                                   "map-fit", "map-layers-button", "map-fullscreen", "map-layer-radar",
                                   "map-layer-rfs", "map-layer-warnings", "map-radar-opacity",
@@ -25,7 +26,8 @@ pages = {
     "news.html": ("news", []),
     "settings.html": ("alerts", ["settings-location", "radius", "notify-toggle", "push-enable",
                                "push-consent", "push-include-incidents", "push-disable", "push-test",
-                               "app-update-status", "app-update-check"]),
+                               "app-update-status", "app-update-check", "source-health-centre", "source-health-summary",
+                               "source-health-grid", "source-health-refresh"]),
 }
 text = {p: (ROOT / p).read_text(encoding="utf-8") for p in pages}
 js = (ROOT / "assets/app.js").read_text(encoding="utf-8")
@@ -111,6 +113,15 @@ check("Mobile 6 equal-width tabs", "grid-template-columns:repeat(6,minmax(0,1fr)
 check("Forecast scrolling contained", ".hours-scroll{display:flex;max-width:100%;scroll-snap-type:x proximity}" in css)
 check("Route-aware JavaScript", "document.body.dataset.page" in js and "function on(id,type,handler)" in js)
 check("Official warning integration", "loadOfficialRfsWarnings()" in js and "showRfsWarningMap" in js)
+check("Independent global model comparison", (ROOT / "assets/forecast-compare.js").exists()
+      and "assets/forecast-compare.js?v=" in text["forecast.html"]
+      and "/v1/ecmwf" in (ROOT / "assets/forecast-compare.js").read_text()
+      and "/v1/gfs" in (ROOT / "assets/forecast-compare.js").read_text())
+check("Source health checks explicit data retrieval", (ROOT / "assets/source-health.js").exists()
+      and "assets/source-health.js?v=" in text["settings.html"]
+      and "not a verified all-clear" in (ROOT / "assets/source-health.js").read_text())
+check("Overhaul modules offline shell", '"./assets/forecast-compare.js"' in sw
+      and '"./assets/source-health.js"' in sw)
 check("Warning feed failures do not imply all clear", "Warning feed unavailable" in js)
 check("Push client isolated to Settings", "assets/push.js" in text["settings.html"] and
       all("assets/push.js" not in text[p] for p in pages if p != "settings.html"))
