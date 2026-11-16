@@ -161,6 +161,10 @@ try{
   if(!(await page.locator("#fire-map-selection-body").textContent()).includes(val))
    throw Error("Map details panel missing published field: "+val);
  }
+ const firstPosition=await page.locator("#fire-report-position").textContent();
+ if(!firstPosition.includes("1 of 1")||!(await page.locator("#fire-report-prev").isDisabled())||
+    !(await page.locator("#fire-report-next").isDisabled()))
+  throw Error("Single nearby report pager invalid: "+firstPosition);
  await page.locator("#fire-map-selection-close").click();
  if(await page.locator("#fire-map-selection").isVisible())throw Error("Close-map-details action failed");
  // Click the actual map marker in the Leaflet stub, not just the directory.
@@ -190,9 +194,34 @@ try{
   throw Error("Clicking an incident extent did not open the same details panel");
  await page.locator("#fire-map-selection-close").click();
 
+ // Navigation, expanded view and the collapsible legend must remain touch accessible.
+ const initialZoom=await page.evaluate(()=>window.__fireTestMap.getZoom());
+ await page.locator("#fire-nav-zoom-in").click();
+ if(await page.evaluate(()=>window.__fireTestMap.getZoom())!==initialZoom+1)throw Error("Map zoom in failed");
+ await page.locator("#fire-nav-zoom-out").click();
+ if(await page.evaluate(()=>window.__fireTestMap.getZoom())!==initialZoom)throw Error("Map zoom out failed");
+ await page.locator("#fire-nav-expand").click();
+ if(!(await page.locator("#fire-map-body").evaluate(el=>el.classList.contains("fire-map-expanded"))))
+  throw Error("Expand Map action failed");
+ await page.keyboard.press("Escape");
+ if(await page.locator("#fire-map-body").evaluate(el=>el.classList.contains("fire-map-expanded")))
+  throw Error("Escape did not exit expanded map");
+ if((await page.locator("#fire-map-legend-toggle").getAttribute("aria-expanded"))!=="false")
+  throw Error("Mobile legend should initially be collapsed");
+ await page.locator("#fire-map-legend-toggle").click();
+ if(!(await page.locator("#fire-map-legend").isVisible()))throw Error("Collapsed map key did not open");
+ await page.locator("#fire-map-legend-toggle").click();
  await page.locator("#fire-directory-scope").selectOption("statewide");
  if(await page.locator("#fire-directory-list [data-fire-dir-kind]").count()!==8)
   throw Error("All NSW reports filter didn't reveal published incident types");
+ await page.locator('#fire-directory-list [data-fire-dir-kind="incident"]').first().click();
+ const browsePosition=await page.locator("#fire-report-position").textContent();
+ if(!browsePosition.includes("1 of 8")||await page.locator("#fire-report-next").isDisabled())
+  throw Error("Statewide pager not enabled: "+browsePosition);
+ await page.locator("#fire-report-next").click();
+ if(!(await page.locator("#fire-report-position").textContent()).includes("2 of 8"))
+  throw Error("Next Report did not change the selected incident");
+ await page.locator("#fire-map-selection-close").click();
  await page.locator("#fire-directory-type").selectOption("grass");
  if(await page.locator('#fire-directory-list [data-fire-dir-kind="incident"]').count()!==1)throw Error("Incident type filter failed");
  await page.locator("#fire-directory-level").selectOption("Advice");
@@ -301,6 +330,8 @@ try{
  await page.locator("#fire-map-selection-close").click();
  // Switch incident points off: no clusters or individual pins may remain.
  await page.locator("#fire-map-points").uncheck();
+ if(await page.evaluate(()=>JSON.parse(localStorage.getItem("skypulse.preferences")||"{}").fireMapLayers?.points)!==false)
+  throw Error("Fire map layer preference was not saved");
  const hidden=await page.evaluate(()=>window.__fireLayers.some(x=>x.kind==="marker"&&x.domNode?.isConnected&&
   (x.opts.icon?.options?.html?.includes("data-fire-cluster-members")||
    x.opts.icon?.options?.html?.includes('data-fire-marker-kind="incident"'))));

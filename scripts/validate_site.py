@@ -71,7 +71,7 @@ check("Incident fire operations view has filterable directory", "function render
 check("Fire Explorer map navigation and report pager", "function fireMapSetExpanded(" in js and "function fireBrowseReports(" in js and "function fireMapNavStatus(" in js and ".fire-map-navigation" in css)
 check("Fire directory source-aware filters and reset", 'typeFilter=state.fireDirectoryType' in js and 'levelFilter=state.fireDirectoryLevel' in js and 'on("fire-directory-clear","click"' in js and '.fire-directory-filter-footer' in css)
 check("RFS map incidents cluster without a dependency", "function fireClusterGroups(" in js and "function fireRenderIncidentPoints(" in js and "FIRE_CLUSTER_BREAK_ZOOM=13" in js)
-check("Radar and Fire Explorer share clustering", 'state.map.on("zoomend",renderRadarIncidentMarkers)' in js and 'state.hazardMap.on("zoomend",renderFireIncidentMarkers)' in js)
+check("Radar and Fire Explorer share clustering", 'state.map.on("zoomend",renderRadarIncidentMarkers)' in js and 'state.hazardMap.on("zoomend",function(){renderFireIncidentMarkers();fireMapNavStatus();})' in js)
 check("Cluster legend and accessibility", "Grouped Incidents" in js and "highest level" in js and ".fire-map-cluster" in css)
 check("Fire Explorer has category-specific local SVG markers", "function fireIconSvg(" in js and "function fireIncidentKind(" in js and "L.divIcon(" in js)
 check("Fire Explorer renders exactly one incident panel", 'function fireSelectMapItem(' in js and
