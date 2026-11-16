@@ -121,5 +121,8 @@ document.addEventListener("visibilitychange",()=>{
 });
 setInterval(()=>{if(document.visibilityState==="visible")refresh(false);},REFRESH_MS);
 paint();
-refresh(true);
+// The main SkyPulse app establishes the selected-location context in its
+// DOMContentLoaded handler. Fetch only after that context is ready.
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>refresh(true),{once:true});
+else refresh(true);
 })();
