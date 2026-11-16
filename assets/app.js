@@ -10,13 +10,13 @@ function radarSettingSpeed(value){return [5000,3500,2200].includes(Number(value)
 function radarSettingOpacity(value){var x=Number(value);return Number.isFinite(x)&&x>=.2&&x<=1?Math.round(x*20)/20:.6;}
 var state={location:stored.location||DEFAULT,radius:Number(stored.radius)||50,theme:stored.theme||"dark",notify:!!stored.notify,weather:null,weatherLocationKey:"",weatherFetchedAt:0,weatherCached:false,weatherFetchFailed:false,weatherSeq:0,forecastChartMode:"temperature",forecastDayIndex:0,map:null,markers:null,radarLayer:null,peekMap:null,peekLayer:null,radarFrames:[],radarHost:"",radarEnabled:radarSettingBool("rain",true),incidentsEnabled:radarSettingBool("incidents",true),radarTimer:null,radarIndex:-1,radarFollowLatest:radarSettingBool("follow",true),
 radarAutocheck:radarSettingBool("auto",true),radarLoop:radarSettingBool("loop",true),
-radarShowTimestamp:radarSettingBool("timestamp",true),radarSpeed:radarSettingSpeed(radarStored.speed),
+radarShowTimestamp:radarSettingBool("timestamp",true),radarSpeed:radarSettingSpeed(radarStored.speed),radarTileSize:radarSettingBool("hires",true)?512:256,radarSmooth:radarSettingBool("smooth",true),
 radarShareView:null,radarSharedAt:null,radarCurrentRegion:"local",radarFetchedAt:0,radarAttemptAt:0,radarLoadingPromise:null,radarRenderedKey:"",radarOutgoing:null,radarSwapTimer:null,radarLastError:"",radarTileErrors:0,baseLayer:null,locationMarker:null,mapTileFailures:0,mapNearbyOnly:radarSettingBool("nearby",true),mapWheelZoom:radarSettingBool("wheel",false),radarOpacity:radarSettingOpacity(radarStored.opacity),gpsMarker:null,gpsAccuracy:null,mapStatusTimer:null,fireDanger:null,hazardMap:null,hazardLayers:null,hazardRadiusLayer:null,fireDirectoryMode:"incidents",fireDirectoryScope:"nearby",fireDirectorySort:"distance",fireDirectoryQuery:"",fireDirectoryType:"all",fireDirectoryLevel:"all",fireSelected:null,fireMapExpanded:false,fireMapLegendCollapsed:false,fireMapLayers:{warnings:stored.fireMapLayers?.warnings!==false,boundaries:stored.fireMapLayers?.boundaries!==false,points:stored.fireMapLayers?.points!==false,radius:stored.fireMapLayers?.radius!==false},
  incidentsFresh:false,warningsFresh:false,fireAreasEnabled:radarSettingBool("fireareas",true),fireAreaLayer:null,fireDistrict:stored.fireDistrict||"",rfsAlerts:[],warningLayer:null,warningsEnabled:radarSettingBool("warnings",true),incidents:[],lastIncidentFetch:null,seen:stored.seen||null,weatherError:false};
 var DATA_MAX_AGE=90*60*1000;
 function save(){try{localStorage.setItem("skypulse.preferences",JSON.stringify({location:state.location,radius:state.radius,theme:state.theme,notify:state.notify,seen:state.seen,fireDistrict:state.fireDistrict,fireMapLayers:state.fireMapLayers,
  radar:{auto:state.radarAutocheck,follow:state.radarFollowLatest,
- loop:state.radarLoop,timestamp:state.radarShowTimestamp,speed:state.radarSpeed,
+ loop:state.radarLoop,timestamp:state.radarShowTimestamp,speed:state.radarSpeed,hires:state.radarTileSize===512,smooth:state.radarSmooth,
  opacity:state.radarOpacity,rain:state.radarEnabled,incidents:state.incidentsEnabled,
  warnings:state.warningsEnabled,nearby:state.mapNearbyOnly,wheel:state.mapWheelZoom,fireareas:state.fireAreasEnabled}}));}catch(e){}}
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];});}
@@ -1367,7 +1367,7 @@ function radarFrameUI(){
 function showRadarFrame(i){
  if((!state.map&&!state.peekMap)||!state.radarFrames.length)return;
  state.radarIndex=Math.max(0,Math.min(state.radarFrames.length-1,Number(i)||0));
- var f=radarFrame(),key=state.radarHost+f.path;
+ var f=radarFrame(),base=state.radarHost+f.path,key=base+"|"+state.radarTileSize+"|"+(state.radarSmooth?"smooth":"raw");
  radarFrameUI();
  if(state.map){
   if(!state.radarEnabled){
@@ -1376,8 +1376,8 @@ function showRadarFrame(i){
   }else if(key!==state.radarRenderedKey||!state.radarLayer){
    radarCleanLayer();var old=state.radarLayer;
    if(old)state.radarOutgoing=old;
-   var layer=L.tileLayer(key+"/256/{z}/{x}/{y}/2/1_1.png",{
-    opacity:state.radarOpacity,zIndex:350,maxNativeZoom:7,maxZoom:18,updateWhenIdle:true,keepBuffer:1,
+   var layer=L.tileLayer(base+"/"+state.radarTileSize+"/{z}/{x}/{y}/2/"+(state.radarSmooth?"1":"0")+"_1.png",{
+    opacity:state.radarOpacity,zIndex:350,tileSize:256,maxNativeZoom:7,maxZoom:18,updateWhenIdle:true,keepBuffer:1,
     attribution:'Radar imagery <a href="https://www.rainviewer.com/">RainViewer</a>'
    });
    layer.on("load",function(){if(state.radarLayer===layer)radarCleanLayer();});
@@ -1409,6 +1409,8 @@ function radarSyncPreferences(){
  if($("radar-setting-opacity"))$("radar-setting-opacity").value=Math.round(state.radarOpacity*100);
  if($("radar-setting-opacity-label"))setText("radar-setting-opacity-label",Math.round(state.radarOpacity*100)+"%");
  if($("radar-setting-speed"))$("radar-setting-speed").value=String(state.radarSpeed);
+ if($("radar-setting-hires"))$("radar-setting-hires").checked=state.radarTileSize===512;
+ if($("radar-setting-smooth"))$("radar-setting-smooth").checked=state.radarSmooth;
  if($("radar-speed"))$("radar-speed").value=String(state.radarSpeed);
  const stamp=$("radar-map-stamp");if(stamp)stamp.hidden=!state.radarShowTimestamp||!state.radarFrames.length;
 }
@@ -1422,7 +1424,7 @@ function radarUpdatePreference(key,value){
 }
 function radarResetPreferences(){
  state.radarAutocheck=true;state.radarFollowLatest=true;state.radarLoop=true;
- state.radarShowTimestamp=true;state.radarSpeed=3500;state.radarOpacity=.6;
+ state.radarShowTimestamp=true;state.radarSpeed=3500;state.radarOpacity=.6;state.radarTileSize=512;state.radarSmooth=true;
  state.radarEnabled=true;state.incidentsEnabled=true;state.warningsEnabled=true;
  state.mapNearbyOnly=true;state.mapWheelZoom=false;
  stopRadarPlayback();save();
@@ -1441,9 +1443,10 @@ function radarUpdateQuality(){
  if(!label||!state.map)return;
  var zoom=Number(state.map.getZoom()),isScaled=Number.isFinite(zoom)&&zoom>7;
  label.dataset.quality=isScaled?"scaled":"native";
- label.textContent=isScaled?
+ label.textContent=(isScaled?
   "Radar zoom "+zoom+": source images enlarged beyond native zoom 7 (no extra radar detail).":
-  "Radar source supports native detail through zoom 7.";
+  "Radar source supports native detail through zoom 7.")+
+  " · "+state.radarTileSize+"px "+(state.radarSmooth?"smoothed":"pixel-defined")+" display tiles. Tile quality does not increase measured radar resolution.";
 }
 
 function radarSyncRegionSelection(){
@@ -1495,6 +1498,12 @@ async function radarCopyLink(){
   window.prompt("Copy this radar map link:",link.toString());
  }
 }
+function radarSetImageQuality(){
+ save();radarSyncPreferences();
+ if(state.radarFrames.length)showRadarFrame(state.radarIndex);
+ radarUpdateQuality();
+ setText("radar-preferences-status","Image preferences saved · Source radar detail remains limited to zoom 7.");
+}
 function initRadarPreferences(){
  radarSyncPreferences();
  const panel=$("radar-preferences"),toggle=$("radar-preferences-toggle");
@@ -1505,6 +1514,8 @@ function initRadarPreferences(){
   .forEach(function(pair){on(pair[1],"change",function(e){radarUpdatePreference(pair[0],e.target.checked);});});
  on("radar-setting-opacity","input",function(e){radarSetOpacity(Number(e.target.value)/100);});
  on("radar-setting-speed","change",function(e){radarSetSpeed(e.target.value);});
+ on("radar-setting-hires","change",function(e){state.radarTileSize=e.target.checked?512:256;radarSetImageQuality();});
+ on("radar-setting-smooth","change",function(e){state.radarSmooth=e.target.checked;radarSetImageQuality();});
  on("radar-reset-preferences","click",radarResetPreferences);
  on("radar-copy-link","click",radarCopyLink);
  document.querySelectorAll("[data-radar-region]").forEach(function(btn){
