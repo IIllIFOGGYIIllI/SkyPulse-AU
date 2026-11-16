@@ -163,7 +163,7 @@ try{
   if(localLink!=="https://www.bom.gov.au/weather-and-climate/rain-radar-and-weather-maps?radar=4-newcastle")
     throw Error("Local higher-detail radar must link directly to the official Newcastle radar viewer");
   const distLabel=await page.locator("#radar-local-distance").textContent();
-  if(!/Approx\\. [0-9]+ km from Cessnock/.test(distLabel))throw Error("Newcastle station distance incorrect: "+distLabel);
+  if(!/Approx\. [0-9]+ km from Cessnock/.test(distLabel))throw Error("Newcastle station distance incorrect: "+distLabel);
   await page.locator("#map-layers-button").click();
   if(await page.locator("#map-layer-radar-sites").isChecked())throw Error("Range rings should be opt-in");
   await page.locator("#map-layer-radar-sites").check();
