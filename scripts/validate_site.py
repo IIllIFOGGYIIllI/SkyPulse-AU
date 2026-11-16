@@ -120,6 +120,11 @@ check("Independent global model comparison", (ROOT / "assets/forecast-compare.js
       and "assets/forecast-compare.js?v=" in text["forecast.html"]
       and "/v1/ecmwf" in (ROOT / "assets/forecast-compare.js").read_text()
       and "/v1/gfs" in (ROOT / "assets/forecast-compare.js").read_text())
+check("Cessnock published model-pair fallback", "publishedModelPair(loc)" in (ROOT / "assets/forecast-compare.js").read_text()
+      and "models_retrieved_at" in (ROOT / "scripts/sync_forecast.py").read_text())
+check("Data repair preserves push registration", 'id="app-data-repair"' in text["settings.html"]
+      and "repairDataLoading()" in (ROOT / "assets/update.js").read_text()
+      and "reg.update()" in (ROOT / "assets/update.js").read_text())
 check("Source health checks explicit data retrieval", (ROOT / "assets/source-health.js").exists()
       and "assets/source-health.js?v=" in text["settings.html"]
       and "not a verified all-clear" in (ROOT / "assets/source-health.js").read_text())

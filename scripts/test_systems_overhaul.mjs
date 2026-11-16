@@ -20,7 +20,7 @@ try{
  start.setUTCHours(0,0,0,0);
  const times=Array.from({length:168},(_,i)=>new Date(start.getTime()+i*3600000).toISOString().slice(0,16));
  const days=Array.from({length:7},(_,i)=>times[i*24].slice(0,10));
- let gfsOffline=false;
+ let gfsOffline=false,allowPublished=false;
  function model(type){
   const add=type==="gfs"?3:0;
   return {utc_offset_seconds:offset,hourly:{
@@ -60,6 +60,12 @@ try{
    return route.fulfill({status:200,contentType:"application/json",
     body:JSON.stringify(type==="normal"?normal():model(type))});
   }
+  if(url.pathname.endsWith("/weather-cessnock.json")){
+   if(!allowPublished)return route.fulfill({status:503,body:"Snapshot disabled for failure test"});
+   const snapshot={location:"Cessnock",models_retrieved_at:new Date().toISOString(),
+    models:{ecmwf:model("ecmwf"),gfs:model("gfs")}};
+   return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(snapshot)});
+  }
   const name=url.pathname.split("/").at(-1);
   if(name in feeds)return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(feeds[name])});
   if(url.hostname==="127.0.0.1")return route.continue();
@@ -75,6 +81,13 @@ try{
  await page.waitForFunction(()=>document.querySelector("#compare-gfs-status")?.textContent==="UNAVAILABLE");
  if((await page.locator("#compare-temp-spread").textContent())!=="—")
   throw Error("Failure did not clear model comparison");
+ allowPublished=true;
+ await page.locator("#compare-refresh").click();
+ await page.waitForFunction(()=>document.querySelector("#compare-ecmwf-status")?.textContent==="PUBLISHED SNAPSHOT");
+ if((await page.locator("#compare-temp-spread").textContent())==="—")
+  throw Error("Published model pair did not recover missing comparison values");
+ if(!(await page.locator("#compare-summary").textContent()).includes("dated Cessnock model snapshot"))
+  throw Error("Published model fallback was not distinguished from direct data");
  await page.goto("http://127.0.0.1:8768/settings.html",{waitUntil:"domcontentloaded"});
  await page.waitForFunction(()=>document.querySelector("#source-health-summary")?.textContent.includes("feeds are"),null,{timeout:15000});
  const states=await page.evaluate(()=>Object.fromEntries(["rfs","fdr","cap","bom","wmo"].map(k=>[

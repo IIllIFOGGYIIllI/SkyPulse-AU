@@ -36,4 +36,29 @@ try:
 except Exception as exc:
  snapshot["error"]="Source check failed: no verified backup available."
  print("Cessnock backup unavailable:",type(exc).__name__,str(exc)[:170])
+# ECMWF and GFS are independent numerical models; store only verified pairs.
+snapshot["models"]={}
+model_q={"latitude":-32.8321,"longitude":151.3497,"timezone":"auto",
+ "hourly":"temperature_2m,precipitation,wind_gusts_10m","forecast_hours":48}
+for model_name in ("ecmwf","gfs"):
+ try:
+  url="https://api.open-meteo.com/v1/"+model_name+"?"+urllib.parse.urlencode(model_q)
+  req=urllib.request.Request(url,headers={"Accept":"application/json","User-Agent":"SkyPulseAU-Backup/1.0"})
+  with urllib.request.urlopen(req,timeout=20) as response:
+   model_data=json.loads(response.read(400_000))
+  hours=model_data.get("hourly") or {}
+  if model_data.get("error") or len(hours.get("time",[]))<24 or not isinstance(model_data.get("utc_offset_seconds"),(int,float)):
+   raise ValueError("Invalid model forecast")
+  for field in ("temperature_2m","precipitation","wind_gusts_10m"):
+   array=hours.get(field)
+   if not isinstance(array,list) or len(array)!=len(hours["time"]) or sum(v is not None for v in array)<24:
+    raise ValueError("Missing valid model field "+field)
+  snapshot["models"][model_name]=model_data
+ except Exception as exc:
+  snapshot.setdefault("model_errors",{})[model_name]=type(exc).__name__+": "+str(exc)[:100]
+if len(snapshot["models"])==2:
+ snapshot["models_retrieved_at"]=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds").replace("+00:00","Z")
+ print("Cessnock ECMWF and GFS backup forecasts captured")
+else:
+ print("Cessnock model backups incomplete:",snapshot.get("model_errors",{}))
 PATH.write_text(json.dumps(snapshot,separators=(",",":"),ensure_ascii=False)+"\n",encoding="utf-8")

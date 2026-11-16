@@ -33,7 +33,7 @@ try{
  }));
  console.log("REAL BROWSER FORECAST",JSON.stringify({forecast,responses,failures,errors}));
  const fail=!/°/.test(forecast.ecmwfTemp||"")||!/°/.test(forecast.gfsTemp||"")||
-  forecast.status!=="MODEL DATA";
+  !["MODEL DATA","SNAPSHOT"].includes(forecast.status);
  await page.goto("http://127.0.0.1:8774/settings.html",{waitUntil:"domcontentloaded",timeout:30000});
  await page.waitForFunction(()=>document.querySelector("#source-health-checked")?.textContent!=="—",null,{timeout:15000}).catch(()=>{});
  const settings=await page.evaluate(()=>({

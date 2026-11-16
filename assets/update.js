@@ -127,10 +127,32 @@ async function applyUpdate(manual){
     }else reloadWithVersion();
   }catch(e){reloadWithVersion();}
 }
+async function repairDataLoading(){
+ const control=$("app-data-repair");
+ if(!navigator.onLine){setStatus("An internet connection is needed to repair app files. Saved preferences are unchanged.","error");return;}
+ if(control)control.disabled=true;
+ setStatus("Checking for fresh app files. Your saved settings and notification permissions will be retained…");
+ try{
+  // Keep the registered service worker and push subscription intact. Only shell cache data is reset.
+  const reg=await navigator.serviceWorker?.getRegistration("./");
+  if("caches" in window){
+   const keys=await caches.keys();
+   await Promise.all(keys.filter(k=>k.startsWith("skypulse-shell-")).map(k=>caches.delete(k)));
+  }
+  if(reg)await reg.update().catch(()=>{});
+  const target=new URL(location.href);
+  target.searchParams.set("refresh_data",Date.now().toString(36));
+  location.replace(target.href);
+ }catch(e){
+  setStatus("Unable to repair app files right now. Try opening SkyPulse in your browser.","error");
+  if(control)control.disabled=false;
+ }
+}
 function init(){
   const label=$("app-version-value");
   if(label)label.textContent=valid(running)?running:"Unverified";
   $("app-update-check")?.addEventListener("click",()=>check(true));
+   $("app-data-repair")?.addEventListener("click",repairDataLoading);
   $("app-update-apply")?.addEventListener("click",()=>applyUpdate(true));
   $("app-update-banner-button")?.addEventListener("click",()=>applyUpdate(true));
   const activity=()=>{lastActivity=Date.now();};
