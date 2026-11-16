@@ -20,7 +20,7 @@ pages = {
                                   "radar-check-now", "radar-freshness-indicator", "radar-latest-issued",
                                   "radar-last-check", "radar-map-clock", "radar-latest", "radar-speed",
                                   "radar-slider", "radar-frame-kind", "radar-data-age", "radar-source-bom",
-                                  "radar-source-weatherzone", "radar-quality-status"]),
+                                  "radar-source-weatherzone", "radar-quality-status", "cloud-panel", "cloud-model-status", "cloud-model-meta", "cloud-hours", "cloud-refresh", "cloud-value-total", "cloud-value-low", "cloud-value-mid", "cloud-value-high", "cloud-source-bom", "cloud-source-jma", "radar-lightning-open", "radar-setting-hires", "radar-setting-smooth"]),
     "hazards.html": ("hazards", ["fire-area-map", "fire-command-summary", "fire-summary-incidents", "fire-summary-warnings", "fire-summary-extents", "fire-summary-location", "fire-directory-list", "fire-directory-incidents", "fire-directory-warnings", "fire-directory-search", "fire-directory-scope", "fire-directory-sort", "fire-directory-type", "fire-directory-level", "fire-directory-clear", "fire-directory-filter-status", "fire-map-selection", "fire-map-selection-close", "fire-geofence-state", "fire-map-warnings", "fire-map-boundaries", "fire-overlaps", "fire-map-fit", "fire-nav-zoom-in", "fire-nav-zoom-out", "fire-nav-centre", "fire-nav-expand", "fire-map-legend-toggle", "fire-map-layer-summary", "fire-report-prev", "fire-report-next", "fire-report-position", "fire-warning-feed-health", "fire-incident-feed-health", "hazards-refresh", "incidents-list", "rfs-alerts-list", "fdr-district-select", "wmo-warnings-list"]),
     "news.html": ("news", []),
     "settings.html": ("alerts", ["settings-location", "radius", "notify-toggle", "push-enable",
@@ -60,6 +60,11 @@ for path, (page_id, required) in pages.items():
 check("Radar official BOM viewer external", 'href="https://www.bom.gov.au/australia/radar/"' in text["radar.html"])
 check("Radar Weatherzone viewer external", 'href="https://www.weatherzone.com/au/layers/"' in text["radar.html"])
 check("Radar source choice not spoofed", "ACTiVE IN SKYPULSE" not in text["radar.html"] and 'ACTIVE IN SKYPULSE' in text["radar.html"])
+check("Cloud model and linked source module", (ROOT / "assets/clouds.js").exists() and "assets/clouds.js?v=" in text["radar.html"] and "./assets/clouds.js" in sw)
+check("Cloud intelligence separated from rain radar", 'id="cloud-panel"' in text["radar.html"] and "Cloud Model" in text["radar.html"] and "Cloud Intelligence" in (ROOT / "assets/clouds.js").read_text(encoding="utf-8"))
+check("Cloud sources are publisher-run viewers", "www.bom.gov.au/australia/satellite/" in text["radar.html"] and "www.data.jma.go.jp/mscweb/data/himawari/" in text["radar.html"])
+check("Radar tile quality can be selected without new resolution claim", "radarTileSize:radarSettingBool" in js and "maxNativeZoom:7" in js and "state.radarTileSize===512" in js and "state.radarSmooth" in js)
+check("Lightning links avoid unlicensed on-map markers", 'id="radar-lightning-open"' in text["radar.html"] and "weatherzone.com/au/layers/" in text["radar.html"] and "Strike data is not yet licensed" in text["radar.html"])
 check("Radar detail disclosure", "function radarUpdateQuality()" in js and "native zoom 7" in js)
 check("Radar provider research retained", (ROOT / "docs/RADAR_PROVIDER_REVIEW.md").exists())
 check("Forecast test suite present", (ROOT / "scripts/test_forecast_reliability.mjs").exists())
