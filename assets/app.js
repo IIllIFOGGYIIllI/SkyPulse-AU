@@ -1378,6 +1378,7 @@ function radarStopFrameWait(){
 function radarFallbackTo256(failedLayer){
  if(state.radarLayer!==failedLayer||state.radarTemporary256||state.radarTileSize!==512)return;
  state.radarTemporary256=true;
+ radarUpdateQuality();
  radarStopFrameWait();
  // Preserve the previous successfully displayed image underneath the replacement.
  state.map.removeLayer(failedLayer);

@@ -156,7 +156,6 @@ try{
   // replace only the failed HD layer with a temporary 256px source.
   await page.evaluate(()=>{window.__holdRadarLoads=true;});
   await page.locator("#radar-step-back").click();
-  const beforeFallback=await page.evaluate(()=>window.__radarLayers.at(-1));
   const fallback=await page.evaluate(()=>{
     const layer=window.__radarLayers.at(-1);
     if(!layer||typeof layer.handlers.tileerror!=="function")return false;
