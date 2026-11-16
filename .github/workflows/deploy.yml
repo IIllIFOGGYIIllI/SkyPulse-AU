@@ -50,6 +50,9 @@ jobs:
       - name: Check Forecast API Fields
         continue-on-error: true
         run: python scripts/check_weather_api.py
+      - name: Check Real Weather Provider Responses
+        continue-on-error: true
+        run: python scripts/diagnose_live_data.py
       - name: Install Browser for Responsive Layout Test
         if: github.event_name != 'schedule'
         run: |
