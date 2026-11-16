@@ -1048,3 +1048,39 @@ body[data-page=hazards] .fire-attribution{border-top:1px solid var(--border);mar
  .fire-directory-list{min-height:190px;scroll-padding-block:12px}
  .fire-directory-entry{scroll-margin-block:10px}
 }
+
+/* Fire Explorer: accessible map navigation and one-panel report browsing */
+.fire-map-navigation{position:absolute;bottom:24px;left:12px;z-index:640;display:flex;align-items:flex-end;gap:8px;max-width:calc(100% - 24px);pointer-events:none}
+.fire-map-nav-buttons{display:flex;gap:5px;padding:5px;border-radius:11px;border:1px solid #416682;background:#0b2940ed;box-shadow:0 5px 18px #07152388;pointer-events:auto}
+.fire-map-nav-buttons button{display:grid;place-items:center;width:36px;height:36px;min-width:36px;border:1px solid #50728a;border-radius:8px;background:#1b3b56;color:#f4faff;font:850 21px/1 Manrope,sans-serif;cursor:pointer}
+.fire-map-nav-buttons button:hover,.fire-map-nav-buttons button:focus-visible{background:#326080;border-color:#91cbe8}
+.fire-map-nav-buttons button:focus-visible{outline:2px solid white;outline-offset:2px}
+.fire-map-nav-status{background:#0a263bef;border:1px solid #416682;color:#d7ebfa;border-radius:8px;font:750 10px/1.5 Manrope,sans-serif;padding:8px 9px;pointer-events:none}
+.fire-map-bottom-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:11px}
+.fire-map-bottom-heading strong{font:850 11px Manrope,sans-serif;color:var(--text)}
+.fire-map-bottom-heading button{border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--accent);background:var(--panel);font:750 10px Manrope,sans-serif;cursor:pointer}
+.fire-map-bottom-heading button:hover,.fire-map-bottom-heading button:focus-visible{border-color:var(--accent)}
+#fire-map-legend[hidden]{display:none!important}
+.fire-map-layer-summary{display:block;font:650 10px/1.6 Manrope,sans-serif;color:var(--muted);padding:4px 0}
+.fire-map-selection-footer{position:sticky;bottom:0;z-index:3;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:6px;padding:9px;background:#17344c;border-top:1px solid #42617c}
+.fire-map-selection-footer button{min-height:37px;border:1px solid #54738c;border-radius:8px;background:#224763;color:#eef8ff;padding:7px 9px;font:800 10px Manrope,sans-serif;cursor:pointer}
+.fire-map-selection-footer button:disabled{opacity:.38;cursor:not-allowed}
+.fire-map-selection-footer button:not(:disabled):hover{background:#396a88}
+.fire-map-selection-footer span{text-align:center;color:#b8d4ed;font:750 10px/1.4 Manrope,sans-serif}
+.fire-map-selection-footer button:focus-visible{outline:2px solid #f4faff;outline-offset:2px}
+.fire-map-expanded-active{overflow:hidden!important}
+body[data-page=hazards] #fire-map-body.fire-map-expanded{position:fixed!important;inset:10px!important;width:auto!important;height:auto!important;z-index:2500!important;box-shadow:0 0 0 100vmax #04121bba,0 18px 60px #000a;border:1px solid #467692}
+body[data-page=hazards] #fire-map-body.fire-map-expanded .fire-map-canvas{min-height:0;flex:1}
+body[data-page=hazards] #fire-map-body.fire-map-expanded .fire-area-map{min-height:0;height:100%}
+body[data-page=hazards] #fire-map-body.fire-map-expanded .fire-map-bottom{flex:none;max-height:33vh;overflow:auto}
+@media(max-width:660px){
+ .fire-map-navigation{left:8px;bottom:18px;gap:5px;align-items:flex-end}
+ .fire-map-nav-buttons{gap:3px;padding:4px}
+ .fire-map-nav-buttons button{width:34px;height:36px;min-width:34px}
+ .fire-map-nav-status{font-size:9px;padding:6px 7px;max-width:100px}
+ .fire-map-selection{top:auto;bottom:64px;right:8px;left:8px;width:auto;max-height:64%;border-radius:13px}
+ .fire-map-selection-footer{padding:7px}
+ .fire-map-selection-footer button{min-height:40px}
+ body[data-page=hazards] #fire-map-body.fire-map-expanded{inset:4px!important}
+ body[data-page=hazards] #fire-map-body.fire-map-expanded .fire-map-bottom{max-height:30vh}
+}

@@ -95,16 +95,30 @@
                 <div id="fire-directory-list" class="fire-directory-list" role="tabpanel" aria-live="polite"><p class="fire-directory-empty">Loading official RFS reports…</p></div>
                 <div class="fire-directory-footer"><span>Data source: NSW Rural Fire Service</span><a href="https://www.rfs.nsw.gov.au/fire-information/fires-near-me" target="_blank" rel="noopener">Official RFS Incident Map ↗</a></div>
               </aside>
-              <div class="fire-map-body">
-                <div class="fire-map-canvas">
+              <div class="fire-map-body" id="fire-map-body">
+                <div class="fire-map-canvas" id="fire-map-canvas">
                   <div id="fire-area-map" class="fire-area-map" role="region" aria-label="Interactive NSW RFS fire warning polygons and reported incident area map"><p>Loading NSW fire areas…</p></div>
-                  <div class="fire-map-floating-label"><span class="fire-map-live-dot"></span><span>NSW RFS • MAPPED INCIDENTS</span></div>
+                  <div class="fire-map-floating-label"><span class="fire-map-live-dot"></span><span>NSW RFS • PUBLISHED MAP DATA</span></div>
+                  <div class="fire-map-navigation" role="toolbar" aria-label="Fire Map Navigation">
+                    <div class="fire-map-nav-buttons">
+                      <button type="button" id="fire-nav-zoom-in" title="Zoom In" aria-label="Zoom In">+</button>
+                      <button type="button" id="fire-nav-zoom-out" title="Zoom Out" aria-label="Zoom Out">−</button>
+                      <button type="button" id="fire-nav-centre" title="Return to Selected Location" aria-label="Return to Selected Location">⌖</button>
+                      <button type="button" id="fire-nav-expand" title="Expand Map" aria-label="Expand Map" aria-pressed="false">⛶</button>
+                    </div><span id="fire-nav-status" class="fire-map-nav-status" aria-live="off">Map Loading</span>
+                  </div>
                   <div id="fire-map-selection" class="fire-map-selection" hidden aria-live="polite">
                     <div class="fire-map-selection-header"><span id="fire-map-selection-kind">OFFICIAL RFS INCIDENT DETAIL</span><button id="fire-map-selection-close" type="button" aria-label="Close selected map details">×</button></div>
                     <div id="fire-map-selection-body" class="fire-map-selection-body"></div>
+                    <div class="fire-map-selection-footer" role="group" aria-label="Browse Matching Reports">
+                      <button id="fire-report-prev" type="button" aria-label="Previous Report">‹ Previous</button>
+                      <span id="fire-report-position" aria-live="polite">Report</span>
+                      <button id="fire-report-next" type="button" aria-label="Next Report">Next ›</button>
+                    </div>
                   </div>
                 </div>
                 <div class="fire-map-bottom">
+                  <div class="fire-map-bottom-heading"><strong>Map Key &amp; Layers</strong><button id="fire-map-legend-toggle" type="button" aria-expanded="true" aria-controls="fire-map-legend">Hide Legend</button></div>
                   <div id="fire-map-legend" class="fire-map-legend" aria-label="Incident types and warning area symbols">
                     <div class="fire-legend-group"><span class="fire-legend-heading">Incident Types</span><div id="fire-map-legend-incidents" class="fire-legend-items">Loading symbols…</div></div>
                     <div class="fire-legend-group"><span class="fire-legend-heading">Warning Levels &amp; Areas</span><div id="fire-map-legend-warnings" class="fire-legend-items">Loading symbols…</div></div>
@@ -115,7 +129,7 @@
                     <label><input id="fire-map-points" type="checkbox" checked> Incidents</label>
                     <label><input id="fire-map-radius" type="checkbox" checked> My Radius</label>
                   </div>
-                  <p class="fire-map-hint">Fire extents and warning zones are different. Locations and boundaries may be delayed or incomplete; absence of a mapped warning is not an all-clear.</p>
+                  <span id="fire-map-layer-summary" class="fire-map-layer-summary" aria-live="polite">Four Map Layers Enabled</span><p class="fire-map-hint">Fire extents and warning zones are different. Locations and boundaries may be delayed or incomplete; absence of a mapped warning is not an all-clear.</p>
                 </div>
               </div>
             </div>

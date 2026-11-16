@@ -11,10 +11,10 @@ function radarSettingOpacity(value){var x=Number(value);return Number.isFinite(x
 var state={location:stored.location||DEFAULT,radius:Number(stored.radius)||50,theme:stored.theme||"dark",notify:!!stored.notify,weather:null,weatherLocationKey:"",weatherFetchedAt:0,weatherCached:false,weatherFetchFailed:false,weatherSeq:0,forecastChartMode:"temperature",forecastDayIndex:0,map:null,markers:null,radarLayer:null,peekMap:null,peekLayer:null,radarFrames:[],radarHost:"",radarEnabled:radarSettingBool("rain",true),incidentsEnabled:radarSettingBool("incidents",true),radarTimer:null,radarIndex:-1,radarFollowLatest:radarSettingBool("follow",true),
 radarAutocheck:radarSettingBool("auto",true),radarLoop:radarSettingBool("loop",true),
 radarShowTimestamp:radarSettingBool("timestamp",true),radarSpeed:radarSettingSpeed(radarStored.speed),
-radarShareView:null,radarSharedAt:null,radarCurrentRegion:"local",radarFetchedAt:0,radarAttemptAt:0,radarLoadingPromise:null,radarRenderedKey:"",radarOutgoing:null,radarSwapTimer:null,radarLastError:"",radarTileErrors:0,baseLayer:null,locationMarker:null,mapTileFailures:0,mapNearbyOnly:radarSettingBool("nearby",true),mapWheelZoom:radarSettingBool("wheel",false),radarOpacity:radarSettingOpacity(radarStored.opacity),gpsMarker:null,gpsAccuracy:null,mapStatusTimer:null,fireDanger:null,hazardMap:null,hazardLayers:null,hazardRadiusLayer:null,fireDirectoryMode:"incidents",fireDirectoryScope:"nearby",fireDirectorySort:"distance",fireDirectoryQuery:"",fireDirectoryType:"all",fireDirectoryLevel:"all",fireSelected:null,
+radarShareView:null,radarSharedAt:null,radarCurrentRegion:"local",radarFetchedAt:0,radarAttemptAt:0,radarLoadingPromise:null,radarRenderedKey:"",radarOutgoing:null,radarSwapTimer:null,radarLastError:"",radarTileErrors:0,baseLayer:null,locationMarker:null,mapTileFailures:0,mapNearbyOnly:radarSettingBool("nearby",true),mapWheelZoom:radarSettingBool("wheel",false),radarOpacity:radarSettingOpacity(radarStored.opacity),gpsMarker:null,gpsAccuracy:null,mapStatusTimer:null,fireDanger:null,hazardMap:null,hazardLayers:null,hazardRadiusLayer:null,fireDirectoryMode:"incidents",fireDirectoryScope:"nearby",fireDirectorySort:"distance",fireDirectoryQuery:"",fireDirectoryType:"all",fireDirectoryLevel:"all",fireSelected:null,fireMapExpanded:false,fireMapLegendCollapsed:false,fireMapLayers:{warnings:stored.fireMapLayers?.warnings!==false,boundaries:stored.fireMapLayers?.boundaries!==false,points:stored.fireMapLayers?.points!==false,radius:stored.fireMapLayers?.radius!==false},
  incidentsFresh:false,warningsFresh:false,fireAreasEnabled:radarSettingBool("fireareas",true),fireAreaLayer:null,fireDistrict:stored.fireDistrict||"",rfsAlerts:[],warningLayer:null,warningsEnabled:radarSettingBool("warnings",true),incidents:[],lastIncidentFetch:null,seen:stored.seen||null,weatherError:false};
 var DATA_MAX_AGE=90*60*1000;
-function save(){try{localStorage.setItem("skypulse.preferences",JSON.stringify({location:state.location,radius:state.radius,theme:state.theme,notify:state.notify,seen:state.seen,fireDistrict:state.fireDistrict,
+function save(){try{localStorage.setItem("skypulse.preferences",JSON.stringify({location:state.location,radius:state.radius,theme:state.theme,notify:state.notify,seen:state.seen,fireDistrict:state.fireDistrict,fireMapLayers:state.fireMapLayers,
  radar:{auto:state.radarAutocheck,follow:state.radarFollowLatest,
  loop:state.radarLoop,timestamp:state.radarShowTimestamp,speed:state.radarSpeed,
  opacity:state.radarOpacity,rain:state.radarEnabled,incidents:state.incidentsEnabled,
@@ -702,6 +702,24 @@ function renderFireDirectory(){
    else focusHazardWarning(i);
   });
  });
+ fireUpdateReportPager();
+}
+function fireUpdateReportPager(){
+ var prev=$("fire-report-prev"),next=$("fire-report-next"),label=$("fire-report-position");
+ if(!prev||!next||!label)return;
+ var items=fireDirectoryItems(),selected=state.fireSelected;
+ var i=selected?items.findIndex(function(x){return x.kind===selected.kind&&x.index===selected.index;}):-1;
+ prev.disabled=i<=0;next.disabled=i<0||i>=items.length-1;
+ label.textContent=i<0?"Not in Current Filters":(i+1)+" of "+items.length;
+}
+function fireBrowseReports(direction){
+ if(!state.fireSelected)return;
+ var items=fireDirectoryItems(),selected=state.fireSelected;
+ var i=items.findIndex(function(x){return x.kind===selected.kind&&x.index===selected.index;});
+ if(i<0||i+direction<0||i+direction>=items.length)return;
+ var next=items[i+direction];
+ if(next.kind==="warning")focusHazardWarning(next.index,false);
+ else focusHazardIncident(next.index,false);
 }
 function fireSelectMapItem(kind,index){
  if(state.hazardMap&&typeof state.hazardMap.closePopup==="function")state.hazardMap.closePopup();
@@ -744,6 +762,8 @@ function fireSelectMapItem(kind,index){
   pane.hidden=false;
  }
  renderFireDirectory();syncFireMapSelection();
+ var list=$("fire-directory-list"),active=list?.querySelector(".fire-directory-entry.is-active");
+ if(list&&active)list.scrollTop=Math.max(0,active.offsetTop-list.offsetTop-list.clientHeight*.3);
 }
 function fireCloseSelection(){
  state.fireSelected=null;
@@ -767,6 +787,8 @@ function initFireDirectory(){
   fireCloseSelection();
  });
  on("fire-map-selection-close","click",fireCloseSelection);
+ on("fire-report-prev","click",function(){fireBrowseReports(-1);});
+ on("fire-report-next","click",function(){fireBrowseReports(1);});
  renderFireDirectory();
 }
 
@@ -793,6 +815,31 @@ function renderFireLegend(){
  }
 }
 
+function fireMapNavStatus(){
+ if(!state.hazardMap)return;
+ var zoom=Math.round(Number(state.hazardMap.getZoom())||0);
+ var enabled=["warnings","boundaries","points","radius"].filter(function(k){return hazardMapEnabled("fire-map-"+k);}).length;
+ setText("fire-nav-status","Zoom "+zoom+" · "+enabled+"/4 Layers");
+ setText("fire-map-layer-summary",enabled+" of 4 Map Layers Visible · Warning Checks Remain Independent");
+}
+function fireMapSetExpanded(expanded){
+ var panel=$("fire-map-body"),button=$("fire-nav-expand");if(!panel||!button)return;
+ state.fireMapExpanded=!!expanded;
+ panel.classList.toggle("fire-map-expanded",state.fireMapExpanded);
+ document.body.classList.toggle("fire-map-expanded-active",state.fireMapExpanded);
+ button.setAttribute("aria-pressed",String(state.fireMapExpanded));
+ button.setAttribute("aria-label",state.fireMapExpanded?"Exit Expanded Map":"Expand Map");
+ button.title=state.fireMapExpanded?"Exit Expanded Map":"Expand Map";
+ button.textContent=state.fireMapExpanded?"×":"⛶";
+ if(state.hazardMap)requestAnimationFrame(function(){state.hazardMap.invalidateSize({pan:false});});
+}
+function fireMapToggleLegend(){
+ state.fireMapLegendCollapsed=!state.fireMapLegendCollapsed;
+ var legend=$("fire-map-legend"),button=$("fire-map-legend-toggle");
+ if(legend)legend.hidden=state.fireMapLegendCollapsed;
+ if(button){button.setAttribute("aria-expanded",String(!state.fireMapLegendCollapsed));
+  button.textContent=state.fireMapLegendCollapsed?"Show Legend":"Hide Legend";}
+}
 function initFireAreaMap(){
  var element=$("fire-area-map");
  if(!element)return;
@@ -801,25 +848,40 @@ function initFireAreaMap(){
   return;
  }
  element.replaceChildren();
- state.hazardMap=L.map(element,{scrollWheelZoom:false,zoomControl:true,preferCanvas:true})
+ state.hazardMap=L.map(element,{scrollWheelZoom:false,zoomControl:false,preferCanvas:true})
   .setView([state.location.lat,state.location.lon],8);
  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{
   maxZoom:18,updateWhenIdle:true,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
  }).addTo(state.hazardMap);
- state.hazardMap.on("zoomend",renderFireIncidentMarkers);
- state.hazardMap.on("moveend",syncFireMapSelection);
+ state.hazardMap.on("zoomend",function(){renderFireIncidentMarkers();fireMapNavStatus();});
+ state.hazardMap.on("moveend",function(){syncFireMapSelection();fireMapNavStatus();});
  state.hazardLayers={warnings:L.layerGroup().addTo(state.hazardMap),
   extents:L.layerGroup().addTo(state.hazardMap),incidents:L.layerGroup().addTo(state.hazardMap),
   locality:L.layerGroup().addTo(state.hazardMap)};
  if("ResizeObserver" in window)new ResizeObserver(function(){if(state.hazardMap)state.hazardMap.invalidateSize({pan:false});}).observe(element);
  on("fire-map-home","click",function(){state.hazardMap.setView([state.location.lat,state.location.lon],10);});
- on("fire-map-fit","click",fitHazardAreas);
+ on("fire-map-fit","click",function(){fitHazardAreas();fireMapNavStatus();});
+ on("fire-nav-centre","click",function(){state.hazardMap.setView([state.location.lat,state.location.lon],10);fireMapNavStatus();});
+ on("fire-nav-zoom-in","click",function(){state.hazardMap.zoomIn();fireMapNavStatus();});
+ on("fire-nav-zoom-out","click",function(){state.hazardMap.zoomOut();fireMapNavStatus();});
+ on("fire-nav-expand","click",function(){fireMapSetExpanded(!state.fireMapExpanded);});
+ on("fire-map-legend-toggle","click",fireMapToggleLegend);
+ document.addEventListener("keydown",function(event){
+  if(event.key==="Escape"&&state.fireMapExpanded){fireMapSetExpanded(false);return;}
+  if(event.key==="Escape"&&state.fireSelected&&document.activeElement?.tagName!=="INPUT")fireCloseSelection();
+ });
+ ["warnings","boundaries","points","radius"].forEach(function(k){
+  var control=$("fire-map-"+k);if(control)control.checked=state.fireMapLayers[k];
+ });
+ if(window.matchMedia&&window.matchMedia("(max-width: 660px)").matches)fireMapToggleLegend();
  renderFireLegend();initFireDirectory();
  ["warnings","boundaries","points","radius"].forEach(function(kind){
-  on("fire-map-"+kind,"change",renderFireAreaMap);
+  on("fire-map-"+kind,"change",function(event){
+   state.fireMapLayers[kind]=!!event.target.checked;save();renderFireAreaMap();
+  });
  });
  setTimeout(function(){state.hazardMap.invalidateSize({pan:false});},250);
- renderFireAreaMap();
+ renderFireAreaMap();fireMapNavStatus();
 }
 function hazardMapEnabled(id){var el=$(id);return !el||el.checked;}
 function hazardNearbyIncident(feature){
@@ -862,7 +924,7 @@ function renderFireAreaMap(){
   }
  }
  renderFireIncidentMarkers();
- renderFireAreaStatus();syncFireMapSelection();
+ renderFireAreaStatus();syncFireMapSelection();fireMapNavStatus();
 }
 function renderFireAreaStatus(){
  var area=hazardAssessWarnings(),current=state.location||{},title=current.name+(current.region?", "+current.region:"");
@@ -906,7 +968,7 @@ function renderFireAreaStatus(){
   incident.className=state.incidentsFresh?"":"warn";
  }
 }
-function focusHazardWarning(i){
+function focusHazardWarning(i,scrollToMap){
  var alert=state.rfsAlerts[i];if(!alert)return;
  var polygons=hazardWarningPolygons(alert);
  if(!state.hazardMap){window.location.href="./radar.html";return;}
@@ -915,17 +977,17 @@ function focusHazardWarning(i){
   if(polygons.length)state.hazardMap.fitBounds(L.latLngBounds(polygons.flat()).pad(.12),{maxZoom:12});
   else message("No mapped boundary was published for this warning; details shown in the incident panel.");
   if($("fire-map-warnings")&&!$("fire-map-warnings").checked){$("fire-map-warnings").checked=true;renderFireAreaMap();}
-  $("fire-map-workspace")?.scrollIntoView({behavior:"smooth",block:"start"});
+  if(scrollToMap!==false)$("fire-map-canvas")?.scrollIntoView({behavior:"smooth",block:"center"});
  }catch(e){message("Unable to zoom to the published warning area.");}
 }
-function focusHazardIncident(i){
+function focusHazardIncident(i,scrollToMap){
  var f=state.incidents[i];if(!f||!state.hazardMap)return;
  var poly=hazardIncidentPolygons(f),point=coordinatesOf(f);
  try{
   fireSelectMapItem("incident",i);
   if(poly.length)state.hazardMap.fitBounds(L.latLngBounds(poly.flat(2)).pad(.15),{maxZoom:12});
   else if(point)state.hazardMap.setView(point,13);
-  $("fire-map-workspace")?.scrollIntoView({behavior:"smooth",block:"start"});
+  if(scrollToMap!==false)$("fire-map-canvas")?.scrollIntoView({behavior:"smooth",block:"center"});
  }catch(e){message("Unable to display this incident area.");}
 }
 function fitHazardAreas(){
