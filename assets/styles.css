@@ -1128,3 +1128,17 @@ body[data-page=hazards] #fire-map-body.fire-map-expanded .fire-map-bottom{flex:n
 .cloud-source-note{font:600 10px/1.6 Manrope,sans-serif;color:var(--muted);margin:8px 0 0}
 @media(max-width:760px){.cloud-head,.cloud-satellite-links{align-items:stretch;flex-direction:column}.cloud-head>button{align-self:start}.cloud-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cloud-hour{flex-basis:60px}}
 @media(max-width:365px){.cloud-intelligence{padding:13px 10px}.cloud-layer-switch button{padding:7px 9px}.cloud-summary-item{padding:10px}.cloud-satellite-actions a{white-space:normal}}
+
+/* Lightning-source access is deliberately an external observation link. */
+.radar-lightning-link{display:inline-flex;align-items:center;justify-content:center;gap:4px;text-decoration:none!important;white-space:nowrap;color:var(--accent)}
+.radar-lightning-link:hover,.radar-lightning-link:focus-visible{border-color:var(--accent)}
+.map-layer-external{display:grid;gap:6px;border:1px solid var(--border);background:var(--panel-2);padding:10px;border-radius:9px;margin:7px 0}
+.map-layer-external strong{font:850 11px Manrope,sans-serif;color:var(--text)}
+.map-layer-external small{font:600 10px/1.5 Manrope,sans-serif;color:var(--muted)}
+.map-layer-external a{font:850 10px Manrope,sans-serif;color:var(--accent);text-decoration:none;justify-self:start;padding:5px 0}
+.cloud-lightning-note{display:flex;justify-content:space-between;gap:14px;align-items:center;border:1px solid var(--border);background:var(--panel-2);border-radius:10px;padding:13px;margin:14px 0}
+.cloud-lightning-note strong{font:850 12px Manrope,sans-serif;color:var(--text)}
+.cloud-lightning-note p{font:600 10px/1.6 Manrope,sans-serif;color:var(--muted);margin:4px 0 0;max-width:670px}
+.cloud-lightning-note a{flex:none;text-decoration:none;color:var(--accent);font:850 10px Manrope,sans-serif;background:var(--panel);padding:9px 12px;border:1px solid var(--border);border-radius:8px}
+.cloud-lightning-note a:hover,.cloud-lightning-note a:focus-visible{border-color:var(--accent)}
+@media(max-width:760px){.cloud-lightning-note{align-items:stretch;flex-direction:column}.cloud-lightning-note a{align-self:start}.radar-lightning-link{white-space:normal;text-align:center}}
