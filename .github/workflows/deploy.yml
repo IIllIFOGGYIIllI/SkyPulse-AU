@@ -67,6 +67,10 @@ jobs:
           node scripts/test_systems_overhaul.mjs
           node scripts/test_fire_areas.mjs
           rm -rf node_modules package-lock.json
+      - name: Check Real Browser Weather Values
+        if: github.event_name != 'schedule'
+        continue-on-error: true
+        run: node scripts/test_live_data_browser.mjs
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload site
