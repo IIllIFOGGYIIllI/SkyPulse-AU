@@ -4,7 +4,7 @@
 const CACHE="skypulse-shell-__SKYPULSE_BUILD__";
 const PREFIX="skypulse-shell-";
 const SHELL=["./","./index.html","./offline.html","./assets/styles.css",
-"./assets/leaflet.css","./assets/app.js","./assets/push.js","./assets/push-config.js",
+"./assets/leaflet.css","./assets/app.js","./assets/clouds.js","./assets/push.js","./assets/push-config.js",
 "./assets/update.js","./assets/icon.svg","./manifest.webmanifest",
 "./forecast.html","./radar.html","./hazards.html","./news.html","./settings.html","./privacy.html",
 "./terms.html","./sources.html"];
