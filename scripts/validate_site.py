@@ -128,6 +128,13 @@ check("Mobile 6 equal-width tabs", "grid-template-columns:repeat(6,minmax(0,1fr)
 check("Forecast scrolling contained", ".hours-scroll{display:flex;max-width:100%;scroll-snap-type:x proximity}" in css)
 check("Route-aware JavaScript", "document.body.dataset.page" in js and "function on(id,type,handler)" in js)
 check("Official warning integration", "loadOfficialRfsWarnings()" in js and "showRfsWarningMap" in js)
+check("Cloud backup uses location and age bounded local snapshots",
+      "skypulse.cloud.snapshot.v2" in (ROOT/"assets/clouds.js").read_text()
+      and "saved.key!==key" in (ROOT/"assets/clouds.js").read_text()
+      and "PREVIOUS MODEL SNAPSHOT" in (ROOT/"assets/clouds.js").read_text())
+check("Model divergence chart is explicitly model-vs-model",
+      'id="compare-hourly"' in text["forecast.html"]
+      and "compare-max-spread" in (ROOT/"assets/forecast-compare.js").read_text())
 check("Independent global model comparison", (ROOT / "assets/forecast-compare.js").exists()
       and "assets/forecast-compare.js?v=" in text["forecast.html"]
       and "/v1/ecmwf" in (ROOT / "assets/forecast-compare.js").read_text()

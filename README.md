@@ -159,3 +159,8 @@ The forecast test suite now reproduces a real browser outage for a GPS-selected 
 
 ### Browser-cached forecasts during outages
 For any saved location, if direct weather API requests fail, SkyPulse can reuse the browser's last verified location-matched forecast for up to 18 hours (versus two hours for normal quick loading). It rebases forecast days and hours to the current local date, prominently labels the saved values with original retrieval age as **NOT live**, and never supplies values from an unrelated location. These are temporary forecast references, not current station readings or official warnings.
+
+### Forecast disagreement chart and cloud outage recovery (18 November 2026)
+The Forecast page shows **hour-by-hour ECMWF IFS versus NOAA GFS temperature differences** over the 24 matching upcoming model hours, with the largest gap and its local time. The difference is *not* statistical forecast confidence or a measured error score. When a model is missing, the chart is cleared rather than showing stale comparisons.
+
+Cloud Intelligence on the Radar page now saves the last verified, same-location Open-Meteo cloud forecast in the browser for up to **18 hours**, never mixing coordinates. Failed requests try twice; if the network remains unavailable, the page displays the historical saved values with the original model valid and retrieval times and explicit **NOT current observation** wording. Values beyond the age limit or without future forecast hours are not treated as current data. No new paid services.

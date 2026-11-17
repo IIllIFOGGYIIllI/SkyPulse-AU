@@ -74,6 +74,10 @@ try{
  await page.goto("http://127.0.0.1:8768/forecast.html",{waitUntil:"domcontentloaded"});
  await page.waitForFunction(()=>document.querySelector("#compare-temp-spread")?.textContent.includes("°C"),null,{timeout:15000});
  if((await page.locator("#compare-rain-spread").textContent())==="—")throw Error("Rain spread missing");
+ if((await page.locator("#compare-hourly .compare-hour-bar").count())!==24)
+  throw Error("Hourly model disagreement graphic not populated with 24 overlapping hours");
+ if((await page.locator("#compare-max-spread").textContent())==="—")
+  throw Error("Largest hourly temperature disagreement not reported");
  if(!(await page.locator("#compare-summary").textContent()).includes("NOT a probability of accuracy"))
   throw Error("Model spread improperly presented as forecast confidence");
  gfsOffline=true;
@@ -81,6 +85,8 @@ try{
  await page.waitForFunction(()=>document.querySelector("#compare-gfs-status")?.textContent==="UNAVAILABLE");
  if((await page.locator("#compare-temp-spread").textContent())!=="—")
   throw Error("Failure did not clear model comparison");
+ if((await page.locator("#compare-hourly .compare-hour-bar").count())!==0)
+  throw Error("Old disagreement chart was not cleared after a model failed");
  allowPublished=true;
  await page.locator("#compare-refresh").click();
  await page.waitForFunction(()=>document.querySelector("#compare-ecmwf-status")?.textContent==="REFERENCE SNAPSHOT");

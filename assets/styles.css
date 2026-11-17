@@ -1214,3 +1214,17 @@ body[data-page=hazards] #fire-map-body.fire-map-expanded .fire-map-bottom{flex:n
 #weather-status{max-width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.4}
 .overview .section-header{min-width:0}
 @media(max-width:620px){.overview .section-header .status-pill{max-width:100%}}
+
+/* Forecast model differences are comparisons, never model confidence percentages. */
+.compare-spread{grid-template-columns:repeat(4,minmax(0,1fr))}
+.compare-spread small{font-size:10px;line-height:1.5;color:var(--muted)}
+.compare-chart-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:19px 0 8px}
+.compare-chart-head strong{font-size:12px}.compare-chart-head span{font-size:10px;color:var(--muted)}
+.compare-hourly{height:116px;padding:10px 11px 22px;border-radius:11px;border:1px solid var(--border);background:var(--panel-2);display:flex;align-items:stretch;gap:3px;overflow:hidden}
+.compare-hour-slot{position:relative;min-width:0;flex:1;display:flex;align-items:flex-end;justify-content:center}
+.compare-hour-bar{width:100%;min-height:3px;border-radius:3px 3px 0 0;background:var(--accent);opacity:.8}
+.compare-hour-bar.is-peak{background:var(--amber);opacity:1}
+.compare-hour-slot small{position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);font-size:9px;white-space:nowrap;color:var(--muted)}
+@media(max-width:880px){.compare-spread{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:540px){.compare-chart-head{display:grid;gap:5px}.compare-spread{grid-template-columns:1fr 1fr}.compare-hourly{padding-left:8px;padding-right:8px;gap:2px}}
+@media(max-width:350px){.compare-spread{grid-template-columns:1fr}}

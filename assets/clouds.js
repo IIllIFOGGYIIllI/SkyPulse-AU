@@ -8,8 +8,27 @@ const root=document.getElementById("cloud-panel");if(!root)return;
 const $=id=>document.getElementById(id);
 const KEYS={total:"cloud_cover",low:"cloud_cover_low",mid:"cloud_cover_mid",high:"cloud_cover_high"};
 const TITLES={total:"Total Cloud Cover",low:"Low-Level Clouds",mid:"Mid-Level Clouds",high:"High-Level Clouds"};
-const REFRESH_MS=15*60*1000;
-let snapshot=null,checkedAt=0,failed=false,placeKey="",layer="total",sequence=0,loading=false;
+const REFRESH_MS=15*60*1000,CACHE_MAX_MS=18*60*60*1000,CACHE_KEY="skypulse.cloud.snapshot.v2";
+let snapshot=null,checkedAt=0,failed=false,restored=false,placeKey="",layer="total",sequence=0,loading=false;
+function restore(key){
+ try{
+  const saved=JSON.parse(localStorage.getItem(CACHE_KEY)||"null");
+  if(!saved||saved.key!==key||!saved.snapshot||!Number.isFinite(saved.checkedAt))return null;
+  const age=Date.now()-saved.checkedAt,model=saved.snapshot;
+  if(age<0||age>CACHE_MAX_MS||!Number.isFinite(model.validAt)||
+     model.validAt>Date.now()+3600000||model.validAt<Date.now()-24*3600000||
+     !Array.isArray(model.times)||model.times.length<12||
+     !model.times.some(t=>Number.isFinite(t)&&t>=Date.now()-70*60000)||
+     !model.current||!model.hourly||percent(model.current.total)===null)return null;
+  for(const field of Object.keys(KEYS)){
+   if(!Array.isArray(model.hourly[field])||model.hourly[field].length!==model.times.length)return null;
+  }
+  return saved;
+ }catch{return null;}
+}
+function persist(key,model){
+ try{localStorage.setItem(CACHE_KEY,JSON.stringify({key,snapshot:model,checkedAt:Date.now()}));}catch{}
+}
 function percent(x){return typeof x==="number"&&Number.isFinite(x)&&x>=0&&x<=100?Math.round(x):null;}
 function epoch(value){
  if(typeof value!=="string"||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?$/.test(value))return NaN;
@@ -40,6 +59,7 @@ function parse(raw){
  return {validAt,times,current,hourly};
 }
 function paint(){
+ if(snapshot&&Date.now()-checkedAt>CACHE_MAX_MS){snapshot=null;failed=true;restored=false;}
  const status=$("cloud-model-status"),meta=$("cloud-model-meta"),scroller=$("cloud-hours");
  document.querySelectorAll("[data-cloud-layer]").forEach(button=>{
   const active=button.dataset.cloudLayer===layer;
@@ -58,10 +78,12 @@ function paint(){
   scroller.appendChild(notice);return;
  }
  const delayed=Date.now()-snapshot.validAt>90*60000||Date.now()-checkedAt>60*60000;
- const health=failed?"failed":delayed?"delayed":"recent";
+ const health=failed?"failed":restored?"delayed":delayed?"delayed":"recent";
  status.className="cloud-health "+health;
- status.textContent=failed?"PREVIOUS MODEL SNAPSHOT":delayed?"MODEL MAY BE DELAYED":"MODEL FORECAST AVAILABLE";
- meta.textContent="Model valid "+clock(snapshot.validAt)+" · Retrieved "+clock(checkedAt)+(failed?" · Latest check failed":"");
+ status.textContent=failed?"PREVIOUS MODEL SNAPSHOT":restored?"SAVED MODEL SNAPSHOT":delayed?"MODEL MAY BE DELAYED":"MODEL FORECAST AVAILABLE";
+ meta.textContent="Model valid "+clock(snapshot.validAt)+" · Retrieved "+clock(checkedAt)+
+  ((failed||restored)?" · Historical forecast, NOT current observation":"")+
+  (failed?" · Latest check failed":"");
  scroller.replaceChildren();
  const upcoming=snapshot.times.map((time,i)=>({time,value:snapshot.hourly[layer][i]}))
   .filter(item=>item.time>=Date.now()-70*60000).slice(0,18);
@@ -86,7 +108,11 @@ function paint(){
 async function refresh(force){
  const loc=location();if(!loc)return;
  const key=loc.latitude.toFixed(4)+","+loc.longitude.toFixed(4);
- if(key!==placeKey){placeKey=key;snapshot=null;checkedAt=0;failed=false;sequence++;}
+ if(key!==placeKey){
+  placeKey=key;snapshot=null;checkedAt=0;failed=false;restored=false;sequence++;
+  const previous=restore(key);
+  if(previous){snapshot=previous.snapshot;checkedAt=previous.checkedAt;restored=true;paint();}
+ }
  if(!force&&snapshot&&!failed&&Date.now()-checkedAt<REFRESH_MS){paint();return;}
  if(loading&&!force)return;
  const id=++sequence;loading=true;$("cloud-refresh").disabled=true;
@@ -96,18 +122,25 @@ async function refresh(force){
   current:Object.values(KEYS).join(","),hourly:Object.values(KEYS).join(","),
   forecast_hours:"24",timezone:"GMT"
  });
- const abort=new AbortController(),timeout=setTimeout(()=>abort.abort(),14000);
  try{
-  const response=await fetch("https://api.open-meteo.com/v1/forecast?"+qs,{signal:abort.signal,cache:"no-store"});
-  if(!response.ok)throw Error("HTTP "+response.status);
-  const data=parse(await response.json());
+  let data=null,problem=null;
+  for(let attempt=0;attempt<2;attempt++){
+   const abort=new AbortController(),timeout=setTimeout(()=>abort.abort(),attempt===0?8000:11000);
+   try{
+    const response=await fetch("https://api.open-meteo.com/v1/forecast?"+qs,{signal:abort.signal,cache:"no-store"});
+    if(!response.ok)throw Error("HTTP "+response.status);
+    data=parse(await response.json());break;
+   }catch(error){problem=error;}
+   finally{clearTimeout(timeout);}
+  }
+  if(!data)throw problem||new Error("Cloud model unavailable");
   if(id!==sequence)return;
-  snapshot=data;checkedAt=Date.now();failed=false;
+  snapshot=data;checkedAt=Date.now();failed=false;restored=false;
+  persist(key,data);
  }catch(error){
   if(id!==sequence)return;
-  failed=true; // Retained snapshot is labelled as previous, never current.
+  failed=true; // Retained source-labelled snapshot is historical, never current.
  }finally{
-  clearTimeout(timeout);
   if(id===sequence){loading=false;$("cloud-refresh").disabled=false;paint();}
  }
 }

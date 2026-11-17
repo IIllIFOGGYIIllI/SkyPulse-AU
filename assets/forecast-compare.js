@@ -20,6 +20,9 @@ function reset(){
  for(const model of MODELS)for(const type of ["status","temp","rain","gust"])
   set("compare-"+model.id+"-"+type,type==="status"?"CHECKING":"—");
  for(const type of ["temp","rain","gust"])set("compare-"+type+"-spread","—");
+ set("compare-max-spread","—");
+ set("compare-max-time","Awaiting both models");
+ const plot=$("compare-hourly");if(plot){plot.replaceChildren();plot.setAttribute("aria-label","Hourly model comparison unavailable");}
  set("compare-summary","Checking independent model data…");
 }
 function read(data){
@@ -94,6 +97,28 @@ function paint(result,loc,published){
  set("compare-temp-spread",fmt(Math.abs(a.get(t).temp-b.get(t).temp),"°C",1));
  set("compare-rain-spread",fmt(Math.abs(first.rain-second.rain)," mm",1));
  set("compare-gust-spread",fmt(Math.abs(first.gust-second.gust)," km/h"));
+ const differences=times.map(hour=>Math.abs(a.get(hour).temp-b.get(hour).temp));
+ const peak=Math.max(...differences),index=differences.indexOf(peak),peakHour=times[index];
+ set("compare-max-spread",fmt(peak,"°C",1));
+ set("compare-max-time","Greatest gap · "+peakHour.slice(5,10)+" "+peakHour.slice(11,16)+" local");
+ const plot=$("compare-hourly");
+ if(plot){
+  plot.replaceChildren();
+  plot.setAttribute("aria-label","Hourly absolute temperature difference between ECMWF IFS and NOAA GFS over "+times.length+" matching forecast hours; highest difference "+peak.toFixed(1)+" degrees Celsius at "+peakHour.replace("T"," ")+" local");
+  const scale=Math.max(1,peak);
+  differences.forEach((delta,i)=>{
+   const item=document.createElement("div");item.className="compare-hour-slot";
+   const bar=document.createElement("div");bar.className="compare-hour-bar";
+   if(i===index)bar.classList.add("is-peak");
+   bar.style.height=(Math.max(3,delta/scale*100))+"%";
+   const label=times[i].replace("T"," ")+" local · "+delta.toFixed(1)+"°C model difference";
+   item.title=label;item.setAttribute("aria-label",label);
+   if(i%6===0||i===times.length-1){
+    const tick=document.createElement("small");tick.textContent=times[i].slice(11,16);item.append(tick);
+   }
+   item.prepend(bar);plot.append(item);
+  });
+ }
  set("compare-summary",(published?"Using older Cessnock reference model "+Math.round(published.distanceKm)+" km from selected location because direct requests failed; these values are NOT live. ":"")+"Compared "+times.length+" matching forecast hours for "+loc.name+
   ". Temperature difference is at the sixth common hour; rainfall and gust differences cover the same forecast window. Model spread is NOT a probability of accuracy.");
 }
