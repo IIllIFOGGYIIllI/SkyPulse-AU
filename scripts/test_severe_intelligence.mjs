@@ -78,7 +78,18 @@ try{
   return route.abort();
  });
  await page.goto("http://127.0.0.1:8781/index.html",{waitUntil:"domcontentloaded"});
- await page.waitForFunction(()=>document.querySelector("#severe-warning-label")?.textContent.includes("Mapped Area Match"),null,{timeout:20000});
+ await page.waitForFunction(()=>document.querySelector("#severe-warning-label")?.textContent.includes("Mapped Area Match"),null,{timeout:9000})
+ .catch(async()=>{
+  const debug=await page.evaluate(()=>({
+   label:document.querySelector("#severe-warning-label")?.textContent,
+   source:document.querySelector("#severe-source-count")?.textContent,
+   model:document.querySelector("#severe-weather")?.textContent,
+   location:window.SkyPulseWatchContext?.(),
+   msg:document.querySelector("#severe-notice")?.textContent,
+   scripts:[...document.scripts].map(s=>s.src).filter(s=>s.includes("severe"))
+  }));
+  throw Error("Severe polygon fixture not rendered: "+JSON.stringify({debug,errors}));
+ });
  const active=await page.evaluate(()=>({
   warning:document.querySelector("#severe-warning-label").textContent,
   detail:document.querySelector("#severe-warning-detail").textContent,
