@@ -29,7 +29,7 @@ try{
    uv_index_max:days.map(()=>7),sunrise:days.map(d=>d+"T06:03"),sunset:days.map(d=>d+"T19:30")}
  };
  await page.addInitScript(()=>{
-  localStorage.setItem("skypulse.preferences",JSON.stringify({
+  if(!localStorage.getItem("skypulse.preferences"))localStorage.setItem("skypulse.preferences",JSON.stringify({
    location:{name:"My Location",region:"Australia",lat:-32.845,lon:151.35},theme:"dark",radius:50,notify:false
   }));
  });
