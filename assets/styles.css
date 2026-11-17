@@ -1282,3 +1282,14 @@ body[data-page=hazards] #fire-map-body.fire-map-expanded .fire-map-bottom{flex:n
 .severe-metrics{width:100%;gap:8px}.severe-model{padding:12px}
 .severe-metrics b{font-size:12px}}
 @media(max-width:360px){.severe-metrics{grid-template-columns:1fr 1fr}}
+
+.severe-cap-notices{display:grid;gap:7px;margin:10px 0}
+.severe-cap-notice{padding:9px 11px;border:1px solid var(--border);background:var(--panel);border-radius:8px;font-size:10px;color:var(--muted);line-height:1.65}
+.push-readiness{padding:14px;margin:13px 0;border:1px solid var(--border);border-radius:11px;background:var(--panel-2)}
+.push-readiness-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.push-readiness-head strong{font-size:12px}
+.push-readiness-head button{flex:none;min-height:34px}
+.push-check-row{font-size:11px;line-height:1.6;border-bottom:1px solid var(--border);padding:6px 0}
+.push-check-row:last-child{border-bottom:0}
+#push-diagnostics p{font-size:11px;color:var(--muted);line-height:1.6}
+@media(max-width:610px){.push-readiness-head{flex-direction:column;align-items:stretch}.push-readiness-head button{width:100%}}

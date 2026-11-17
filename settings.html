@@ -68,6 +68,9 @@
   <label class="push-choice"><input type="checkbox" id="push-include-incidents"><span><b>Include Nearby RFS Incident Updates</b><small>Informational location markers; not an official emergency warning.</small></span></label>
   <label class="push-choice"><input type="checkbox" id="push-consent"><span><b>I Consent to Background Monitoring</b><small>If enabled, a push service stores my subscription endpoint and approximate watch-zone coordinates (rounded to about 1 km). I can disable it at any time.</small></span></label>
   <div class="push-buttons"><button id="push-enable" class="outline-button" type="button">Enable Background Alerts</button><button id="push-update" class="outline-button" type="button" hidden>Update Watch Zone</button><button id="push-disable" class="outline-button" type="button" hidden>Disable Alerts</button><button id="push-test" class="outline-button" type="button" hidden>Test Notification</button></div>
+  <div class="push-readiness"><div class="push-readiness-head"><strong>Notification Delivery Readiness</strong><button id="push-diagnostics-check" type="button" class="outline-button">Check Delivery Readiness</button></div>
+    <div id="push-diagnostics" role="status" aria-live="polite"><p>Check device permission, active subscription and Cloudflare Worker status. A local notification test is not proof that background alerts can arrive.</p></div>
+  </div>
   <p class="data-footnote">Requires a configured backend and a compatible browser. On iPhone, install the PWA to the Home Screen. Delivery is best-effort, may be delayed and never replaces Hazards Near Me, BOM warnings or emergency broadcasts.</p>
   <a href="https://github.com/IIllIFOGGYIIllI/SkyPulse-AU/blob/main/docs/PUSH_SETUP.md" target="_blank" rel="noopener" class="text-link">Push Service Setup &amp; Status ↗</a>
 </article>

@@ -121,12 +121,26 @@ def load_rfs():
             return
         root = ET.fromstring(content)
         alerts = []
+        cancellations = []
         for alert in root.iter():
             if local(alert.tag) != "alert":
                 continue
             status = value(alert, "status")
             msg_type = value(alert, "msgType")
-            if status != "Actual" or msg_type in ("Cancel", "Error", "Ack"):
+            if status != "Actual" or msg_type in ("Error", "Ack"):
+                continue
+            if msg_type == "Cancel":
+                infos = [x for x in alert if local(x.tag) == "info"][:1]
+                info = infos[0] if infos else None
+                if info is not None:
+                    link = valid_link(value(info, "web"), {"www.rfs.nsw.gov.au", "rfs.nsw.gov.au"})
+                    cancellations.append({
+                        "id": value(alert, "identifier")[:250],
+                        "sent": value(alert, "sent"),
+                        "references": value(alert, "references")[:450],
+                        "headline": value(info, "headline")[:450] or value(info, "event")[:150] or "Published RFS CAP Cancellation",
+                        "web": link or "https://www.rfs.nsw.gov.au/fire-information/alerts-and-warnings"
+                    })
                 continue
             for info in [x for x in alert if local(x.tag) == "info"][:3]:
                 expiration = parse_iso(value(info, "expires"))
@@ -154,6 +168,7 @@ def load_rfs():
                 if item["headline"]:
                     alerts.append(item)
         dump("rfs-alerts.json", {"source": RFS, "retrieved_at": iso(), "alerts": alerts,
+             "cancellations": cancellations[:30],
              "scope": "NSW RFS published warnings; a warning with no polygon cannot be automatically location-matched",
              "attribution": "© State of New South Wales (NSW Rural Fire Service). For current information go to www.rfs.nsw.gov.au."})
         print("RFS CAP warning alerts:", len(alerts), "with polygons:", sum(bool(x["polygons"]) for x in alerts))

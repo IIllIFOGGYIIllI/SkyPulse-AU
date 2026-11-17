@@ -133,10 +133,23 @@ function render(x){
    "The selected location or monitoring radius intersects published RFS warning geometry.":
    "No match in the retrieved polygons. Warnings without polygons cannot be location-matched; this is NOT an all-clear.");
   const list=$("severe-warning-list");list.replaceChildren();
+  const notices=Array.isArray(cap.data.cancellations)?cap.data.cancellations:[];
+  const caps=$("severe-cap-notices");if(caps){
+   caps.replaceChildren();
+   for(const c of notices.slice(0,3)){
+    const row=document.createElement("div");row.className="severe-cap-notice";
+    const time=Date.parse(c.sent||"");
+    row.textContent="Official CAP cancellation published"+(Number.isFinite(time)?" "+date(time):"")+
+      ": "+String(c.headline||"Cancellation notice")+
+      " · Statewide notice, NOT location-matched. Verify details at NSW RFS.";
+    caps.append(row);
+   }
+  }
   if(matched.length)for(const {a,scope} of matched){
    const row=document.createElement("div");row.className="severe-warning-row";
    row.dataset.level=level(a);
-   const title=document.createElement("strong");title.textContent=level(a)+" · "+(a.headline||a.event||"Published RFS Notice");
+   const title=document.createElement("strong");title.textContent=
+    (a.message_type==="Update"?"PUBLISHED UPDATE · ":"")+level(a)+" · "+(a.headline||a.event||"Published RFS Notice");
    const detail=document.createElement("span");detail.textContent=(scope==="inside"?"Contains selected location":"Within monitoring radius")+
     " · Issued "+(Number.isFinite(Date.parse(a.sent||""))?date(Date.parse(a.sent)):"time unavailable");
    const link=document.createElement("a");const u=String(a.web||"");
@@ -149,6 +162,7 @@ function render(x){
   set("severe-warning-label",region?"RFS Feed Unavailable":"Outside NSW Coverage");
   set("severe-warning-detail",region?"Official warning areas cannot be checked; open NSW RFS.":"NSW RFS polygons must not be treated as worldwide warning coverage.");
   $("severe-warning-list").replaceChildren();
+  $("severe-cap-notices")?.replaceChildren();
  }
  if(inc.ok&&region){
   const close=inc.data.features.filter(f=>{

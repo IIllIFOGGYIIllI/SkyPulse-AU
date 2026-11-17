@@ -8,7 +8,7 @@ let publicKey="",ready=false,updating=false,syncTimer=null;
 const supported=()=>("serviceWorker" in navigator)&&("PushManager" in window)&&("Notification" in window);
 function status(text,kind=""){
   const e=$("push-status");if(!e)return;e.textContent=text;e.className="push-status"+(kind?" "+kind:"");
-  const badge=$("push-status-badge");if(badge)badge.textContent=kind==="ready"?"READY":kind==="problem"?"ACTION NEEDED":"NOT CONFIGURED";
+  const badge=$("push-status-badge");if(badge)badge.textContent=kind==="ready"?"SERVICE AVAILABLE":kind==="problem"?"ACTION NEEDED":"NOT CONFIGURED";
 }
 function btnState(hasSubscription){
   $("push-enable").hidden=hasSubscription;
@@ -46,8 +46,10 @@ async function refreshStatus(){
     publicKey=data.publicKey;ready=true;
     const sub=await subscription();
     btnState(Boolean(sub));$("push-enable").textContent="Enable Background Alerts";
-    if(sub)status("Device Push Subscription Found. Use Update Watch Zone to synchronise your selected location and incident settings.","ready");
-    else status("Background Push Service Is Ready. Read the privacy consent, then tap Enable to subscribe.","ready");
+    if(sub){
+      status("Device Push Subscription Found. Delivery from Cloudflare to this device is NOT independently verified.","ready");
+      if($("push-status-badge"))$("push-status-badge").textContent="DEVICE SUBSCRIBED";
+    }else status("Background Push Service Is Available. Subscribe before notifications can be received.","ready");
   }catch(e){
     ready=false;btnState(false);
     status("Background Push Service Is Unavailable or Not Configured: "+String(e.message||e)+". No background notifications are active.","problem");
@@ -104,10 +106,41 @@ async function testDeviceNotification(){
       body:"This is a local test, not a delivered background warning. Always follow official alerts.",
       icon:"./assets/icon.svg",tag:"skypulse-test",data:{url:new URL("./#alerts",location.href).href}
     });
-    status("Test Notification Shown Locally. This Does Not Verify Server-to-Device Delivery.","ready");
+    status("Local Display Test Completed. This Does NOT Verify Cloudflare-To-Device Delivery.","ready");
   }catch(e){status("Unable to Show Test Notification: "+String(e.message||e),"problem");}
 }
+async function checkReadiness(){
+ const out=$("push-diagnostics");if(!out)return;
+ const button=$("push-diagnostics-check");
+ if(button)button.disabled=true;
+ out.textContent="Checking browser, Worker, device and delivery requirements…";
+ const checks=[];
+ try{
+  checks.push("HTTPS: "+(window.isSecureContext?"Available":"Required"));
+  checks.push("Browser Push: "+(supported()?"Supported":"Unsupported in this browser context"));
+  checks.push("Notification Permission: "+(supported()?Notification.permission:"Unavailable"));
+  if(ROOT){
+   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),9000);
+   try{
+    const response=await fetch(ROOT+"/health",{signal:controller.signal,cache:"no-store"});
+    if(!response.ok)throw Error("HTTP "+response.status);
+    const d=await response.json();
+    checks.push("Cloudflare Worker: "+(d.ready===true?"Configured":"Not Ready"));
+    checks.push("Gateway Coverage: "+(Array.isArray(d.sources)?d.sources.join(", "):"Unverified"));
+   }catch(e){checks.push("Cloudflare Worker: Connection Failed ("+String(e.message||e)+")");}
+   finally{clearTimeout(timeout);}
+  }else checks.push("Cloudflare Worker: URL Not Configured");
+  if(supported()){
+   const sub=await Promise.race([subscription(),new Promise((_,reject)=>setTimeout(()=>reject(Error("Timed out")),7000))]).catch(()=>null);
+   checks.push("Device Subscription: "+(sub?"Found":"Not Found"));
+  }
+  checks.push("Actual Background Delivery: NOT VERIFIED · Local Display Test Only");
+  out.replaceChildren();
+  checks.forEach(item=>{const row=document.createElement("div");row.className="push-check-row";row.textContent=item;out.append(row);});
+ }finally{if(button)button.disabled=false;}
+}
 function init(){
+  $("push-diagnostics-check")?.addEventListener("click",checkReadiness);
   $("push-enable").addEventListener("click",enable);
   $("push-disable").addEventListener("click",disable);
   $("push-update").addEventListener("click",update);

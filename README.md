@@ -173,3 +173,8 @@ Fire-danger and Total Fire Ban information on the NSW Hazards and Overview pages
 
 ### Location service reliability
 Across all six pages, an unsuccessful Open-Meteo geocoding search is now labelled **Location Search Unavailable** instead of silently closing the suggestions as though there were no matching cities. A **Try Again** action is offered, and the saved location/GPS coordinates remain unchanged. Failed source checks and missing weather fields are never represented as zero readings or safe conditions.
+
+### Severe Weather and Notification Reliability (18 November 2026)
+Overview and NSW Hazards now display an Official-Source Severe Weather Centre. Official RFS warning polygons are intersected with the selected location and monitoring radius; unmapped warnings cannot be location-matched. Nearby incident points, fire-danger district ratings and statewide BOM RSS publication status are shown separately and fail closed when snapshots exceed 90 minutes. Numerical gust/rainfall indicators are forecasts, not official alerts.
+
+The RFS CAP extractor now stores explicitly published Cancel messages as a separate, statewide and non-location-matched cancellations collection. The app never infers that an alert was cancelled just because it disappeared from a snapshot; cancellation records never become live warning polygons or location-triggered push. Published Update notices are labelled. Existing backend delivery has per-event deduplication, but background delivery to a device has not been verified by browser testing. Settings now includes Check Delivery Readiness, checking browser permission, device subscription and Worker health. Local Display Test is not a cloud-to-device test.
