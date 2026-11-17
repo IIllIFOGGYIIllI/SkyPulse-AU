@@ -17,7 +17,8 @@ version = sha[:12].lower()
 pages = ("index.html", "forecast.html", "radar.html", "hazards.html", "news.html", "settings.html")
 assets = ("assets/styles.css", "assets/leaflet.css", "assets/app.js",
           "assets/push.js", "assets/push-config.js", "assets/update.js",
-          "assets/forecast-compare.js", "assets/source-health.js")
+          "assets/forecast-compare.js", "assets/source-health.js",
+          "assets/severe-centre.js", "assets/quarter-hour.js")
 for page in pages:
     path = ROOT / page
     html = path.read_text(encoding="utf-8")

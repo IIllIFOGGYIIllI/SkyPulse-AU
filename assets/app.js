@@ -295,7 +295,11 @@ function forecastRender(data){
  setText("detail-sunrise",localClock((d.sunrise||[])[0]));
  setText("detail-sunset",localClock((d.sunset||[])[0]));
  showTomorrow(data);updateOfficialStation();
- forecastSixHours(data);forecastHourlyRender();forecastDailyRender();forecastChartRender();forecastHealth();
+ forecastSixHours(data);forecastHourlyRender();forecastDailyRender();
+ window.dispatchEvent(new CustomEvent("skypulse:forecast-loaded",{detail:{
+  data:data,checkedAt:state.weatherFetchedAt,location:state.location,
+  cached:state.weatherCached,published:state.weatherPublished
+ }}));forecastChartRender();forecastHealth();
 }
 
 function degreeBearing(value){var n=Number(value);if(!Number.isFinite(n))return "—";var labels=["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];return labels[Math.round((n%360)/22.5)%16]+" · "+Math.round(n)+"°";}
@@ -1877,7 +1881,7 @@ document.querySelectorAll(".mobile-tab,.nav-item,.page-shortcuts a").forEach(fun
 }
 function on(id,type,handler){var el=$(id);if(el)el.addEventListener(type,handler);}
 function init(){
- window.SkyPulseWatchContext=function(){return {latitude:state.location.lat,longitude:state.location.lon,radiusKm:state.radius,locationName:state.location.name};};
+ window.SkyPulseWatchContext=function(){return {latitude:state.location.lat,longitude:state.location.lon,radiusKm:state.radius,locationName:state.location.name,fireDistrict:state.fireDistrict||preferredFireDistrict()};};
  if(state.location&&state.location.name==="My location"){state.location.name="My Location";save();}
  theme();updateLocationUI();
  setText("year",new Date().getFullYear());
