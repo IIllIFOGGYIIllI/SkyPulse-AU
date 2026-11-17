@@ -78,6 +78,8 @@ check("Radar provider research retained", (ROOT / "docs/RADAR_PROVIDER_REVIEW.md
 check("Forecast provisional reference shows while live request is pending",
       "forecastPublishedCessnock(loc).then(function(backup)" in js
       and "Checking Live Model" in js)
+check("Location geocoding failure does not silently disappear or change saved location",
+      "Location Search Unavailable" in js and "location-search-retry" in js)
 check("Stale matching-location cache retains forecast values during provider failure",
       "forecastCacheRead(key,FORECAST_FALLBACK_MAX_AGE)" in js
       and "Older saved forecast for" in js)

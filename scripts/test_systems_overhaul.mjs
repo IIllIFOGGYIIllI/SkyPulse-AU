@@ -102,6 +102,13 @@ try{
    states.bom!=="unavailable"||states.wmo!=="stale")throw Error("Source freshness flags incorrect: "+JSON.stringify(states));
  if(!(await page.locator("#source-health-summary").textContent()).includes("2 of 5"))
   throw Error("Missing unavailable/stale source summary");
+ // A failed worldwide geocoding request is an outage, not a legitimate "no matches" result.
+ await page.locator("#location-input").fill("Cessnock");
+ await page.waitForFunction(()=>document.querySelector("#location-results")?.textContent.includes("Location Search Unavailable"),null,{timeout:5000});
+ if((await page.locator("#location-results .location-search-retry").count())!==1)
+  throw Error("Location lookup outage offers no recovery action");
+ const savedLocation=await page.evaluate(()=>JSON.parse(localStorage.getItem("skypulse.preferences")).location.name);
+ if(savedLocation!=="Cessnock")throw Error("Failed location search unexpectedly changed saved monitoring location");
  if(errors.length)throw Error("Browser errors: "+errors.join(" | "));
  console.log("Systems overhaul PASSED: ECMWF/GFS model spread, missing-model protection, NSW feed freshness and safe failure states.");
 }finally{

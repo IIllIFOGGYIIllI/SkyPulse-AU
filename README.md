@@ -170,3 +170,6 @@ Radar Studio now retains a compact record of the last successfully validated **R
 
 ### NSW feed outage handling (18 November 2026)
 Fire-danger and Total Fire Ban information on the NSW Hazards and Overview pages is **unavailable/unverified** if the publisher's snapshot is older than the existing 90-minute age threshold, malformed or future-dated. It no longer displays obsolete **No Total Fire Ban Listed** messaging during an outage. Statewide BOM RSS warning counts similarly disappear when the feed is stale; the app directs the reader to official BOM warnings instead of implying zero warnings. The publication-age checks are browser-tested in the NSW fire regression suite.
+
+### Location service reliability
+Across all six pages, an unsuccessful Open-Meteo geocoding search is now labelled **Location Search Unavailable** instead of silently closing the suggestions as though there were no matching cities. A **Try Again** action is offered, and the saved location/GPS coordinates remain unchanged. Failed source checks and missing weather fields are never represented as zero readings or safe conditions.
