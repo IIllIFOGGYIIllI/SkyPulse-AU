@@ -92,6 +92,19 @@ try{
  await page.waitForFunction(()=>document.querySelector("#forecast-health-pill").textContent==="CACHED");
  if(!(await page.locator("#forecast-health-title").textContent()).includes("CACHED FORECAST"))
   throw Error("Offline cache not explicitly labelled");
+ // A location-matched cache older than the normal two-hour window remains
+ // a visibly old model reference when the live provider goes down.
+ await page.evaluate(()=>{
+  const x=JSON.parse(localStorage.getItem("skypulse.weather.cache.v1"));
+  x.checkedAt=Date.now()-3*60*60*1000;
+  localStorage.setItem("skypulse.weather.cache.v1",JSON.stringify(x));
+ });
+ await page.reload({waitUntil:"domcontentloaded"});
+ await page.waitForFunction(()=>document.querySelector("#forecast-health-pill")?.textContent==="CACHED");
+ if((await page.locator("#forecast-next-temps").textContent())==="—")
+  throw Error("Same-location 3h cached forecast did not survive API outage");
+ if(!(await page.locator("#forecast-health-detail").textContent()).includes("NOT live"))
+  throw Error("Stale local model was presented without explicit age warning");
  // Wrong-location cached data must never appear for a different city.
  await page.evaluate(()=>{const p=JSON.parse(localStorage.getItem("skypulse.preferences"));
   p.location={name:"Sydney",region:"New South Wales",lat:-33.87,lon:151.21};

@@ -156,3 +156,6 @@ A known intermittent Open-Meteo TLS-handshake failure was observed in the live s
 
 ### GPS and snapshot regression coverage
 The forecast test suite now reproduces a real browser outage for a GPS-selected **My Location** within the Cessnock monitoring area and verifies that a dated reference forecast is shown, today's dates are correct even when the model was retrieved yesterday, and a distant GPS selection (Sydney) is not assigned Cessnock values. Live requests continue in parallel and replace provisional reference figures when they succeed. This remains a fail-safe reference, not official live observations.
+
+### Browser-cached forecasts during outages
+For any saved location, if direct weather API requests fail, SkyPulse can reuse the browser's last verified location-matched forecast for up to 18 hours (versus two hours for normal quick loading). It rebases forecast days and hours to the current local date, prominently labels the saved values with original retrieval age as **NOT live**, and never supplies values from an unrelated location. These are temporary forecast references, not current station readings or official warnings.
