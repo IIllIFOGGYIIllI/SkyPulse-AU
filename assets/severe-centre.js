@@ -5,7 +5,7 @@
 const root=document.getElementById("severe-centre");if(!root)return;
 const $=id=>document.getElementById(id);
 const MAX_AGE=90*60000,TTL=15*60000;
-let currentKey="",sequence=0,running=false,lastCheck=0,sourceData=null,weather=null,weatherAt=0;
+let currentKey="",sourceSeq=0,modelSeq=0,running=false,lastCheck=0,sourceData=null,weather=null,weatherAt=0;
 const sources=[
  {id:"cap",path:"rfs-alerts.json",field:"alerts"},
  {id:"incidents",path:"rfs.json",field:"features"},
@@ -186,34 +186,34 @@ async function refresh(force){
  const x=context();if(!x||running)return;
  const k=key(x);
  if(!force&&k===currentKey&&Date.now()-lastCheck<TTL){render(x);return;}
- currentKey=k;const seq=++sequence;running=true;
+ currentKey=k;const seq=++sourceSeq;running=true;
  set("severe-source-count","Checking official source snapshots…");
  if($("severe-refresh"))$("severe-refresh").disabled=true;
  try{
   const results=await Promise.all(sources.map(fetchFeed));
-  if(seq!==sequence||!context()||key(context())!==k)return;
+  if(seq!==sourceSeq||!context()||key(context())!==k)return;
   sourceData=Object.fromEntries(sources.map((s,i)=>[s.id,results[i]]));
   lastCheck=Date.now();render(x);
  }finally{running=false;if($("severe-refresh"))$("severe-refresh").disabled=false;}
 }
 async function modelHazards(){
  const x=context();if(!x)return;
- const k=key(x),seq=++sequence,c=new AbortController(),timer=setTimeout(()=>c.abort(),14000);
+ const k=key(x),seq=++modelSeq,c=new AbortController(),timer=setTimeout(()=>c.abort(),14000);
  try{
   const q=new URLSearchParams({latitude:String(x.lat),longitude:String(x.lon),timezone:"auto",
    hourly:"wind_gusts_10m,precipitation,precipitation_probability",forecast_hours:"24"});
   const response=await fetch("https://api.open-meteo.com/v1/forecast?"+q,{cache:"no-store",signal:c.signal});
   if(!response.ok)throw Error("HTTP "+response.status);
   const data=await response.json();
-  if(seq!==sequence||!context()||key(context())!==k)return;
+  if(seq!==modelSeq||!context()||key(context())!==k)return;
   if(!data?.hourly?.time||!Number.isFinite(+data.utc_offset_seconds))throw Error("Invalid model response");
   weather=data;weatherAt=Date.now();
- }catch{if(seq===sequence){weather=null;weatherAt=0;}}
- finally{clearTimeout(timer);if(seq===sequence)render(context());}
+ }catch{if(seq===modelSeq){weather=null;weatherAt=0;}}
+ finally{clearTimeout(timer);if(seq===modelSeq)render(context());}
 }
 function update(force){
  const x=context();if(!x)return;
- if(key(x)!==currentKey){sourceData=null;weather=null;lastCheck=0;currentKey="";sequence++;}
+ if(key(x)!==currentKey){sourceData=null;weather=null;lastCheck=0;currentKey="";sourceSeq++;modelSeq++;running=false;}
  refresh(force);
  modelHazards();
 }
@@ -222,7 +222,7 @@ window.addEventListener("skypulse:watch-changed",()=>update(true));
 window.addEventListener("skypulse:forecast-loaded",event=>{
  const x=context(),d=event.detail;
  if(x&&d?.data&&d?.location&&Math.abs(+d.location.lat-x.lat)<.0001&&Math.abs(+d.location.lon-x.lon)<.0001){
-  weather=d.data;weatherAt=Date.now();render(x);
+  weather=d.data;weatherAt=Number(d.checkedAt)||0;render(x);
  }
 });
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")update(false);});

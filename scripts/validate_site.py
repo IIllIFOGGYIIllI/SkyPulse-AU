@@ -145,6 +145,14 @@ check("Cloud backup uses location and age bounded local snapshots",
 check("Model divergence chart is explicitly model-vs-model",
       'id="compare-hourly"' in text["forecast.html"]
       and "compare-max-spread" in (ROOT/"assets/forecast-compare.js").read_text())
+check("Severe weather and quarter-hour features are source-labelled",
+      (ROOT/"assets/severe-centre.js").exists()
+      and (ROOT/"assets/quarter-hour.js").exists()
+      and 'id="severe-centre"' in text["index.html"]
+      and 'id="severe-centre"' in text["hazards.html"]
+      and 'id="quarter-forecast"' in text["forecast.html"]
+      and "sourceSeq=0,modelSeq=0" in (ROOT/"assets/severe-centre.js").read_text()
+      and "Hourly Rain Reference" in text["forecast.html"])
 check("Independent global model comparison", (ROOT / "assets/forecast-compare.js").exists()
       and "assets/forecast-compare.js?v=" in text["forecast.html"]
       and "/v1/ecmwf" in (ROOT / "assets/forecast-compare.js").read_text()
