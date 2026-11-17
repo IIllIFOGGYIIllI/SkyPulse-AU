@@ -80,6 +80,7 @@ jobs:
           node scripts/check_mobile_layout.mjs
           node scripts/test_radar_studio.mjs
           node scripts/test_forecast_reliability.mjs
+          node scripts/test_geo_fallback.mjs
           node scripts/test_systems_overhaul.mjs
           node scripts/test_fire_areas.mjs
       - name: Check Real Browser Weather Values

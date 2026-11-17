@@ -150,7 +150,7 @@ function forecastHealth(){
  }else{
   var old=age>90*60000,delayed=age>55*60000;
   kind=state.weatherPublished?"cached":state.weatherCached?"cached":state.weatherFetchFailed?"failed":old?"stale":delayed?"delayed":"recent";
-  title=state.weatherPublished?"REFERENCE FORECAST ONLY — live model unavailable":state.weatherCached?"CACHED FORECAST — not newly verified":
+  title=state.weatherPublished?(state.weatherFetchFailed?"REFERENCE FORECAST ONLY — live model unavailable":"REFERENCE FORECAST — live update pending"):state.weatherCached?"CACHED FORECAST — not newly verified":
    state.weatherFetchFailed?"UPDATE FAILED — previous forecast shown":
    old?"OLD MODEL TIME — check official sources":
    delayed?"DELAYED MODEL TIME":"FORECAST DATA AVAILABLE";
@@ -333,6 +333,17 @@ async function loadWeather(){
   if(prior){state.weather=prior.data;state.weatherFetchedAt=prior.checkedAt;state.weatherCached=true;forecastRender(prior.data);}
  }
  updateWeatherStatus("Checking Model Forecast",false);
+ // Show a valid source-labelled local reference promptly, while the live model is retried.
+ // Never replace an already successful live response or leak reference values to distant locations.
+ if(!state.weather&&forecastNearbyCessnock(loc)!==null){
+  forecastPublishedCessnock(loc).then(function(backup){
+   if(seq!==state.weatherSeq||key!==forecastLocationKey(state.location)||state.weather)return;
+   state.weather=backup.data;state.weatherFetchedAt=backup.checkedAt;
+   state.weatherPublished=true;state.weatherCached=false;state.weatherReferenceKm=backup.distanceKm;
+   forecastRender(backup.data);
+   updateWeatherStatus("Cessnock Reference · Checking Live Model",false);
+  }).catch(function(){});
+ }
  if($("forecast-retry"))$("forecast-retry").disabled=true;
  forecastHealth();
  var q=new URLSearchParams({

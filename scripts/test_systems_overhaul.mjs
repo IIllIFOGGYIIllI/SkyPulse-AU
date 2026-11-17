@@ -83,7 +83,7 @@ try{
   throw Error("Failure did not clear model comparison");
  allowPublished=true;
  await page.locator("#compare-refresh").click();
- await page.waitForFunction(()=>document.querySelector("#compare-ecmwf-status")?.textContent==="PUBLISHED SNAPSHOT");
+ await page.waitForFunction(()=>document.querySelector("#compare-ecmwf-status")?.textContent==="REFERENCE SNAPSHOT");
  if((await page.locator("#compare-temp-spread").textContent())==="—")
   throw Error("Published model pair did not recover missing comparison values");
  if(!(await page.locator("#compare-summary").textContent()).includes("dated Cessnock model snapshot"))
