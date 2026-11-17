@@ -1439,6 +1439,37 @@ function showMapFireExtents(){
 // RainViewer 2026 free API: up to two hours of past imagery, usually every 10 minutes.
 // Polling its manifest every five minutes does not create more frequent radar scans.
 const RADAR_URL="https://api.rainviewer.com/public/weather-maps.json",RADAR_CHECK_MS=300000;
+const RADAR_META_CACHE_KEY="skypulse.radar.metadata.v1",RADAR_META_CACHE_MAX_MS=45*60000;
+function radarParseMetadata(raw){
+ var u=new URL(String(raw&&raw.host||""));
+ if(u.protocol!=="https:"||!/(^|\.)rainviewer\.com$/.test(u.hostname)||u.username||u.password)
+  throw Error("Unexpected radar image server");
+ if(!raw.radar||!Array.isArray(raw.radar.past))throw Error("Missing radar history");
+ var now=Date.now()/1000,seen=new Map();
+ raw.radar.past.forEach(function(f){
+  if(f&&Number.isFinite(Number(f.time))&&Number(f.time)>0&&Number(f.time)<=now+600&&typeof f.path==="string"&&
+   /^\/v2\/radar\/[A-Za-z0-9/_-]+$/.test(f.path))
+   seen.set(Number(f.time),{time:Number(f.time),path:f.path});
+ });
+ var frames=Array.from(seen.values()).sort(function(a,b){return a.time-b.time;}).slice(-24);
+ if(!frames.length)throw Error("No valid radar history frames");
+ return {host:u.origin,frames};
+}
+function radarRememberMetadata(meta){
+ try{localStorage.setItem(RADAR_META_CACHE_KEY,JSON.stringify({host:meta.host,
+   frames:meta.frames,checkedAt:Date.now()}));}catch(e){}
+}
+function radarRestoreMetadata(){
+ try{
+  var saved=JSON.parse(localStorage.getItem(RADAR_META_CACHE_KEY)||"null");
+  if(!saved||!Number.isFinite(saved.checkedAt)||Date.now()-saved.checkedAt<0||
+   Date.now()-saved.checkedAt>RADAR_META_CACHE_MAX_MS)return null;
+  var parsed=radarParseMetadata({host:saved.host,radar:{past:saved.frames}});
+  // Image timestamps, not just the last successful request, determine whether a fallback is useful.
+  if(Date.now()-parsed.frames[parsed.frames.length-1].time*1000>75*60000)return null;
+  return {host:parsed.host,frames:parsed.frames,checkedAt:saved.checkedAt};
+ }catch(e){return null;}
+}
 function radarClock(epoch,full){
  if(!Number.isFinite(Number(epoch)))return "Time unavailable";
  return new Intl.DateTimeFormat("en-AU",{timeZone:"Australia/Sydney",
@@ -1508,7 +1539,8 @@ function radarStatus(){
  if(indicator){indicator.className="radar-freshness "+level;indicator.innerHTML='<span class="radar-pulse"></span> '+text;}
  setText("radar-latest-issued","Latest issued: "+radarClock(latest.time,true));
  setText("radar-data-age","Source frame issued "+radarAge(age)+" ago"+
-  (state.radarLastError?" · Could not verify newer data":stale?" · Historical only; current conditions unknown":delayed?" · Behind usual source schedule":" · Not a live video feed"));
+  (state.radarLastError?" · "+state.radarLastError+" · Not a live radar check":
+   stale?" · Historical only; current conditions unknown":delayed?" · Behind usual source schedule":" · Not a live video feed"));
  if($("radar-last-check")&&state.radarFetchedAt)setText("radar-last-check","Last checked: "+radarClock(state.radarFetchedAt/1000,false)+(state.radarLastError?" · Retry pending":""));
  var stamp=$("radar-map-stamp");if(stamp)stamp.className="radar-map-stamp"+(stale?" is-stale":delayed?" is-delayed":"");
 }
@@ -1734,18 +1766,24 @@ async function loadRadar(force){
  if(!force&&state.radarAttemptAt&&Date.now()-state.radarAttemptAt<RADAR_CHECK_MS-10000)return;
  state.radarAttemptAt=Date.now();
  if($("radar-check-now"))$("radar-check-now").disabled=true;
+ if(!state.radarFrames.length){
+  var saved=radarRestoreMetadata();
+  if(saved){
+   state.radarHost=saved.host;state.radarFrames=saved.frames;state.radarFetchedAt=saved.checkedAt;
+   state.radarLastError="Showing saved radar history while new data is checked";
+   showRadarFrame(saved.frames.length-1);radarStatus();
+  }
+ }
  state.radarLoadingPromise=(async function(){
   try{
-   var raw=await getJSON(RADAR_URL,13000),u=new URL(String(raw.host||""));
-   if(u.protocol!=="https:"||!/(^|\.)rainviewer\.com$/.test(u.hostname)||u.username||u.password)throw Error("Unexpected image server");
-   if(!raw.radar||!Array.isArray(raw.radar.past))throw Error("Missing radar history");
-   var now=Date.now()/1000,seen=new Map();
-   raw.radar.past.forEach(function(f){
-    if(f&&Number.isFinite(Number(f.time))&&f.time>0&&f.time<=now+600&&typeof f.path==="string"&&
-       /^\/v2\/radar\/[A-Za-z0-9/_-]+$/.test(f.path))seen.set(Number(f.time),{time:Number(f.time),path:f.path});
-   });
-   var frames=Array.from(seen.values()).sort(function(a,b){return a.time-b.time;}).slice(-24);
-   if(!frames.length)throw Error("No recent historical radar frames");
+   var parsed=null,fetchError=null;
+   for(var attempt=0;attempt<2;attempt++){
+    try{parsed=radarParseMetadata(await getJSON(RADAR_URL,attempt===0?8500:11000));break;}
+    catch(e){fetchError=e;}
+   }
+   if(!parsed)throw fetchError||new Error("Radar metadata unavailable");
+   var frames=parsed.frames,u={origin:parsed.host};
+   radarRememberMetadata(parsed);
    var old=radarFrame(),oldTime=old?old.time:null,oldNewest=state.radarFrames[state.radarFrames.length-1]?.time;
    state.radarFrames=frames;state.radarHost=u.origin;state.radarFetchedAt=Date.now();state.radarLastError="";
    var index=frames.length-1;

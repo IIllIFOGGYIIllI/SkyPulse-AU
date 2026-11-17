@@ -311,6 +311,43 @@ try{
   console.log("Radar preferences PASSED: local persistence, four controls, region preset, copy map URL, shared historical frame and defaults restore.");
   if(errors.length)throw Error("Radar browser JavaScript errors: "+errors.join(" | "));
   console.log("Radar Studio PASSED: issued times, AEST/AEDT, 10-min history, latest follow, scrubbing, playback, stale/failed-state, free API tiles.");
+  // First-load outage: an actual earlier session stored source-verified radar metadata.
+  // Both cloud and radar should show saved historical data on reload, not pretend to be live.
+  failed=true;cloudFailed=true;
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.waitForFunction(()=>document.querySelector("#radar-freshness-indicator")?.textContent.includes("CHECK FAILED"),null,{timeout:14000});
+  await page.waitForFunction(()=>document.querySelector("#cloud-model-status")?.textContent==="PREVIOUS MODEL SNAPSHOT",null,{timeout:14000});
+  if(!(await page.locator("#radar-frame-label").textContent()).includes("Frame issued"))
+   throw Error("Radar first-load outage did not retain the last verified metadata");
+  if((await page.locator("#cloud-value-total").textContent())!=="68%")
+   throw Error("Cloud first-load outage did not restore the matching-location snapshot");
+  const cache=await page.evaluate(()=>({
+   radar:JSON.parse(localStorage.getItem("skypulse.radar.metadata.v1")||"null"),
+   cloud:JSON.parse(localStorage.getItem("skypulse.cloud.snapshot.v2")||"null")
+  }));
+  if(!cache.radar?.checkedAt||cache.cloud?.key!=="-32.8321,151.3497")
+   throw Error("Radar or cloud saved source metadata missing");
+  // Reject an old metadata record; older imagery must not be shown as recent.
+  await page.evaluate(()=>{
+   const saved=JSON.parse(localStorage.getItem("skypulse.radar.metadata.v1"));
+   saved.checkedAt=Date.now()-2*3600000;
+   localStorage.setItem("skypulse.radar.metadata.v1",JSON.stringify(saved));
+  });
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.waitForFunction(()=>document.querySelector("#radar-freshness-indicator")?.textContent.includes("UNAVAILABLE"),null,{timeout:14000});
+  if((await page.locator("#radar-frame-label").textContent()).includes("Frame issued"))
+   throw Error("Expired radar metadata appeared as an available history");
+  // Cloud forecasts are location-specific. GPS / searches must never inherit another city's cloud values.
+  await page.evaluate(()=>{
+   const p=JSON.parse(localStorage.getItem("skypulse.preferences"));
+   p.location={name:"Sydney",region:"NSW",lat:-33.8688,lon:151.2093};
+   localStorage.setItem("skypulse.preferences",JSON.stringify(p));
+  });
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.waitForFunction(()=>document.querySelector("#cloud-model-status")?.textContent==="CLOUD MODEL UNAVAILABLE",null,{timeout:14000});
+  if((await page.locator("#cloud-value-total").textContent())!=="—")
+   throw Error("Cessnock cloud data leaked into a different location");
+  console.log("Cloud + radar cross-session outage recovery PASSED: matching location, stale source labels, metadata expiry and no cross-location data leakage.");
   await page.close();
 }finally{
   if(browser)await browser.close();

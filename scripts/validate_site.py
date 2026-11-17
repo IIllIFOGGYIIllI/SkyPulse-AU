@@ -117,6 +117,11 @@ check("Radar poll cadence at 5 minutes", "RADAR_CHECK_MS=300000" in js)
 check("Source generation timestamp shown in Sydney time", 'timeZone:"Australia/Sydney"' in js)
 check("Radar recent vs stale explicitly distinguished", '"STALE IMAGE"' in js and '"RECENT FRAME"' in js)
 check("Radar latest selection survives new frames", "state.radarFollowLatest" in js)
+check("Radar metadata outage cache includes age and source validation",
+      "radarRestoreMetadata()" in js
+      and "radarRememberMetadata(parsed)" in js
+      and "RADAR_META_CACHE_MAX_MS" in js
+      and "radarParseMetadata(raw)" in js)
 check("Radar browser smoke test present", (ROOT / "scripts/test_radar_studio.mjs").exists())
 check("Self-hosted Leaflet CSS", ".leaflet-tile," in leaflet and "position: absolute" in leaflet)
 check("Radar page loads Leaflet styles", 'href="./assets/leaflet.css' in text["radar.html"])
