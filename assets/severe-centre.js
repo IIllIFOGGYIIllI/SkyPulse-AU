@@ -241,6 +241,8 @@ window.addEventListener("skypulse:forecast-loaded",event=>{
 });
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")update(false);});
 setInterval(()=>{if(document.visibilityState==="visible")update(false);},TTL);
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>update(true),{once:true});
+// Deferred scripts run while readyState is "interactive", before app.js sets SkyPulseWatchContext on DOMContentLoaded.
+// Wait for the main app initialisation in both loading and interactive states.
+if(document.readyState!=="complete")document.addEventListener("DOMContentLoaded",()=>update(true),{once:true});
 else update(true);
 })();
