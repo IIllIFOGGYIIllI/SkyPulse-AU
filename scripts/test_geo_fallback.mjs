@@ -58,7 +58,7 @@ try{
   day:document.querySelector("#daily-list .day small")?.textContent,
   range:document.querySelector("#forecast-next-temps").textContent,
   forecastHour:document.querySelector("#forecast-brief-period").textContent,
-  description:document.querySelector("#current-clock")?.textContent
+  description:document.querySelector("#forecast-health-detail")?.textContent
  }));
  if(!near.title.includes("REFERENCE FORECAST")||!near.detail.includes("km away")||
   !near.description.includes("Cessnock reference")||
