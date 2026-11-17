@@ -48,7 +48,7 @@ try{
    circle(v,opts){let z=layer("circle",opts);z.coords=v;return z;},latLngBounds(){return {pad(){return this;}}},
    control:{scale(){return layer("scale");}}};
  });
- let stale=false,dense=false;const now=new Date().toISOString(),old=new Date(Date.now()-4*3600000).toISOString();
+ let stale=false,dense=false,staleFdr=false,staleBom=false;const now=new Date().toISOString(),old=new Date(Date.now()-4*3600000).toISOString();
  const poly=[[-32.86,151.31],[-32.86,151.38],[-32.81,151.38],[-32.81,151.31],[-32.86,151.31]];
  const footprint=[[151.32,-32.86],[151.37,-32.86],[151.37,-32.81],[151.32,-32.81],[151.32,-32.86]];
  await page.route("**/*",route=>{
@@ -78,7 +78,8 @@ try{
       {id:"near-2",properties:{title:"Nearby Bush Fire",details:{incident_type:"Bush Fire",location:"Cessnock district"}},
        geometry:{type:"Point",coordinates:[151.3448,-32.8303]}}
     ]:[])]};
-   if(file==="fdr.json")payload={retrieved_at:now,districts:[{name:"Greater Hunter",rating_today:"Moderate",rating_tomorrow:"Moderate"}]};
+   if(file==="fdr.json")payload={retrieved_at:staleFdr?old:now,districts:[{name:"Greater Hunter",rating_today:"Moderate",rating_tomorrow:"Moderate"}]};
+   if(file==="bom.json")payload={retrieved_at:staleBom?old:now,warnings:[]};
    return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(payload)});
   }
   if(u.hostname==="127.0.0.1")return route.continue();
@@ -352,6 +353,19 @@ try{
  await page.reload({waitUntil:"domcontentloaded"});
  await page.waitForFunction(()=>document.querySelector("#fire-geofence-state")?.textContent.includes("No overlap"));
  if(!(await page.locator("#fire-geofence-state").textContent()).includes("NOT an all-clear"))throw Error("No-overlap message could be misconstrued as safe");
+ // Stale fire-danger publications must not show outdated "No Total Fire Ban" values as current.
+ staleFdr=true;
+ await page.locator("#hazards-refresh").click();
+ await page.waitForFunction(()=>document.querySelector("#fdr-today-rating")?.textContent==="Unavailable",null,{timeout:10000});
+ if(!(await page.locator("#fdr-today-ban").textContent()).includes("Unverified"))
+  throw Error("Old fire danger feed was shown as a verified fire-ban status");
+ // The overview must not claim zero warnings from a stale BOM snapshot either.
+ staleBom=true;
+ await page.goto("http://127.0.0.1:8768/index.html",{waitUntil:"domcontentloaded"});
+ await page.waitForFunction(()=>document.querySelector("#snapshot-warnings")?.textContent.includes("Warning Feed Unavailable"),null,{timeout:10000});
+ if(!(await page.locator("#snapshot-warnings").textContent()).includes("Check Official BOM"))
+  throw Error("Stale BOM notices were shown as current or as an all-clear");
+ console.log("Weather/Fire Publication Freshness PASSED: stale fire bans and BOM warning counts fail closed.");
  if(errors.length)throw Error("JS exceptions: "+errors.join(" | "));
  console.log("NSW Fire Area Explorer PASSED: operational dashboard summary, search, statewide scope, warning tabs, detail overlay, CAP/extents distinction, stale safety and 320/390px mobile layout.");
  await page.close();

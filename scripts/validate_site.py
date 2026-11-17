@@ -132,6 +132,9 @@ check("SW navigation cache keyed by request", 'cache.put(request,res.clone())' i
 check("Mobile 6 equal-width tabs", "grid-template-columns:repeat(6,minmax(0,1fr))" in css)
 check("Forecast scrolling contained", ".hours-scroll{display:flex;max-width:100%;scroll-snap-type:x proximity}" in css)
 check("Route-aware JavaScript", "document.body.dataset.page" in js and "function on(id,type,handler)" in js)
+check("Hazard sources reject aged fire-ban and BOM publication snapshots",
+      "Fire danger snapshot is too old" in js
+      and "BOM warning publication snapshot too old" in js)
 check("Official warning integration", "loadOfficialRfsWarnings()" in js and "showRfsWarningMap" in js)
 check("Cloud backup uses location and age bounded local snapshots",
       "skypulse.cloud.snapshot.v2" in (ROOT/"assets/clouds.js").read_text()
