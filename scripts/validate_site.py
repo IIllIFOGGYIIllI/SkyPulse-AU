@@ -145,6 +145,11 @@ check("Cloud backup uses location and age bounded local snapshots",
 check("Model divergence chart is explicitly model-vs-model",
       'id="compare-hourly"' in text["forecast.html"]
       and "compare-max-spread" in (ROOT/"assets/forecast-compare.js").read_text())
+check("Severe-intelligence integration browser suite exists",
+      (ROOT/"scripts/test_severe_intelligence.mjs").exists()
+      and "test_severe_intelligence.mjs" in (ROOT/".github/workflows/deploy.yml").read_text()
+      and 'id="quarter-toggle"' in text["forecast.html"]
+      and 'id="severe-source-count"' in text["index.html"])
 check("CAP cancellation notices are not modelled as active warning areas",
       '"cancellations": cancellations[:30]' in (ROOT/"scripts/sync_warnings.py").read_text()
       and "Official CAP cancellation published" in (ROOT/"assets/severe-centre.js").read_text()
