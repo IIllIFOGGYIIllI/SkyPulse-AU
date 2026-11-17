@@ -86,7 +86,7 @@ try{
  await page.waitForFunction(()=>document.querySelector("#compare-ecmwf-status")?.textContent==="REFERENCE SNAPSHOT");
  if((await page.locator("#compare-temp-spread").textContent())==="—")
   throw Error("Published model pair did not recover missing comparison values");
- if(!(await page.locator("#compare-summary").textContent()).includes("dated Cessnock model snapshot"))
+ if(!(await page.locator("#compare-summary").textContent()).includes("Cessnock reference model"))
   throw Error("Published model fallback was not distinguished from direct data");
  await page.goto("http://127.0.0.1:8768/settings.html",{waitUntil:"domcontentloaded"});
  await page.waitForFunction(()=>document.querySelector("#source-health-summary")?.textContent.includes("feeds are"),null,{timeout:15000});
