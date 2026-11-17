@@ -4,7 +4,7 @@ on:
     branches: [main]
   workflow_dispatch:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "13,28,43,58 * * * *"
 
 permissions:
   contents: read
@@ -32,8 +32,22 @@ jobs:
         run: python scripts/sync_feeds.py
       - name: Retrieve NSW Warning Feeds
         run: python scripts/sync_warnings.py
+      - name: Restore Last Verified Forecast Snapshot
+        uses: actions/cache/restore@v4
+        with:
+          path: data/weather-cessnock.json
+          key: skypulse-forecast-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            skypulse-forecast-
       - name: Publish Free Cessnock Forecast Backup
+        id: forecast
         run: python scripts/sync_forecast.py
+      - name: Preserve Successfully Updated Forecast Snapshot
+        if: steps.forecast.outputs.fresh_primary == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: data/weather-cessnock.json
+          key: skypulse-forecast-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Stamp Release and Cache Version
         run: python scripts/stamp_build.py
       - name: Validate Dashboard and PWA

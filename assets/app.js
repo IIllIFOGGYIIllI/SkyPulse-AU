@@ -8,7 +8,7 @@ var radarStored=stored.radar&&typeof stored.radar==="object"&&!Array.isArray(sto
 function radarSettingBool(key,fallback){return typeof radarStored[key]==="boolean"?radarStored[key]:fallback;}
 function radarSettingSpeed(value){return [5000,3500,2200].includes(Number(value))?Number(value):3500;}
 function radarSettingOpacity(value){var x=Number(value);return Number.isFinite(x)&&x>=.2&&x<=1?Math.round(x*20)/20:.6;}
-var state={location:stored.location||DEFAULT,radius:Number(stored.radius)||50,theme:stored.theme||"dark",notify:!!stored.notify,weather:null,weatherLocationKey:"",weatherFetchedAt:0,weatherCached:false,weatherPublished:false,weatherFetchFailed:false,weatherSeq:0,forecastChartMode:"temperature",forecastDayIndex:0,map:null,markers:null,radarLayer:null,peekMap:null,peekLayer:null,radarFrames:[],radarHost:"",radarEnabled:radarSettingBool("rain",true),incidentsEnabled:radarSettingBool("incidents",true),radarTimer:null,radarIndex:-1,radarFollowLatest:radarSettingBool("follow",true),
+var state={location:stored.location||DEFAULT,radius:Number(stored.radius)||50,theme:stored.theme||"dark",notify:!!stored.notify,weather:null,weatherLocationKey:"",weatherFetchedAt:0,weatherCached:false,weatherPublished:false,weatherReferenceKm:null,weatherSourceError:'',weatherFetchFailed:false,weatherSeq:0,forecastChartMode:"temperature",forecastDayIndex:0,map:null,markers:null,radarLayer:null,peekMap:null,peekLayer:null,radarFrames:[],radarHost:"",radarEnabled:radarSettingBool("rain",true),incidentsEnabled:radarSettingBool("incidents",true),radarTimer:null,radarIndex:-1,radarFollowLatest:radarSettingBool("follow",true),
 radarAutocheck:radarSettingBool("auto",true),radarLoop:radarSettingBool("loop",true),
 radarShowTimestamp:radarSettingBool("timestamp",true),radarSpeed:radarSettingSpeed(radarStored.speed),radarTileSize:radarSettingBool("hires",true)?512:256,radarSmooth:radarSettingBool("smooth",true),
  radarTemporary256:false,radarTileLoadTimer:null,radarTilesLoading:false,radarSitesShown:radarSettingBool("sites",false),radarSiteOverlay:null,
@@ -97,14 +97,44 @@ function forecastCacheRead(key){
   return {data:forecastValidate(item.data),checkedAt:item.checkedAt};
  }catch(e){return null;}
 }
-async function forecastPublishedCessnock(key){
- if(key!==forecastLocationKey(DEFAULT))throw Error("No published backup for this location");
+const FORECAST_FALLBACK_MAX_AGE=18*60*60*1000,FORECAST_FALLBACK_MAX_DISTANCE_KM=15;
+function forecastNearbyCessnock(location){
+ if(!location||!Number.isFinite(Number(location.lat))||!Number.isFinite(Number(location.lon)))return null;
+ var distance=km(Number(location.lat),Number(location.lon),DEFAULT.lat,DEFAULT.lon);
+ return Number.isFinite(distance)&&distance<=FORECAST_FALLBACK_MAX_DISTANCE_KM?distance:null;
+}
+function forecastRebasePublished(data){
+ // A snapshot taken yesterday must not label yesterday as Today or show old forecast hours as upcoming.
+ var cloned=JSON.parse(JSON.stringify(data)),offset=Number(cloned.utc_offset_seconds);
+ var currentDay=new Date(Date.now()+offset*1000).toISOString().slice(0,10);
+ var dates=cloned.daily&&cloned.daily.time||[],index=dates.indexOf(currentDay);
+ if(index<0||index>=dates.length-1)throw Error("Published snapshot does not include current local day");
+ if(index>0)Object.keys(cloned.daily).forEach(function(field){
+  if(Array.isArray(cloned.daily[field]))cloned.daily[field]=cloned.daily[field].slice(index);
+ });
+ return forecastValidate(cloned);
+}
+async function forecastPublishedCessnock(location){
+ var distance=forecastNearbyCessnock(location);
+ if(distance===null)throw Error("Published Cessnock forecast does not cover selected coordinates");
  var snapshot=await getJSON("./data/weather-cessnock.json?fresh="+Date.now(),10000);
  var checkedAt=Date.parse(snapshot&&snapshot.retrieved_at||"");
  var age=Date.now()-checkedAt;
- if(snapshot.location!=="Cessnock"||!Number.isFinite(age)||age<0||age>4*60*60*1000)
-  throw Error("Published Cessnock forecast is missing or older than four hours");
- return {data:forecastValidate(snapshot.primary),checkedAt:checkedAt};
+ if(snapshot.location!=="Cessnock"||!Number.isFinite(age)||age<0||age>FORECAST_FALLBACK_MAX_AGE)
+  throw Error("Published Cessnock forecast is missing or too old for fallback");
+ return {data:forecastRebasePublished(snapshot.primary),checkedAt:checkedAt,distanceKm:distance,ageMs:age};
+}
+async function forecastFetchWithRetry(url){
+ var errors=[];
+ for(var attempt=0;attempt<3;attempt++){
+  try{
+   return forecastValidate(await getJSON(url,attempt===0?8500:9500));
+  }catch(error){
+   errors.push(error&&error.name==="AbortError"?"Connection timed out":error&&error.message||"Network error");
+   if(attempt<2)await new Promise(function(resolve){setTimeout(resolve,450*(attempt+1));});
+  }
+ }
+ throw Error("Forecast provider unavailable after 3 attempts: "+errors.join(" / ").slice(0,180));
 }
 function forecastCacheWrite(key,data){
  try{localStorage.setItem(FORECAST_CACHE_KEY,JSON.stringify({key:key,data:data,checkedAt:Date.now()}));}catch(e){}
@@ -115,17 +145,20 @@ function forecastHealth(){
  if(!data){
   kind=state.weatherFetchFailed?"failed":"checking";
   title=state.weatherFetchFailed?"Forecast unavailable":"Retrieving model forecast…";
-  detail=state.weatherFetchFailed?"No verified weather data available for this location. Try again or check BOM.":"Open-Meteo · Numerical forecast data";
+  detail=state.weatherFetchFailed?"Open-Meteo connection failed. "+(state.weatherSourceError||"Try again or check BOM.")+
+   " · Check your browser network protection, VPN or blocker if requests keep failing.":"Open-Meteo · Numerical forecast data";
  }else{
   var old=age>90*60000,delayed=age>55*60000;
   kind=state.weatherPublished?"cached":state.weatherCached?"cached":state.weatherFetchFailed?"failed":old?"stale":delayed?"delayed":"recent";
-  title=state.weatherPublished?"PUBLISHED CESSNOCK SNAPSHOT — direct update failed":state.weatherCached?"CACHED FORECAST — not newly verified":
+  title=state.weatherPublished?"REFERENCE FORECAST ONLY — live model unavailable":state.weatherCached?"CACHED FORECAST — not newly verified":
    state.weatherFetchFailed?"UPDATE FAILED — previous forecast shown":
    old?"OLD MODEL TIME — check official sources":
    delayed?"DELAYED MODEL TIME":"FORECAST DATA AVAILABLE";
   detail="Open-Meteo model estimate · "+(Number.isFinite(age)?Math.max(0,Math.round(age/60000))+" min since model valid time":"model time unavailable")+
    (state.weatherFetchFailed?" · Latest refresh unsuccessful":"")+
-   (state.weatherPublished?" · Last successful GitHub Pages snapshot for Cessnock":state.weatherCached?" · Stored locally on this device":"")+
+   (state.weatherPublished?" · Cessnock reference "+Math.round(state.weatherReferenceKm||0)+" km away · "+Math.round((Date.now()-state.weatherFetchedAt)/3600000)+" h since retrieval · NOT live data":
+    state.weatherCached?" · Stored locally on this device":"")+
+   (state.weatherSourceError?" · "+state.weatherSourceError:"")+
    " · Not a weather-station observation";
  }
  if(pill){pill.className="forecast-health-pill "+kind;pill.textContent=state.weatherPublished?"SNAPSHOT":kind==="recent"?"MODEL DATA":kind==="delayed"?"DELAYED":kind==="stale"?"STALE":kind==="cached"?"CACHED":kind==="failed"?"CHECK FAILED":"CHECKING";}
@@ -136,6 +169,9 @@ function forecastHealth(){
 }
 function forecastHours(data){
  var h=data&&data.hourly||{},times=h.time||[],now=data.current&&data.current.time;
+ if(state.weatherPublished&&data&&Number.isFinite(Number(data.utc_offset_seconds))){
+  now=new Date(Date.now()+Number(data.utc_offset_seconds)*1000).toISOString().slice(0,16);
+ }
  var start=times.findIndex(function(t){return typeof t==="string"&&now&&t.slice(0,13)>now.slice(0,13);});
  if(start<0)start=0;
  return {h:h,start:start,times:times.slice(start,start+24)};
@@ -236,7 +272,10 @@ function forecastRender(data){
  setText("today-high",forecastValue(d.temperature_2m_max,0,0,"°"));
  setText("today-low",forecastValue(d.temperature_2m_min,0,0,"°"));
  setText("current-date",localDay(c.time));
- setText("current-clock","Modelled conditions in "+state.location.name+" · valid at "+localClock(c.time)+" "+forecastLocalZone(data));
+ setText("current-clock",(state.weatherPublished?
+  "Older Cessnock reference model (~"+Math.round(state.weatherReferenceKm||0)+" km from "+state.location.name+"); not current weather":
+  "Modelled conditions in "+state.location.name)+
+  " · valid at "+localClock(c.time)+" "+forecastLocalZone(data));
  setText("wind-speed",forecastDisplay(c.wind_speed_10m,0," km/h"));
  setText("wind-gust","Modelled gusts "+forecastDisplay(c.wind_gusts_10m,0," km/h"));
  setText("humidity",forecastDisplay(c.relative_humidity_2m,0,"%"));
@@ -289,7 +328,7 @@ async function loadWeather(){
  var changed=state.weatherLocationKey!==key;
  if(changed){
   state.weather=null;state.weatherFetchedAt=0;state.weatherCached=false;state.weatherPublished=false;state.weatherFetchFailed=false;
-  state.weatherLocationKey=key;state.forecastDayIndex=0;forecastClear();
+  state.weatherLocationKey=key;state.forecastDayIndex=0;state.weatherReferenceKm=null;state.weatherSourceError="";forecastClear();
   var prior=forecastCacheRead(key);
   if(prior){state.weather=prior.data;state.weatherFetchedAt=prior.checkedAt;state.weatherCached=true;forecastRender(prior.data);}
  }
@@ -304,30 +343,33 @@ async function loadWeather(){
   timezone:"auto",forecast_days:"7"
  });
  try{
-  var data=forecastValidate(await getJSON("https://api.open-meteo.com/v1/forecast?"+q.toString(),15000));
+  var data=await forecastFetchWithRetry("https://api.open-meteo.com/v1/forecast?"+q.toString());
   if(seq!==state.weatherSeq||key!==forecastLocationKey(state.location))return;
-  state.weather=data;state.weatherCached=false;state.weatherPublished=false;state.weatherFetchFailed=false;state.weatherFetchedAt=Date.now();
+  state.weather=data;state.weatherCached=false;state.weatherPublished=false;state.weatherReferenceKm=null;state.weatherSourceError="";state.weatherFetchFailed=false;state.weatherFetchedAt=Date.now();
   forecastCacheWrite(key,data);forecastRender(data);
   updateWeatherStatus("Model Forecast Available",false);
  }catch(e){
   if(seq!==state.weatherSeq||key!==forecastLocationKey(state.location))return;
-  state.weatherFetchFailed=true;updateWeatherStatus("Forecast Update Failed",true);
+  state.weatherFetchFailed=true;
+  state.weatherSourceError=e&&e.name==="AbortError"?"Model request timed out":e&&String(e.message||"").slice(0,170)||"Weather model connection failed";
+  updateWeatherStatus("Forecast Provider Unreachable",true);
   if(!state.weather){
    try{
-    var published=await forecastPublishedCessnock(key);
+    var published=await forecastPublishedCessnock(loc);
     if(seq!==state.weatherSeq||key!==forecastLocationKey(state.location))return;
     state.weather=published.data;state.weatherFetchedAt=published.checkedAt;
-    state.weatherPublished=true;state.weatherCached=false;
+    state.weatherPublished=true;state.weatherReferenceKm=published.distanceKm;state.weatherCached=false;
     forecastRender(published.data);
-    updateWeatherStatus("Cessnock Snapshot · Direct Update Failed",true);
+    updateWeatherStatus("Cessnock Reference · Direct Update Failed",true);
    }catch(backupError){
     if(seq!==state.weatherSeq||key!==forecastLocationKey(state.location))return;
+    state.weatherSourceError+=" · No usable nearby forecast backup ("+(backupError&&backupError.message||"unavailable")+")";
     forecastClear();forecastHealth();
-    setText("current-description","Current model estimate unavailable");
-    setText("tomorrow-narrative","Forecast could not be verified. Check the official Bureau of Meteorology forecast and warnings.");
+    setText("current-description","Model service unavailable");
+    setText("tomorrow-narrative","Forecast requests failed and no sufficiently recent local backup is available. Check official Bureau information and retry later.");
    }
   }else forecastHealth();
-  message("Weather update failed. Any previous model values are labelled as unverified.");
+  message("Weather model connection failed. Check the source status or try again.");
   console.warn("SkyPulse forecast",e);
  }finally{
   if(seq===state.weatherSeq&&$("forecast-retry"))$("forecast-retry").disabled=false;

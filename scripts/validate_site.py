@@ -75,6 +75,12 @@ check("Radar adaptive transfer fallback and image loading status",
     and "if(state.radarTilesLoading)return;" in js and '.radar-image-state' in css)
 check("Radar detail disclosure", "function radarUpdateQuality()" in js and "native zoom 7" in js)
 check("Radar provider research retained", (ROOT / "docs/RADAR_PROVIDER_REVIEW.md").exists())
+check("Provider outage preserves verified snapshot and handles nearby GPS coordinates",
+      "forecastNearbyCessnock(location)" in js
+      and "forecastRebasePublished(data)" in js
+      and "forecastFetchWithRetry(url)" in js
+      and "actions/cache/restore@v4" in (ROOT/".github/workflows/deploy.yml").read_text()
+      and "load_previous()" in (ROOT/"scripts/sync_forecast.py").read_text())
 check("Time-bounded Cessnock source-labelled forecast backup", (ROOT / "scripts/sync_forecast.py").exists()
       and "forecastPublishedCessnock(key)" in js
       and "Publish Free Cessnock Forecast Backup" in (ROOT / ".github/workflows/deploy.yml").read_text())

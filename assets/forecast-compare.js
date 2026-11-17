@@ -54,16 +54,18 @@ const stats=values=>({
  gust:Math.max(...values.map(x=>x.gust))
 });
 async function publishedModelPair(loc){
- if(key(loc)!=="-32.8321:151.3497")return null;
+ const dx=(loc.lat+32.8321)*111,dy=(loc.lon-151.3497)*93.7;
+ const distance=Math.hypot(dx,dy);
+ if(!Number.isFinite(distance)||distance>15)return null;
  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),9000);
  try{
   const response=await fetch("./data/weather-cessnock.json?models="+Date.now(),{cache:"no-store",signal:ctrl.signal});
   if(!response.ok)throw Error("Snapshot HTTP "+response.status);
   const data=await response.json(),checkedAt=Date.parse(data.models_retrieved_at||"");
   const age=Date.now()-checkedAt;
-  if(data.location!=="Cessnock"||!Number.isFinite(age)||age<0||age>4*60*60*1000)throw Error("Snapshot too old");
+  if(data.location!=="Cessnock"||!Number.isFinite(age)||age<0||age>18*60*60*1000)throw Error("Snapshot too old");
   const values=MODELS.map(model=>read(data.models?.[model.id]));
-  return {result:values.map(value=>({status:"fulfilled",value})),checkedAt};
+  return {result:values.map(value=>({status:"fulfilled",value})),checkedAt,distanceKm:distance};
  }catch{return null;}finally{clearTimeout(timer);}
 }
 function paint(result,loc,published){
@@ -74,7 +76,7 @@ function paint(result,loc,published){
   }
   available++;
   const s=stats(Array.from(result[i].value.values()).slice(0,24));
-  set("compare-"+model.id+"-status",published?"PUBLISHED SNAPSHOT":"MODEL AVAILABLE");
+  set("compare-"+model.id+"-status",published?"REFERENCE SNAPSHOT":"MODEL AVAILABLE");
   set("compare-"+model.id+"-temp",fmt(s.low,"°C")+" to "+fmt(s.high,"°C"));
   set("compare-"+model.id+"-rain",fmt(s.rain," mm",1));
   set("compare-"+model.id+"-gust",fmt(s.gust," km/h"));
@@ -92,7 +94,7 @@ function paint(result,loc,published){
  set("compare-temp-spread",fmt(Math.abs(a.get(t).temp-b.get(t).temp),"°C",1));
  set("compare-rain-spread",fmt(Math.abs(first.rain-second.rain)," mm",1));
  set("compare-gust-spread",fmt(Math.abs(first.gust-second.gust)," km/h"));
- set("compare-summary",(published?"Using a dated Cessnock model snapshot because direct requests failed. ":"")+"Compared "+times.length+" matching forecast hours for "+loc.name+
+ set("compare-summary",(published?"Using older Cessnock reference model "+Math.round(published.distanceKm)+" km from selected location because direct requests failed; these values are NOT live. ":"")+"Compared "+times.length+" matching forecast hours for "+loc.name+
   ". Temperature difference is at the sixth common hour; rainfall and gust differences cover the same forecast window. Model spread is NOT a probability of accuracy.");
 }
 async function refresh(force){
@@ -108,7 +110,7 @@ async function refresh(force){
   if(id!==sequence||!location()||key(location())!==key(loc))return;
   if(backup)result=backup.result;
   lastCheck=Date.now();
-  paint(result,loc,!!backup);
+  paint(result,loc,backup);
   set("compare-checked-at",new Intl.DateTimeFormat("en-AU",{timeZone:"Australia/Sydney",hour:"numeric",
    minute:"2-digit",hour12:true,timeZoneName:"short"}).format(backup?.checkedAt||lastCheck));
  }finally{if(id===sequence){working=false;if($("compare-refresh"))$("compare-refresh").disabled=false;}}
