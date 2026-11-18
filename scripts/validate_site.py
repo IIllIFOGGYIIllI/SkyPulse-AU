@@ -145,6 +145,11 @@ check("Cloud backup uses location and age bounded local snapshots",
 check("Model divergence chart is explicitly model-vs-model",
       'id="compare-hourly"' in text["forecast.html"]
       and "compare-max-spread" in (ROOT/"assets/forecast-compare.js").read_text())
+check("Official warning relevance and incident proximity retain geometric source caveats",
+      'id="severe-nearest-incidents"' in text["index.html"]
+      and 'id="severe-source-details"' in text["hazards.html"]
+      and "Polygon edge approx." in (ROOT/"assets/severe-centre.js").read_text()
+      and "Incident coordinate, not incident boundary" in (ROOT/"assets/severe-centre.js").read_text())
 check("Severe-intelligence integration browser suite exists",
       (ROOT/"scripts/test_severe_intelligence.mjs").exists()
       and "test_severe_intelligence.mjs" in (ROOT/".github/workflows/deploy.yml").read_text()

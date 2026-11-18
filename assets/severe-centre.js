@@ -56,14 +56,14 @@ function segmentDistance(lat,lon,a,b){
 }
 function overlap(alert,location){
  const shapes=(Array.isArray(alert.polygons)?alert.polygons:[]).slice(0,12);
- let near=false;
+ let nearest=Infinity;
  for(const raw of shapes){
   const p=ring(raw);if(!p)continue;
-  if(inside(location.lat,location.lon,p))return "inside";
+  if(inside(location.lat,location.lon,p))return {scope:"inside",distanceKm:0};
   for(let i=0;i<p.length;i++)
-   if(segmentDistance(location.lat,location.lon,p[i],p[(i+1)%p.length])<=location.radius)near=true;
+   nearest=Math.min(nearest,segmentDistance(location.lat,location.lon,p[i],p[(i+1)%p.length]));
  }
- return near?"near":null;
+ return Number.isFinite(nearest)&&nearest<=location.radius?{scope:"near",distanceKm:nearest}:null;
 }
 function level(alert){
  const s=String(alert?.alert_level||"");
@@ -120,17 +120,35 @@ function render(x){
  const recorded=Object.values(sourceData).filter(z=>z.ok).map(z=>z.checked);
  set("severe-updated",recorded.length?"Latest source retrieval "+date(Math.max(...recorded)):"Source retrieval unavailable");
  root.dataset.health=valid===4?"complete":"partial";
+ const services=$("severe-source-details");
+ if(services){
+  services.replaceChildren();
+  for(const s of sources){
+   const record=sourceData[s.id],item=document.createElement("div");
+   item.className="severe-source-item";item.dataset.status=record.ok?"recent":"unavailable";
+   const name=document.createElement("strong");name.textContent=s.id==="cap"?"RFS Warning Areas":s.id==="incidents"?"RFS Incidents":s.id==="danger"?"Fire Danger":"BOM Notices";
+   const status=document.createElement("span");status.textContent=record.ok?"Retrieved "+date(record.checked):"Unavailable / Stale";
+   item.append(name,status);services.append(item);
+  }
+ }
  const region=x.lat>=-38&&x.lat<=-28&&x.lon>=140&&x.lon<=154;
  let matched=[];
  if(cap.ok&&region){
   const alerts=cap.data.alerts.filter(a=>a.status==="Actual"&&
    !["Cancel","Error","Ack"].includes(a.message_type)&&
    (!Number.isFinite(Date.parse(a.expires||""))||Date.parse(a.expires)>=Date.now()));
-  matched=alerts.map(a=>({a,scope:overlap(a,x)})).filter(z=>z.scope).sort((a,b)=>priority[level(a.a)]-priority[level(b.a)]).slice(0,6);
+  matched=alerts.map(a=>({a,relevance:overlap(a,x)})).filter(z=>z.relevance).sort((a,b)=>
+   priority[level(a.a)]-priority[level(b.a)]||
+   (a.relevance.scope==="inside"?0:1)-(b.relevance.scope==="inside"?0:1)||
+   a.relevance.distanceKm-b.relevance.distanceKm).slice(0,6);
+  const containing=matched.filter(z=>z.relevance.scope==="inside").length;
+  const surrounding=matched.length-containing;
   set("severe-warning-label",matched.length?matched.length+" Mapped Area Match"+(matched.length===1?"":"es"):
    "No Published Polygon Match");
   set("severe-warning-detail",matched.length?
-   "The selected location or monitoring radius intersects published RFS warning geometry.":
+   containing+" published polygon"+(containing===1?" contains":"s contain")+" the selected point · "+
+   surrounding+" additional warning area"+(surrounding===1?"":"s")+" within "+x.radius+
+   " km. Distances are approximate. Check official warnings.":
    "No match in the retrieved polygons. Warnings without polygons cannot be location-matched; this is NOT an all-clear.");
   const list=$("severe-warning-list");list.replaceChildren();
   const notices=Array.isArray(cap.data.cancellations)?cap.data.cancellations:[];
@@ -145,12 +163,14 @@ function render(x){
     caps.append(row);
    }
   }
-  if(matched.length)for(const {a,scope} of matched){
+  if(matched.length)for(const {a,relevance} of matched){
    const row=document.createElement("div");row.className="severe-warning-row";
    row.dataset.level=level(a);
    const title=document.createElement("strong");title.textContent=
     (a.message_type==="Update"?"PUBLISHED UPDATE · ":"")+level(a)+" · "+(a.headline||a.event||"Published RFS Notice");
-   const detail=document.createElement("span");detail.textContent=(scope==="inside"?"Contains selected location":"Within monitoring radius")+
+   const detail=document.createElement("span");detail.textContent=(relevance.scope==="inside"?
+     "Selected point inside the published warning polygon":
+     "Polygon edge approx. "+Math.round(relevance.distanceKm)+" km from selected point (within watch radius)")+
     " · Issued "+(Number.isFinite(Date.parse(a.sent||""))?date(Date.parse(a.sent)):"time unavailable");
    const link=document.createElement("a");const u=String(a.web||"");
    try{const parsed=new URL(u);link.href=parsed.protocol==="https:"&&["rfs.nsw.gov.au","www.rfs.nsw.gov.au"].includes(parsed.hostname)?u:"https://www.rfs.nsw.gov.au/fire-information/alerts-and-warnings";}
@@ -164,14 +184,27 @@ function render(x){
   $("severe-warning-list").replaceChildren();
   $("severe-cap-notices")?.replaceChildren();
  }
+ const nearList=$("severe-nearest-incidents");if(nearList)nearList.replaceChildren();
  if(inc.ok&&region){
-  const close=inc.data.features.filter(f=>{
+  const close=inc.data.features.map(f=>{
    const p=point(f.geometry);
-   return p&&p.every(Number.isFinite)&&km(x.lat,x.lon,p[0],p[1])<=x.radius;
-  });
+   if(!p||!p.every(Number.isFinite))return null;
+   const distance=km(x.lat,x.lon,p[0],p[1]);
+   return Number.isFinite(distance)&&distance<=x.radius?{feature:f,distanceKm:distance}:null;
+  }).filter(Boolean).sort((a,b)=>a.distanceKm-b.distanceKm);
   set("severe-incident-count",String(close.length));
   set("severe-incidents",close.length+" published incident point"+(close.length===1?"":"s")+
    " within "+x.radius+" km. Point locations are not incident boundaries. NOT an all-clear.");
+  if(nearList)for(const item of close.slice(0,4)){
+   const row=document.createElement("div");row.className="severe-incident-row";
+   const p=item.feature.properties||{};
+   const name=document.createElement("strong");
+   name.textContent=String(p.title||p.incidentName||p.name||"Published Incident").slice(0,110);
+   const distance=document.createElement("span");
+   distance.textContent=(item.distanceKm<1?item.distanceKm.toFixed(1):Math.round(item.distanceKm))+
+     " km from selected point · Incident coordinate, not incident boundary";
+   row.append(name,distance);nearList.append(row);
+  }
  }else{
   set("severe-incident-count","—");
   set("severe-incidents",region?"Incident feed unavailable; no nearby incident count can be verified.":"NSW RFS incident coverage does not apply worldwide.");

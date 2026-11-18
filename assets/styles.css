@@ -1293,3 +1293,17 @@ body[data-page=hazards] #fire-map-body.fire-map-expanded .fire-map-bottom{flex:n
 .push-check-row:last-child{border-bottom:0}
 #push-diagnostics p{font-size:11px;color:var(--muted);line-height:1.6}
 @media(max-width:610px){.push-readiness-head{flex-direction:column;align-items:stretch}.push-readiness-head button{width:100%}}
+
+/* Local relevance explains official source geometry rather than inferring impact. */
+.severe-nearest-incidents{display:grid;gap:7px;margin-top:10px}
+.severe-incident-row{display:grid;gap:3px;padding:8px 10px;border-radius:8px;background:var(--panel);border:1px solid var(--border);min-width:0}
+.severe-incident-row strong{font-size:11px;overflow-wrap:anywhere}
+.severe-incident-row span{font-size:10px;color:var(--muted);line-height:1.5}
+.severe-source-details{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:10px 0 16px}
+.severe-source-item{display:grid;align-content:start;gap:5px;padding:11px;border-radius:9px;border:1px solid var(--border);background:var(--panel-2);min-width:0}
+.severe-source-item strong{font-size:10px}
+.severe-source-item span{font-size:10px;line-height:1.5;overflow-wrap:anywhere;color:var(--muted)}
+.severe-source-item[data-status="unavailable"]{border-color:var(--amber)}
+.severe-source-item[data-status="unavailable"] span{color:var(--amber)}
+@media(max-width:780px){.severe-source-details{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:380px){.severe-source-details{grid-template-columns:1fr}}
