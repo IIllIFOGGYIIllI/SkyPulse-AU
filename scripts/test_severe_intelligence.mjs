@@ -60,6 +60,9 @@ try{
      sent:now,expires:new Date(Date.now()+2*3600000).toISOString(),
      alert_level:"Emergency Warning",headline:"Published Warning Near Cessnock",
      polygons:[poly],web:"https://www.rfs.nsw.gov.au/fire-information/alerts-and-warnings"},
+    {id:"nearby-watch",message_type:"Alert",status:"Actual",sent:now,alert_level:"Watch and Act",
+     headline:"Published Warning Near Watch Radius",
+     polygons:[[[-32.72,151.8],[-32.72,151.84],[-32.67,151.84],[-32.67,151.8]]]},
     {id:"unmapped",message_type:"Alert",status:"Actual",sent:now,alert_level:"Advice",
      headline:"Unmapped Published Alert",polygons:[]}
    ],cancellations:[{id:"cancel-1",sent:now,headline:"Statewide CAP Cancellation",references:"incident-2"}]};
@@ -100,9 +103,17 @@ try{
   fire:document.querySelector("#severe-fire-danger").textContent,
   ban:document.querySelector("#severe-fire-ban").textContent,
   bom:document.querySelector("#severe-bom-status").textContent,
-  source:document.querySelector("#severe-source-count").textContent
+  source:document.querySelector("#severe-source-count").textContent,
+  incidentDetails:document.querySelector("#severe-nearest-incidents").textContent,
+  feedDetails:document.querySelector("#severe-source-details").textContent
  }));
- if(active.cards!==1||!active.update.includes("PUBLISHED UPDATE")||
+ if(active.cards!==2||!active.update.includes("PUBLISHED UPDATE")||
+  !active.update.includes("Polygon edge approx.")||
+  !active.detail.includes("1 published polygon contains")||
+  !active.detail.includes("1 additional warning area")||
+  !active.incidentDetails.includes("km from selected point")||
+  !active.feedDetails.includes("BOM Notices")||
+  !active.feedDetails.includes("Unavailable / Stale")||
   !active.cancelled.includes("NOT location-matched")||active.incidents!=="1"||
   active.fire!=="High"||!active.ban.includes("No Total Fire Ban Listed")||
   !active.bom.includes("unavailable")||active.source!=="3/4 verified feed snapshots")
