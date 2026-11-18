@@ -13,7 +13,9 @@ permissions:
 
 concurrency:
   group: github-pages
-  cancel-in-progress: false
+  # A newer code change cancels an obsolete push build. Scheduled source refreshes
+  # must not interrupt code deployments once started.
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
   build-and-deploy:
