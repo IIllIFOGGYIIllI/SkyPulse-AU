@@ -57,6 +57,7 @@ jobs:
           node --check assets/push.js
           node --check assets/update.js
           node --check assets/forecast-compare.js
+          node --check assets/forecast-trend.js
           node --check assets/source-health.js
           node --check assets/severe-centre.js
           node --check assets/quarter-hour.js
@@ -85,6 +86,7 @@ jobs:
           node scripts/test_geo_fallback.mjs
           node scripts/test_systems_overhaul.mjs
           node scripts/test_severe_intelligence.mjs
+          node scripts/test_forecast_trend.mjs
           node scripts/test_fire_areas.mjs
       - name: Check Real Browser Weather Values
         if: github.event_name != 'schedule'

@@ -1307,3 +1307,20 @@ body[data-page=hazards] #fire-map-body.fire-map-expanded .fire-map-bottom{flex:n
 .severe-source-item[data-status="unavailable"] span{color:var(--amber)}
 @media(max-width:780px){.severe-source-details{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:380px){.severe-source-details{grid-template-columns:1fr}}
+
+/* Source-labelled forecast revision tracking, distinct from observed accuracy. */
+.forecast-revisions{padding:20px;margin:16px 0}
+.revision-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.revision-head h3{font:850 19px/1.3 Manrope,sans-serif;margin:5px 0}
+.revision-head p{margin:6px 0 0;font-size:12px;line-height:1.65;color:var(--muted);max-width:720px}
+.revision-head button{flex:none;min-height:36px}
+.revision-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0 11px}
+.revision-values>div{display:grid;align-content:start;gap:7px;padding:15px;border:1px solid var(--border);border-radius:11px;background:var(--panel-2)}
+.revision-values span{font-size:11px;color:var(--muted)}.revision-values strong{font-size:22px}
+.revision-values small{font-size:10px;line-height:1.5;color:var(--muted)}
+.revision-window,.revision-baseline{font-size:11px;color:var(--muted);margin:7px 0}
+.revision-status{font-size:11px;line-height:1.65;background:var(--panel-2);padding:11px 13px;border:1px solid var(--border);border-radius:9px;margin:14px 0}
+.revision-observation{display:grid;gap:7px;padding:13px;border:1px solid var(--border);border-radius:10px}
+.revision-observation strong{font-size:12px}.revision-observation p{margin:0;font-size:11px;line-height:1.6;color:var(--muted)}
+.revision-observation a{font-size:11px;color:var(--accent);font-weight:850;text-decoration:none}
+@media(max-width:730px){.revision-head{flex-direction:column;gap:10px}.revision-head button{width:100%}.revision-values{grid-template-columns:1fr}}

@@ -142,6 +142,11 @@ check("Cloud backup uses location and age bounded local snapshots",
       "skypulse.cloud.snapshot.v2" in (ROOT/"assets/clouds.js").read_text()
       and "saved.key!==key" in (ROOT/"assets/clouds.js").read_text()
       and "PREVIOUS MODEL SNAPSHOT" in (ROOT/"assets/clouds.js").read_text())
+check("Local forecast revision tracker is accurately labelled",
+      (ROOT/"assets/forecast-trend.js").exists()
+      and 'id="forecast-revisions"' in text["forecast.html"]
+      and "DO NOT verify measured accuracy" in (ROOT/"assets/forecast-trend.js").read_text()
+      and '"./assets/forecast-trend.js"' in sw)
 check("Model divergence chart is explicitly model-vs-model",
       'id="compare-hourly"' in text["forecast.html"]
       and "compare-max-spread" in (ROOT/"assets/forecast-compare.js").read_text())

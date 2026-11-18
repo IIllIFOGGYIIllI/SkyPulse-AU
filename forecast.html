@@ -71,6 +71,20 @@
   <div id="quarter-content"><div class="quarter-meta"><span id="quarter-status" role="status">Awaiting the hourly forecast…</span><span id="quarter-checked">—</span></div><div class="quarter-scroll" role="region" aria-label="Next two hours of fifteen-minute forecast checkpoints"><div class="quarter-table"><div class="quarter-row quarter-labels"><strong>Local Time</strong><span>Temperature*</span><span>Peak Gust*</span><span>Hourly Rain Chance</span><span>Hourly Rain Reference</span></div><div id="quarter-rows"></div></div></div></div>
   <p class="data-footnote">*Intermediate temperature and wind values are display interpolation only. A 15-minute label does not mean the source has quarter-hour forecast skill. Hourly rain totals must not be interpreted as 15-minute totals. <a href="https://open-meteo.com/en/docs" target="_blank" rel="noopener noreferrer">Model Methodology ↗</a></p>
 </article>
+<article id="forecast-revisions" class="card forecast-revisions" aria-labelledby="revision-heading">
+  <div class="revision-head"><div><span class="eyebrow">FORECAST TRANSPARENCY · LOCAL AUDIT</span><h3 id="revision-heading">How Has The Forecast Changed?</h3>
+    <p>Track differences between successful model retrievals saved on this device. <strong>These are not verified forecast accuracy scores.</strong></p></div>
+    <button type="button" id="revision-clear" class="outline-button">Clear Local History</button></div>
+  <div class="revision-values"><div><span>Temperature Revision</span><strong id="revision-temp">—</strong><small>Temperature at a matching future hour</small></div>
+    <div><span>Rainfall Revision</span><strong id="revision-rain">—</strong><small>Total over matching future hours</small></div>
+    <div><span>Peak Gust Revision</span><strong id="revision-gust">—</strong><small>Maximum across the same forecast hours</small></div></div>
+  <p id="revision-window" class="revision-window">—</p><p id="revision-baseline" class="revision-baseline">No previous verified model retrieval</p>
+  <p id="revision-status" class="revision-status" role="status" aria-live="polite">Waiting for a direct model forecast…</p>
+  <div class="revision-observation"><strong>Verify With Measured Observations</strong>
+    <p>Only station observations can assess actual forecast error. SkyPulse does not republish BOM observations; check a suitable station and compare the same local hour and location.</p>
+    <a id="revision-observation-link" href="https://www.bom.gov.au/places/" target="_blank" rel="noopener noreferrer">Find Official BOM Observations ↗</a></div>
+  <p class="data-footnote">Up to six retrievals per location are stored in this browser for 72 hours. New retrievals must be at least 30 minutes apart. They may still originate from the same underlying weather-model run. No measured accuracy or confidence percentage is calculated.</p>
+</article>
           <article id="forecast-model-comparison" class="card forecast-compare" aria-labelledby="forecast-comparison-title">
             <div class="forecast-compare-head"><div><span class="eyebrow">FORECAST INTELLIGENCE · INDEPENDENT GLOBAL MODELS</span><h3 id="forecast-comparison-title">ECMWF vs NOAA GFS</h3><p>Compare two numerical weather forecasts. Differences show model disagreement, not which model is correct.</p></div><button type="button" id="compare-refresh" class="outline-button">↻ Compare Models</button></div>
             <div class="forecast-compare-meta"><span>Location: <b id="compare-location">Selected Location</b></span><span>Checked: <b id="compare-checked-at">—</b></span><span>Upcoming 24 matching hours where available</span></div>
@@ -113,6 +127,7 @@
   <script src="./assets/app.js?v=7" defer></script>
   <script src="./assets/quarter-hour.js?v=1" defer></script>
   <script src="./assets/forecast-compare.js?v=1" defer></script>
+  <script src="./assets/forecast-trend.js?v=1" defer></script>
   <script src="./assets/update.js?v=1" defer></script>
 </body>
 </html>
