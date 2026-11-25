@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 
@@ -69,9 +70,11 @@ jobs:
           python scripts/validate_site.py
           python scripts/test_fire_geometry.py
       - name: Check Forecast API Fields
+        if: github.event_name != 'schedule'
         continue-on-error: true
         run: python scripts/check_weather_api.py
       - name: Check Real Weather Provider Responses
+        if: github.event_name != 'schedule'
         continue-on-error: true
         run: python scripts/diagnose_live_data.py
       - name: Install Browser for Responsive Layout Test
@@ -103,6 +106,24 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
+      - name: Wait for Pages Artifact Registration
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          # Artifact upload can complete before the Actions REST API lists it.
+          for attempt in {1..24}; do
+            if count=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?name=github-pages" --jq '[.artifacts[] | select(.name == "github-pages" and .expired == false)] | length'); then
+              if [[ "$count" == "1" ]]; then
+                echo "Pages artifact is registered and ready."
+                exit 0
+              fi
+            fi
+            echo "Waiting for Pages artifact registration ($attempt/24)."
+            sleep 5
+          done
+          echo "::error::Pages artifact did not become visible within 120 seconds."
+          exit 1
       - name: Deploy site
         id: deployment
         uses: actions/deploy-pages@v4
