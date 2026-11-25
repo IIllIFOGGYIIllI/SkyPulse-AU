@@ -14,11 +14,11 @@ if not re.fullmatch(r"[0-9a-fA-F]{40}", sha):
 if not re.fullmatch(r"[0-9a-fA-F]{40}", sha):
     raise SystemExit("No valid commit SHA for release")
 version = sha[:12].lower()
-pages = ("index.html", "forecast.html", "radar.html", "hazards.html", "news.html", "settings.html")
+pages = ("index.html", "forecast.html", "radar.html", "hazards.html", "news.html", "settings.html", "tools.html", "intelligence.html", "weather-maps.html", "air-quality.html", "marine.html", "history.html", "activities.html", "locations.html", "status.html")
 assets = ("assets/styles.css", "assets/leaflet.css", "assets/app.js",
           "assets/push.js", "assets/push-config.js", "assets/update.js",
           "assets/forecast-compare.js", "assets/forecast-trend.js", "assets/source-health.js",
-          "assets/severe-centre.js", "assets/quarter-hour.js")
+          "assets/severe-centre.js", "assets/quarter-hour.js", "assets/tools.js", "assets/tools.css")
 for page in pages:
     path = ROOT / page
     html = path.read_text(encoding="utf-8")
@@ -44,4 +44,4 @@ metadata = {"version": version, "commit": sha.lower(),
             "deployed_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")}
 (ROOT / "app-version.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
 assert version in sw and all(version in (ROOT / p).read_text(encoding="utf-8") for p in pages)
-print("Stamped 6 SkyPulse AU pages and service worker:", version)
+print("Stamped", len(pages), "SkyPulse AU pages and service worker:", version)

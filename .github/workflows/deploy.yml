@@ -56,6 +56,8 @@ jobs:
       - name: Validate Dashboard and PWA
         run: |
           node --check assets/app.js
+          node --check assets/tools.js
+          node scripts/test_tools.cjs
           node --check sw.js
           node --check assets/push.js
           node --check assets/update.js

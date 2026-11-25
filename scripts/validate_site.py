@@ -194,6 +194,15 @@ check("Push config contains no private key", "VAPID_PRIVATE_PKCS8" not in push)
 check("Backend validates VAPID and feed freshness", "VAPID_PRIVATE_PKCS8" in
       (ROOT / "notifications/src/index.js").read_text(encoding="utf-8") and
       "MAX_FEED_AGE" in (ROOT / "notifications/src/index.js").read_text(encoding="utf-8"))
+tool_pages = ["tools.html","intelligence.html","weather-maps.html","air-quality.html","marine.html","history.html","activities.html","locations.html","status.html"]
+for tool in tool_pages:
+    page = (ROOT / tool).read_text(encoding="utf-8")
+    check(tool + ": separate stamped page", 'data-build="' + version + '"' in page and 'data-tool="' + tool[:-5] + '"' in page)
+    check(tool + ": tools module and style stamped", "assets/tools.js?v=" + version in page and "assets/tools.css?v=" + version in page)
+    check(tool + ": cached shell", '"./' + tool + '"' in sw)
+    check(tool + ": no duplicate IDs", len(re.findall(r'\sid="([^"]+)"', page)) == len(set(re.findall(r'\sid="([^"]+)"', page))))
+check("All core pages link to tools", all('href="./tools.html"' in text[p] for p in pages))
+check("New tool shell assets cached", '"./assets/tools.js"' in sw and '"./assets/tools.css"' in sw)
 if errors:
     raise SystemExit("SkyPulse page validation FAILED:\n- " + "\n- ".join(errors))
-print("SkyPulse AU validation PASSED — six pages, safety, navigation, PWA caching and notification isolation.")
+print("SkyPulse AU validation PASSED — core and tool pages, safety, navigation, PWA caching and notification isolation.")

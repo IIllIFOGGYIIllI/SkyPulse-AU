@@ -1,0 +1,10 @@
+const assert=require("node:assert/strict");
+const {finite,locOK,key,memberRange,activityMatch,cacheAge}=require("../assets/tools.js");
+assert.equal(finite(null),false);assert.equal(finite("12"),false);assert.equal(finite(0),true);
+assert.equal(locOK({name:"A",lat:0,lon:0}),true);assert.equal(locOK({name:"A",lat:91,lon:0}),false);
+assert.notEqual(key({lat:0,lon:0}),key({lat:0,lon:1}));
+assert.deepEqual(memberRange([null,2,9,NaN,0]),{min:0,max:9,count:3});assert.equal(memberRange([null]),null);
+const rules={min:10,max:30,rain:20,gust:40},h={temperature_2m:[20,20,20],precipitation_probability:[0,null,0],wind_gusts_10m:[20,20,20],is_day:[1,1,0]};
+assert.equal(activityMatch(h,0,rules),true);assert.equal(activityMatch(h,1,rules),false);assert.equal(activityMatch(h,2,rules),false);
+assert.equal(Boolean(cacheAge({at:10},20,10)),true);assert.equal(Boolean(cacheAge({at:30},20,10)),false);assert.equal(Boolean(cacheAge({at:10},21,10)),false);
+console.log("SkyPulse tools unit checks passed");

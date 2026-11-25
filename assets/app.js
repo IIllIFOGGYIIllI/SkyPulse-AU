@@ -132,10 +132,11 @@ async function forecastFetchWithRetry(url){
    return forecastValidate(await getJSON(url,attempt===0?8500:9500));
   }catch(error){
    errors.push(error&&error.name==="AbortError"?"Connection timed out":error&&error.message||"Network error");
+   if(/HTTP 429/.test(String(error&&error.message)))break; // Do not retry a provider quota response immediately.
    if(attempt<2)await new Promise(function(resolve){setTimeout(resolve,450*(attempt+1));});
   }
  }
- throw Error("Forecast provider unavailable after 3 attempts: "+errors.join(" / ").slice(0,180));
+ throw Error("Forecast provider unavailable: "+errors.join(" / ").slice(0,180));
 }
 function forecastCacheWrite(key,data){
  try{localStorage.setItem(FORECAST_CACHE_KEY,JSON.stringify({key:key,data:data,checkedAt:Date.now()}));}catch(e){}

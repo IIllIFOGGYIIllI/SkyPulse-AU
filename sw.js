@@ -7,7 +7,7 @@ const SHELL=["./","./index.html","./offline.html","./assets/styles.css",
 "./assets/leaflet.css","./assets/app.js","./assets/clouds.js","./assets/push.js","./assets/push-config.js",
 "./assets/update.js","./assets/forecast-compare.js","./assets/forecast-trend.js","./assets/source-health.js","./assets/severe-centre.js","./assets/quarter-hour.js","./assets/icon.svg","./manifest.webmanifest",
 "./forecast.html","./radar.html","./hazards.html","./news.html","./settings.html","./privacy.html",
-"./terms.html","./sources.html"];
+"./terms.html","./sources.html","./tools.html","./intelligence.html","./weather-maps.html","./air-quality.html","./marine.html","./history.html","./activities.html","./locations.html","./status.html", "./assets/tools.js","./assets/tools.css"];
 self.addEventListener("install",event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)));
 });
